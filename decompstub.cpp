@@ -1,5 +1,4 @@
-#include <jit/jit.h>
-#include <stdint.h>
+#include "decomp.h"
 
 // This is passed as an array of uint32_t
 typedef struct state_s {
@@ -7,8 +6,6 @@ typedef struct state_s {
 	uint32_t pc;
 	uint32_t hi, lo;
 } state_t;
-
-bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t inst, bool &branched);
 
 jit_value_t _make_uint(jit_function_t func, uint32_t val) {
 	return jit_value_create_nint_constant(func, jit_type_uint, val);
@@ -29,6 +26,7 @@ jit_value_t _make_uint(jit_function_t func, uint32_t val) {
 #define DEP(gpr) do { } while(0)
 #define RES(gpr) do { } while(0)
 #define END_DEPRES() do { } while(0)
+#define DO_LDS() do { } while(0)
 
 jit_type_t sig_1, sig_2, sig_3;
 void store_memory(int size, uint32_t ptr, uint32_t val) {
@@ -163,10 +161,10 @@ void init_decompiler() {
 	block_sig = jit_type_create_signature(jit_abi_cdecl, jit_type_void, params, 1, 1);
 }
 
+jit_value_t state;
+
 jit_function_t create_function() {
-	auto func = jit_function_create(context, block_sig);
-	auto statevar = jit_value_get_param(func, 0);
-	bool branched = false;
-	decompile(func, statevar, 0xDEADBEE0, 0x0, branched);
+	jit_function_t func = jit_function_create(context, block_sig);
+	state = jit_value_get_param(func, 0);
 	return func;
 }
