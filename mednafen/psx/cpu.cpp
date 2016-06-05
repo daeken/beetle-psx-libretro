@@ -596,18 +596,20 @@ int32_t PS_CPU::RunReal(int32_t timestamp_in)
    gtimestamp = 0;
 
    compile_function(func);
-   uint32_t args[35];
-   memcpy(args, GPR, 4*32);
+   uint32_t state[35];
+   memcpy(state, GPR, 4*32);
    BACKING_TO_ACTIVE; // Get the original PC
-   args[32] = PC;
-   args[33] = HI;
-   args[34] = LO;
-   jit_function_apply(func, (void **) args, NULL);
-   assert(args[0] == 0); // Sanity check R0 == 0
-   memcpy(GPR, args, 4*32);
-   PC = args[32];
-   HI = args[33];
-   LO = args[34];
+   state[32] = PC;
+   state[33] = HI;
+   state[34] = LO;
+   void *args[1];
+   args[0] = state;
+   jit_function_apply(func, args, NULL);
+   assert(state[0] == 0); // Sanity check R0 == 0
+   memcpy(GPR, state, 4*32);
+   PC = state[32];
+   HI = state[33];
+   LO = state[34];
 
    timestamp += gtimestamp;
 
