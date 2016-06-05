@@ -25,6 +25,11 @@ jit_value_t _make_uint(jit_function_t func, uint32_t val) {
 #define WLO(val) jit_insn_store_relative(func, state, 34*4, (val));
 #define RLO() jit_insn_load_relative(func, state, 34*4, jit_type_uint)
 
+#define BEGIN_DEPRES() do { } while(0)
+#define DEP(gpr) do { } while(0)
+#define RES(gpr) do { } while(0)
+#define END_DEPRES() do { } while(0)
+
 jit_type_t sig_1, sig_2, sig_3;
 void store_memory(int size, uint32_t ptr, uint32_t val) {
 }
