@@ -16,6 +16,16 @@ jit_value_t _make_uint(jit_function_t func, uint32_t val) {
 }
 #define make_uint(val) _make_uint(func, (val))
 
+#define WGPR(gpr, val) jit_insn_store_relative(func, jit_insn_add(func, state, jit_insn_mul(func, make_uint(gpr), make_uint(4))), 0, (val))
+#define RGPR(gpr) jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, make_uint(gpr), make_uint(4))), 0, jit_type_uint)
+
+#define WPC(val) jit_insn_store_relative(func, state, 32*4, (val));
+#define RPC() jit_insn_load_relative(func, state, 32*4, jit_type_uint)
+#define WHI(val) jit_insn_store_relative(func, state, 33*4, (val));
+#define RHI() jit_insn_load_relative(func, state, 33*4, jit_type_uint)
+#define WLO(val) jit_insn_store_relative(func, state, 34*4, (val));
+#define RLO() jit_insn_load_relative(func, state, 34*4, jit_type_uint)
+
 jit_type_t sig_1, sig_2, sig_3;
 void store_memory(int size, uint32_t ptr, uint32_t val) {
 }
@@ -121,10 +131,12 @@ void call_overflow(jit_function_t func, jit_value_t a, jit_value_t b, int dir) {
 	jit_insn_call_native(func, 0, (void *) overflow, sig_3, args, 3, 0);
 }
 
+jit_context_t context;
 
-int main() {
-	bool branched = false;
-	auto context = jit_context_create();
+jit_type_t block_sig;
+
+void init_decompiler() {
+	context = jit_context_create();
 	jit_context_build_start(context);
 
 	jit_type_t s3params[3];
@@ -141,15 +153,18 @@ int main() {
 	jit_type_t lparams[2];
 	lparams[0] = jit_type_uint;
 	sig_1 = jit_type_create_signature(jit_abi_cdecl, jit_type_uint, lparams, 1, 1);
-	
+
 	jit_type_t params[1];
 	params[0] = jit_type_create_pointer(jit_type_uint, 0);
-	auto signature = jit_type_create_signature(jit_abi_cdecl, jit_type_int, params, 1, 1);
+	block_sig = jit_type_create_signature(jit_abi_cdecl, jit_type_void, params, 1, 1);
+}
 
-	auto func = jit_function_create(context, signature);
+jit_function_t create_function() {
+	auto func = jit_function_create(context, block_sig);
 	auto statevar = jit_value_get_param(func, 0);
+	bool branched = false;
 	decompile(func, statevar, 0xDEADBEE0, 0x0, branched);
-	return 0;
+	return func;
 }
 bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t inst, bool &branched) {
 	switch((inst) >> (0x1a)) {
@@ -157,87 +172,87 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 			switch((inst) & (0x3f)) {
 				case 0x0: {
 					/* SLL */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					uint32_t shamt = ((inst) >> (0x6)) & (0x1f);
-					if((rd) != (0x0)) { jit_insn_store_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rd), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_insn_shl(func, jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rt), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint), jit_value_create_nint_constant(func, jit_type_uint, shamt))); }
+					if((rd) != (0x0)) { WGPR(rd, jit_insn_shl(func, RGPR(rt), make_uint(shamt))); }
 					return(true);
 					break;
 				}
 				case 0x2: {
 					/* SRL */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					uint32_t shamt = ((inst) >> (0x6)) & (0x1f);
-					if((rd) != (0x0)) { jit_insn_store_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rd), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_insn_ushr(func, jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rt), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint), jit_value_create_nint_constant(func, jit_type_uint, shamt))); }
+					if((rd) != (0x0)) { WGPR(rd, jit_insn_ushr(func, RGPR(rt), make_uint(shamt))); }
 					return(true);
 					break;
 				}
 				case 0x3: {
 					/* SRA */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					uint32_t shamt = ((inst) >> (0x6)) & (0x1f);
-					if((rd) != (0x0)) { jit_insn_store_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rd), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_insn_sshr(func, jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rt), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint), jit_value_create_nint_constant(func, jit_type_uint, shamt))); }
+					if((rd) != (0x0)) { WGPR(rd, jit_insn_sshr(func, RGPR(rt), make_uint(shamt))); }
 					return(true);
 					break;
 				}
 				case 0x4: {
 					/* SLLV */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					if((rd) != (0x0)) { jit_insn_store_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rd), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_insn_shl(func, jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rt), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint), jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rs), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint))); }
+					if((rd) != (0x0)) { WGPR(rd, jit_insn_shl(func, RGPR(rt), RGPR(rs))); }
 					return(true);
 					break;
 				}
 				case 0x6: {
 					/* SRLV */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					if((rd) != (0x0)) { jit_insn_store_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rd), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_insn_ushr(func, jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rt), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint), jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rs), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint))); }
+					if((rd) != (0x0)) { WGPR(rd, jit_insn_ushr(func, RGPR(rt), RGPR(rs))); }
 					return(true);
 					break;
 				}
 				case 0x7: {
 					/* SRAV */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					if((rd) != (0x0)) { jit_insn_store_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rd), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_insn_sshr(func, jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rt), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint), jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rs), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint))); }
+					if((rd) != (0x0)) { WGPR(rd, jit_insn_sshr(func, RGPR(rt), RGPR(rs))); }
 					return(true);
 					break;
 				}
 				case 0x8: {
 					/* JR */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
-					call_branch(func, jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rs), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint));
+					call_branch(func, RGPR(rs));
 					branched = true;
 					return(true);
 					break;
 				}
 				case 0x9: {
 					/* JALR */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					if((rd) != (0x0)) { jit_insn_store_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rd), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_insn_add(func, jit_insn_add(func, jit_value_create_nint_constant(func, jit_type_uint, pc), jit_value_create_nint_constant(func, jit_type_uint, 0x4)), jit_value_create_nint_constant(func, jit_type_uint, 0x4))); }
-					call_branch(func, jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rs), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint));
+					if((rd) != (0x0)) { WGPR(rd, jit_insn_add(func, jit_insn_add(func, make_uint(pc), make_uint(0x4)), make_uint(0x4))); }
+					call_branch(func, RGPR(rs));
 					branched = true;
 					return(true);
 					break;
 				}
 				case 0xc: {
 					/* SYSCALL */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t code = ((inst) >> (0x6)) & (0xfffff);
 					call_syscall(func, code);
 					return(true);
@@ -245,7 +260,7 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0xd: {
 					/* BREAK */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t code = ((inst) >> (0x6)) & (0xfffff);
 					call_break(func, code);
 					return(true);
@@ -253,39 +268,39 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x10: {
 					/* MFHI */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					if((rd) != (0x0)) { jit_insn_store_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rd), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_insn_load_relative(func, state, 33*4, jit_type_uint)); }
+					if((rd) != (0x0)) { WGPR(rd, RHI()); }
 					return(true);
 					break;
 				}
 				case 0x11: {
 					/* MTHI */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					jit_insn_store_relative(func, state, 33*4, jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rd), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint));
+					WHI(RGPR(rd))
 					return(true);
 					break;
 				}
 				case 0x12: {
 					/* MFLO */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					if((rd) != (0x0)) { jit_insn_store_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rd), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_insn_load_relative(func, state, 34*4, jit_type_uint)); }
+					if((rd) != (0x0)) { WGPR(rd, RLO()); }
 					return(true);
 					break;
 				}
 				case 0x13: {
 					/* MTLO */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					jit_insn_store_relative(func, state, 34*4, jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rd), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint));
+					WLO(RGPR(rd))
 					return(true);
 					break;
 				}
 				case 0x18: {
 					/* MULT */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					/* Unhandled list */
@@ -294,7 +309,7 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x19: {
 					/* MULTU */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					/* Unhandled list */
@@ -303,123 +318,123 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x1a: {
 					/* DIV */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
-					jit_insn_store_relative(func, state, 34*4, jit_insn_div(func, jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rs), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint), jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rt), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint)));
-					jit_insn_store_relative(func, state, 33*4, jit_insn_rem(func, jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rs), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint), jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rt), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint)));
+					WLO(jit_insn_div(func, RGPR(rs), RGPR(rt)))
+					WHI(jit_insn_rem(func, RGPR(rs), RGPR(rt)))
 					return(true);
 					break;
 				}
 				case 0x1b: {
 					/* DIVU */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
-					jit_insn_store_relative(func, state, 34*4, jit_insn_div(func, jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rs), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint), jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rt), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint)));
-					jit_insn_store_relative(func, state, 33*4, jit_insn_rem(func, jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rs), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint), jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rt), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint)));
+					WLO(jit_insn_div(func, RGPR(rs), RGPR(rt)))
+					WHI(jit_insn_rem(func, RGPR(rs), RGPR(rt)))
 					return(true);
 					break;
 				}
 				case 0x20: {
 					/* ADD */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					call_overflow(func, jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rs), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint), jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rt), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint), 1);
-					if((rd) != (0x0)) { jit_insn_store_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rd), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_insn_add(func, jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rs), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint), jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rt), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint))); }
+					call_overflow(func, RGPR(rs), RGPR(rt), 1);
+					if((rd) != (0x0)) { WGPR(rd, jit_insn_add(func, RGPR(rs), RGPR(rt))); }
 					return(true);
 					break;
 				}
 				case 0x21: {
 					/* ADDU */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					if((rd) != (0x0)) { jit_insn_store_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rd), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_insn_add(func, jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rs), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint), jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rt), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint))); }
+					if((rd) != (0x0)) { WGPR(rd, jit_insn_add(func, RGPR(rs), RGPR(rt))); }
 					return(true);
 					break;
 				}
 				case 0x22: {
 					/* SUB */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					call_overflow(func, jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rs), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint), jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rt), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint), -1);
-					if((rd) != (0x0)) { jit_insn_store_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rd), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_insn_sub(func, jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rs), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint), jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rt), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint))); }
+					call_overflow(func, RGPR(rs), RGPR(rt), -1);
+					if((rd) != (0x0)) { WGPR(rd, jit_insn_sub(func, RGPR(rs), RGPR(rt))); }
 					return(true);
 					break;
 				}
 				case 0x23: {
 					/* SUBU */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					if((rd) != (0x0)) { jit_insn_store_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rd), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_insn_sub(func, jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rs), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint), jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rt), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint))); }
+					if((rd) != (0x0)) { WGPR(rd, jit_insn_sub(func, RGPR(rs), RGPR(rt))); }
 					return(true);
 					break;
 				}
 				case 0x24: {
 					/* AND */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					if((rd) != (0x0)) { jit_insn_store_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rd), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_insn_and(func, jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rs), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint), jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rt), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint))); }
+					if((rd) != (0x0)) { WGPR(rd, jit_insn_and(func, RGPR(rs), RGPR(rt))); }
 					return(true);
 					break;
 				}
 				case 0x25: {
 					/* OR */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					if((rd) != (0x0)) { jit_insn_store_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rd), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_insn_or(func, jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rs), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint), jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rt), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint))); }
+					if((rd) != (0x0)) { WGPR(rd, jit_insn_or(func, RGPR(rs), RGPR(rt))); }
 					return(true);
 					break;
 				}
 				case 0x26: {
 					/* XOR */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					if((rd) != (0x0)) { jit_insn_store_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rd), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_insn_xor(func, jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rs), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint), jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rt), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint))); }
+					if((rd) != (0x0)) { WGPR(rd, jit_insn_xor(func, RGPR(rs), RGPR(rt))); }
 					return(true);
 					break;
 				}
 				case 0x27: {
 					/* NOR */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					if((rd) != (0x0)) { jit_insn_store_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rd), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_insn_not(func, jit_insn_or(func, jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rs), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint), jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rt), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint)))); }
+					if((rd) != (0x0)) { WGPR(rd, jit_insn_not(func, jit_insn_or(func, RGPR(rs), RGPR(rt)))); }
 					return(true);
 					break;
 				}
 				case 0x2a: {
 					/* SLT */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					jit_label_t temp_1 = jit_label_undefined, temp_2 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_lt(func, jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rs), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint), jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rt), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint)), &temp_1);
+					jit_insn_branch_if(func, jit_insn_lt(func, RGPR(rs), RGPR(rt)), &temp_1);
 					jit_label_t temp_3 = jit_label_undefined;
-					jit_insn_branch_if_not(func, jit_insn_ne(func, jit_value_create_nint_constant(func, jit_type_uint, rd), jit_value_create_nint_constant(func, jit_type_uint, 0x0)), &temp_3);
-					jit_insn_store_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rd), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_value_create_nint_constant(func, jit_type_uint, 0x1));
+					jit_insn_branch_if_not(func, jit_insn_ne(func, make_uint(rd), make_uint(0x0)), &temp_3);
+					WGPR(rd, make_uint(0x1));
 					jit_insn_label(func, &temp_3);
 					jit_insn_branch(func, &temp_2);
 					jit_insn_label(func, &temp_1);
 					jit_label_t temp_4 = jit_label_undefined;
-					jit_insn_branch_if_not(func, jit_insn_ne(func, jit_value_create_nint_constant(func, jit_type_uint, rd), jit_value_create_nint_constant(func, jit_type_uint, 0x0)), &temp_4);
-					jit_insn_store_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rd), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_value_create_nint_constant(func, jit_type_uint, 0x0));
+					jit_insn_branch_if_not(func, jit_insn_ne(func, make_uint(rd), make_uint(0x0)), &temp_4);
+					WGPR(rd, make_uint(0x0));
 					jit_insn_label(func, &temp_4);
 					jit_insn_label(func, &temp_2);
 					return(true);
@@ -427,21 +442,21 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x2b: {
 					/* SLTU */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					jit_label_t temp_5 = jit_label_undefined, temp_6 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_lt(func, jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rs), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint), jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rt), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint)), &temp_5);
+					jit_insn_branch_if(func, jit_insn_lt(func, RGPR(rs), RGPR(rt)), &temp_5);
 					jit_label_t temp_7 = jit_label_undefined;
-					jit_insn_branch_if_not(func, jit_insn_ne(func, jit_value_create_nint_constant(func, jit_type_uint, rd), jit_value_create_nint_constant(func, jit_type_uint, 0x0)), &temp_7);
-					jit_insn_store_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rd), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_value_create_nint_constant(func, jit_type_uint, 0x1));
+					jit_insn_branch_if_not(func, jit_insn_ne(func, make_uint(rd), make_uint(0x0)), &temp_7);
+					WGPR(rd, make_uint(0x1));
 					jit_insn_label(func, &temp_7);
 					jit_insn_branch(func, &temp_6);
 					jit_insn_label(func, &temp_5);
 					jit_label_t temp_8 = jit_label_undefined;
-					jit_insn_branch_if_not(func, jit_insn_ne(func, jit_value_create_nint_constant(func, jit_type_uint, rd), jit_value_create_nint_constant(func, jit_type_uint, 0x0)), &temp_8);
-					jit_insn_store_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rd), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_value_create_nint_constant(func, jit_type_uint, 0x0));
+					jit_insn_branch_if_not(func, jit_insn_ne(func, make_uint(rd), make_uint(0x0)), &temp_8);
+					WGPR(rd, make_uint(0x0));
 					jit_insn_label(func, &temp_8);
 					jit_insn_label(func, &temp_6);
 					return(true);
@@ -454,13 +469,13 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 			switch(((inst) >> (0x10)) & (0x1f)) {
 				case 0x0: {
 					/* BLTZ */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					uint32_t target = ((pc) + (0x4)) + (signext(0x12, (imm) << (0x2)));
 					jit_label_t temp_9 = jit_label_undefined;
-					jit_insn_branch_if_not(func, jit_insn_lt(func, jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rs), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint), jit_value_create_nint_constant(func, jit_type_uint, 0x0)), &temp_9);
-					call_branch(func, jit_value_create_nint_constant(func, jit_type_uint, target));
+					jit_insn_branch_if_not(func, jit_insn_lt(func, RGPR(rs), make_uint(0x0)), &temp_9);
+					call_branch(func, make_uint(target));
 					jit_insn_label(func, &temp_9);
 					branched = true;
 					return(true);
@@ -468,13 +483,13 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x1: {
 					/* BGEZ */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					uint32_t target = ((pc) + (0x4)) + (signext(0x12, (imm) << (0x2)));
 					jit_label_t temp_10 = jit_label_undefined;
-					jit_insn_branch_if_not(func, jit_insn_ge(func, jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rs), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint), jit_value_create_nint_constant(func, jit_type_uint, 0x0)), &temp_10);
-					call_branch(func, jit_value_create_nint_constant(func, jit_type_uint, target));
+					jit_insn_branch_if_not(func, jit_insn_ge(func, RGPR(rs), make_uint(0x0)), &temp_10);
+					call_branch(func, make_uint(target));
 					jit_insn_label(func, &temp_10);
 					branched = true;
 					return(true);
@@ -482,14 +497,14 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x10: {
 					/* BLTZAL */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
-					if((0x1f) != (0x0)) { jit_insn_store_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, 0x1f), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_insn_add(func, jit_value_create_nint_constant(func, jit_type_uint, pc), jit_value_create_nint_constant(func, jit_type_uint, 0x4))); }
+					if((0x1f) != (0x0)) { WGPR(0x1f, jit_insn_add(func, make_uint(pc), make_uint(0x4))); }
 					uint32_t target = ((pc) + (0x4)) + (signext(0x12, (imm) << (0x2)));
 					jit_label_t temp_11 = jit_label_undefined;
-					jit_insn_branch_if_not(func, jit_insn_lt(func, jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rs), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint), jit_value_create_nint_constant(func, jit_type_uint, 0x0)), &temp_11);
-					call_branch(func, jit_value_create_nint_constant(func, jit_type_uint, target));
+					jit_insn_branch_if_not(func, jit_insn_lt(func, RGPR(rs), make_uint(0x0)), &temp_11);
+					call_branch(func, make_uint(target));
 					jit_insn_label(func, &temp_11);
 					branched = true;
 					return(true);
@@ -497,14 +512,14 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x11: {
 					/* BGEZAL */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
-					if((0x1f) != (0x0)) { jit_insn_store_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, 0x1f), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_insn_add(func, jit_value_create_nint_constant(func, jit_type_uint, pc), jit_value_create_nint_constant(func, jit_type_uint, 0x4))); }
+					if((0x1f) != (0x0)) { WGPR(0x1f, jit_insn_add(func, make_uint(pc), make_uint(0x4))); }
 					uint32_t target = ((pc) + (0x4)) + (signext(0x12, (imm) << (0x2)));
 					jit_label_t temp_12 = jit_label_undefined;
-					jit_insn_branch_if_not(func, jit_insn_ge(func, jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rs), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint), jit_value_create_nint_constant(func, jit_type_uint, 0x0)), &temp_12);
-					call_branch(func, jit_value_create_nint_constant(func, jit_type_uint, target));
+					jit_insn_branch_if_not(func, jit_insn_ge(func, RGPR(rs), make_uint(0x0)), &temp_12);
+					call_branch(func, make_uint(target));
 					jit_insn_label(func, &temp_12);
 					branched = true;
 					return(true);
@@ -515,35 +530,35 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 		}
 		case 0x2: {
 			/* J */
-			jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+			WPC(make_uint(pc));
 			uint32_t imm = (inst) & (0x3ffffff);
 			uint32_t target = (((pc) + (0x4)) & (0xf0000000)) + (0x1c);
-			call_branch(func, jit_value_create_nint_constant(func, jit_type_uint, target));
+			call_branch(func, make_uint(target));
 			branched = true;
 			return(true);
 			break;
 		}
 		case 0x3: {
 			/* JAL */
-			jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+			WPC(make_uint(pc));
 			uint32_t imm = (inst) & (0x3ffffff);
-			if((0x1f) != (0x0)) { jit_insn_store_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, 0x1f), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_insn_add(func, jit_insn_add(func, jit_value_create_nint_constant(func, jit_type_uint, pc), jit_value_create_nint_constant(func, jit_type_uint, 0x4)), jit_value_create_nint_constant(func, jit_type_uint, 0x4))); }
+			if((0x1f) != (0x0)) { WGPR(0x1f, jit_insn_add(func, jit_insn_add(func, make_uint(pc), make_uint(0x4)), make_uint(0x4))); }
 			uint32_t target = (((pc) + (0x4)) & (0xf0000000)) + (0x1c);
-			call_branch(func, jit_value_create_nint_constant(func, jit_type_uint, target));
+			call_branch(func, make_uint(target));
 			branched = true;
 			return(true);
 			break;
 		}
 		case 0x4: {
 			/* BEQ */
-			jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+			WPC(make_uint(pc));
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
 			uint32_t target = ((pc) + (0x4)) + (signext(0x12, (imm) << (0x2)));
 			jit_label_t temp_13 = jit_label_undefined;
-			jit_insn_branch_if_not(func, jit_insn_eq(func, jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rs), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint), jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rt), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint)), &temp_13);
-			call_branch(func, jit_value_create_nint_constant(func, jit_type_uint, target));
+			jit_insn_branch_if_not(func, jit_insn_eq(func, RGPR(rs), RGPR(rt)), &temp_13);
+			call_branch(func, make_uint(target));
 			jit_insn_label(func, &temp_13);
 			branched = true;
 			return(true);
@@ -551,14 +566,14 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 		}
 		case 0x5: {
 			/* BNE */
-			jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+			WPC(make_uint(pc));
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
 			uint32_t target = ((pc) + (0x4)) + (signext(0x12, (imm) << (0x2)));
 			jit_label_t temp_14 = jit_label_undefined;
-			jit_insn_branch_if_not(func, jit_insn_ne(func, jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rs), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint), jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rt), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint)), &temp_14);
-			call_branch(func, jit_value_create_nint_constant(func, jit_type_uint, target));
+			jit_insn_branch_if_not(func, jit_insn_ne(func, RGPR(rs), RGPR(rt)), &temp_14);
+			call_branch(func, make_uint(target));
 			jit_insn_label(func, &temp_14);
 			branched = true;
 			return(true);
@@ -568,13 +583,13 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 			switch(((inst) >> (0x10)) & (0x1f)) {
 				case 0x0: {
 					/* BLEZ */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					uint32_t target = ((pc) + (0x4)) + (signext(0x12, (imm) << (0x2)));
 					jit_label_t temp_15 = jit_label_undefined;
-					jit_insn_branch_if_not(func, jit_insn_le(func, jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rs), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint), jit_value_create_nint_constant(func, jit_type_uint, 0x0)), &temp_15);
-					call_branch(func, jit_value_create_nint_constant(func, jit_type_uint, target));
+					jit_insn_branch_if_not(func, jit_insn_le(func, RGPR(rs), make_uint(0x0)), &temp_15);
+					call_branch(func, make_uint(target));
 					jit_insn_label(func, &temp_15);
 					branched = true;
 					return(true);
@@ -587,13 +602,13 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 			switch(((inst) >> (0x10)) & (0x1f)) {
 				case 0x0: {
 					/* BGTZ */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					uint32_t target = ((pc) + (0x4)) + (signext(0x12, (imm) << (0x2)));
 					jit_label_t temp_16 = jit_label_undefined;
-					jit_insn_branch_if_not(func, jit_insn_gt(func, jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rs), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint), jit_value_create_nint_constant(func, jit_type_uint, 0x0)), &temp_16);
-					call_branch(func, jit_value_create_nint_constant(func, jit_type_uint, target));
+					jit_insn_branch_if_not(func, jit_insn_gt(func, RGPR(rs), make_uint(0x0)), &temp_16);
+					call_branch(func, make_uint(target));
 					jit_insn_label(func, &temp_16);
 					branched = true;
 					return(true);
@@ -604,45 +619,45 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 		}
 		case 0x8: {
 			/* ADDI */
-			jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+			WPC(make_uint(pc));
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
 			uint32_t eimm = signext(0x10, imm);
-			call_overflow(func, jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rs), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint), jit_value_create_nint_constant(func, jit_type_uint, eimm), 1);
-			if((rt) != (0x0)) { jit_insn_store_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rt), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_insn_add(func, jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rs), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint), jit_value_create_nint_constant(func, jit_type_uint, eimm))); }
+			call_overflow(func, RGPR(rs), make_uint(eimm), 1);
+			if((rt) != (0x0)) { WGPR(rt, jit_insn_add(func, RGPR(rs), make_uint(eimm))); }
 			return(true);
 			break;
 		}
 		case 0x9: {
 			/* ADDIU */
-			jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+			WPC(make_uint(pc));
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
 			uint32_t eimm = signext(0x10, imm);
-			if((rt) != (0x0)) { jit_insn_store_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rt), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_insn_add(func, jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rs), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint), jit_value_create_nint_constant(func, jit_type_uint, eimm))); }
+			if((rt) != (0x0)) { WGPR(rt, jit_insn_add(func, RGPR(rs), make_uint(eimm))); }
 			return(true);
 			break;
 		}
 		case 0xa: {
 			/* SLTI */
-			jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+			WPC(make_uint(pc));
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
 			uint32_t eimm = signext(0x10, imm);
 			jit_label_t temp_17 = jit_label_undefined, temp_18 = jit_label_undefined;
-			jit_insn_branch_if(func, jit_insn_lt(func, jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rs), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint), jit_value_create_nint_constant(func, jit_type_uint, eimm)), &temp_17);
+			jit_insn_branch_if(func, jit_insn_lt(func, RGPR(rs), make_uint(eimm)), &temp_17);
 			jit_label_t temp_19 = jit_label_undefined;
-			jit_insn_branch_if_not(func, jit_insn_ne(func, jit_value_create_nint_constant(func, jit_type_uint, rt), jit_value_create_nint_constant(func, jit_type_uint, 0x0)), &temp_19);
-			jit_insn_store_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rt), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_value_create_nint_constant(func, jit_type_uint, 0x1));
+			jit_insn_branch_if_not(func, jit_insn_ne(func, make_uint(rt), make_uint(0x0)), &temp_19);
+			WGPR(rt, make_uint(0x1));
 			jit_insn_label(func, &temp_19);
 			jit_insn_branch(func, &temp_18);
 			jit_insn_label(func, &temp_17);
 			jit_label_t temp_20 = jit_label_undefined;
-			jit_insn_branch_if_not(func, jit_insn_ne(func, jit_value_create_nint_constant(func, jit_type_uint, rt), jit_value_create_nint_constant(func, jit_type_uint, 0x0)), &temp_20);
-			jit_insn_store_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rt), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_value_create_nint_constant(func, jit_type_uint, 0x0));
+			jit_insn_branch_if_not(func, jit_insn_ne(func, make_uint(rt), make_uint(0x0)), &temp_20);
+			WGPR(rt, make_uint(0x0));
 			jit_insn_label(func, &temp_20);
 			jit_insn_label(func, &temp_18);
 			return(true);
@@ -650,22 +665,22 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 		}
 		case 0xb: {
 			/* SLTIU */
-			jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+			WPC(make_uint(pc));
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
 			uint32_t eimm = signext(0x10, imm);
 			jit_label_t temp_21 = jit_label_undefined, temp_22 = jit_label_undefined;
-			jit_insn_branch_if(func, jit_insn_lt(func, jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rs), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint), jit_value_create_nint_constant(func, jit_type_uint, eimm)), &temp_21);
+			jit_insn_branch_if(func, jit_insn_lt(func, RGPR(rs), make_uint(eimm)), &temp_21);
 			jit_label_t temp_23 = jit_label_undefined;
-			jit_insn_branch_if_not(func, jit_insn_ne(func, jit_value_create_nint_constant(func, jit_type_uint, rt), jit_value_create_nint_constant(func, jit_type_uint, 0x0)), &temp_23);
-			jit_insn_store_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rt), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_value_create_nint_constant(func, jit_type_uint, 0x1));
+			jit_insn_branch_if_not(func, jit_insn_ne(func, make_uint(rt), make_uint(0x0)), &temp_23);
+			WGPR(rt, make_uint(0x1));
 			jit_insn_label(func, &temp_23);
 			jit_insn_branch(func, &temp_22);
 			jit_insn_label(func, &temp_21);
 			jit_label_t temp_24 = jit_label_undefined;
-			jit_insn_branch_if_not(func, jit_insn_ne(func, jit_value_create_nint_constant(func, jit_type_uint, rt), jit_value_create_nint_constant(func, jit_type_uint, 0x0)), &temp_24);
-			jit_insn_store_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rt), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_value_create_nint_constant(func, jit_type_uint, 0x0));
+			jit_insn_branch_if_not(func, jit_insn_ne(func, make_uint(rt), make_uint(0x0)), &temp_24);
+			WGPR(rt, make_uint(0x0));
 			jit_insn_label(func, &temp_24);
 			jit_insn_label(func, &temp_22);
 			return(true);
@@ -673,43 +688,43 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 		}
 		case 0xc: {
 			/* ANDI */
-			jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+			WPC(make_uint(pc));
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
 			uint32_t eimm = 0x10;
-			if((rt) != (0x0)) { jit_insn_store_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rt), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_insn_and(func, jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rs), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint), jit_value_create_nint_constant(func, jit_type_uint, eimm))); }
+			if((rt) != (0x0)) { WGPR(rt, jit_insn_and(func, RGPR(rs), make_uint(eimm))); }
 			return(true);
 			break;
 		}
 		case 0xd: {
 			/* ORI */
-			jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+			WPC(make_uint(pc));
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
 			uint32_t eimm = 0x10;
-			if((rt) != (0x0)) { jit_insn_store_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rt), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_insn_or(func, jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rs), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint), jit_value_create_nint_constant(func, jit_type_uint, eimm))); }
+			if((rt) != (0x0)) { WGPR(rt, jit_insn_or(func, RGPR(rs), make_uint(eimm))); }
 			return(true);
 			break;
 		}
 		case 0xe: {
 			/* XORI */
-			jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+			WPC(make_uint(pc));
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
 			uint32_t eimm = 0x10;
-			if((rt) != (0x0)) { jit_insn_store_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rt), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_insn_xor(func, jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rs), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint), jit_value_create_nint_constant(func, jit_type_uint, eimm))); }
+			if((rt) != (0x0)) { WGPR(rt, jit_insn_xor(func, RGPR(rs), make_uint(eimm))); }
 			return(true);
 			break;
 		}
 		case 0xf: {
 			/* LUI */
-			jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+			WPC(make_uint(pc));
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
-			if((rt) != (0x0)) { jit_insn_store_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rt), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_insn_shl(func, jit_value_create_nint_constant(func, jit_type_uint, imm), jit_value_create_nint_constant(func, jit_type_uint, 0x10))); }
+			if((rt) != (0x0)) { WGPR(rt, jit_insn_shl(func, make_uint(imm), make_uint(0x10))); }
 			return(true);
 			break;
 		}
@@ -717,47 +732,47 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 			switch(((inst) >> (0x15)) & (0x1f)) {
 				case 0x0: {
 					/* MFCzanonymous_0 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					if((rt) != (0x0)) { jit_insn_store_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rt), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, call_read_copreg(func, cop, rd)); }
+					if((rt) != (0x0)) { WGPR(rt, call_read_copreg(func, cop, rd)); }
 					return(true);
 					break;
 				}
 				case 0x2: {
 					/* CFCzanonymous_0 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					if((rt) != (0x0)) { jit_insn_store_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rt), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, call_read_copcreg(func, cop, rd)); }
+					if((rt) != (0x0)) { WGPR(rt, call_read_copcreg(func, cop, rd)); }
 					return(true);
 					break;
 				}
 				case 0x4: {
 					/* MTCzanonymous_0 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					call_write_copreg(func, cop, rd, jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rt), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint));
+					call_write_copreg(func, cop, rd, RGPR(rt));
 					return(true);
 					break;
 				}
 				case 0x6: {
 					/* CTCzanonymous_0 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					call_write_copcreg(func, cop, rd, jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rt), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint));
+					call_write_copcreg(func, cop, rd, RGPR(rt));
 					return(true);
 					break;
 				}
 				case 0x10: {
 					/* COPzanonymous_4anonymous_0 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -766,7 +781,7 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x11: {
 					/* COPzanonymous_5anonymous_0 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -775,7 +790,7 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x12: {
 					/* COPzanonymous_6anonymous_0 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -784,7 +799,7 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x13: {
 					/* COPzanonymous_7anonymous_0 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -793,7 +808,7 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x14: {
 					/* COPzanonymous_8anonymous_0 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -802,7 +817,7 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x15: {
 					/* COPzanonymous_9anonymous_0 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -811,7 +826,7 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x16: {
 					/* COPzanonymous_10anonymous_0 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -820,7 +835,7 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x17: {
 					/* COPzanonymous_11anonymous_0 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -829,7 +844,7 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x18: {
 					/* COPzanonymous_12anonymous_0 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -838,7 +853,7 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x19: {
 					/* COPzanonymous_13anonymous_0 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -847,7 +862,7 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x1a: {
 					/* COPzanonymous_14anonymous_0 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -856,7 +871,7 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x1b: {
 					/* COPzanonymous_15anonymous_0 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -865,7 +880,7 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x1c: {
 					/* COPzanonymous_16anonymous_0 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -874,7 +889,7 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x1d: {
 					/* COPzanonymous_17anonymous_0 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -883,7 +898,7 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x1e: {
 					/* COPzanonymous_18anonymous_0 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -892,7 +907,7 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x1f: {
 					/* COPzanonymous_19anonymous_0 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -906,47 +921,47 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 			switch(((inst) >> (0x15)) & (0x1f)) {
 				case 0x0: {
 					/* MFCzanonymous_1 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					if((rt) != (0x0)) { jit_insn_store_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rt), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, call_read_copreg(func, cop, rd)); }
+					if((rt) != (0x0)) { WGPR(rt, call_read_copreg(func, cop, rd)); }
 					return(true);
 					break;
 				}
 				case 0x2: {
 					/* CFCzanonymous_1 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					if((rt) != (0x0)) { jit_insn_store_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rt), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, call_read_copcreg(func, cop, rd)); }
+					if((rt) != (0x0)) { WGPR(rt, call_read_copcreg(func, cop, rd)); }
 					return(true);
 					break;
 				}
 				case 0x4: {
 					/* MTCzanonymous_1 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					call_write_copreg(func, cop, rd, jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rt), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint));
+					call_write_copreg(func, cop, rd, RGPR(rt));
 					return(true);
 					break;
 				}
 				case 0x6: {
 					/* CTCzanonymous_1 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					call_write_copcreg(func, cop, rd, jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rt), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint));
+					call_write_copcreg(func, cop, rd, RGPR(rt));
 					return(true);
 					break;
 				}
 				case 0x10: {
 					/* COPzanonymous_4anonymous_1 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -955,7 +970,7 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x11: {
 					/* COPzanonymous_5anonymous_1 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -964,7 +979,7 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x12: {
 					/* COPzanonymous_6anonymous_1 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -973,7 +988,7 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x13: {
 					/* COPzanonymous_7anonymous_1 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -982,7 +997,7 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x14: {
 					/* COPzanonymous_8anonymous_1 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -991,7 +1006,7 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x15: {
 					/* COPzanonymous_9anonymous_1 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -1000,7 +1015,7 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x16: {
 					/* COPzanonymous_10anonymous_1 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -1009,7 +1024,7 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x17: {
 					/* COPzanonymous_11anonymous_1 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -1018,7 +1033,7 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x18: {
 					/* COPzanonymous_12anonymous_1 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -1027,7 +1042,7 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x19: {
 					/* COPzanonymous_13anonymous_1 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -1036,7 +1051,7 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x1a: {
 					/* COPzanonymous_14anonymous_1 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -1045,7 +1060,7 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x1b: {
 					/* COPzanonymous_15anonymous_1 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -1054,7 +1069,7 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x1c: {
 					/* COPzanonymous_16anonymous_1 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -1063,7 +1078,7 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x1d: {
 					/* COPzanonymous_17anonymous_1 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -1072,7 +1087,7 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x1e: {
 					/* COPzanonymous_18anonymous_1 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -1081,7 +1096,7 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x1f: {
 					/* COPzanonymous_19anonymous_1 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -1095,47 +1110,47 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 			switch(((inst) >> (0x15)) & (0x1f)) {
 				case 0x0: {
 					/* MFCzanonymous_2 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					if((rt) != (0x0)) { jit_insn_store_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rt), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, call_read_copreg(func, cop, rd)); }
+					if((rt) != (0x0)) { WGPR(rt, call_read_copreg(func, cop, rd)); }
 					return(true);
 					break;
 				}
 				case 0x2: {
 					/* CFCzanonymous_2 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					if((rt) != (0x0)) { jit_insn_store_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rt), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, call_read_copcreg(func, cop, rd)); }
+					if((rt) != (0x0)) { WGPR(rt, call_read_copcreg(func, cop, rd)); }
 					return(true);
 					break;
 				}
 				case 0x4: {
 					/* MTCzanonymous_2 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					call_write_copreg(func, cop, rd, jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rt), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint));
+					call_write_copreg(func, cop, rd, RGPR(rt));
 					return(true);
 					break;
 				}
 				case 0x6: {
 					/* CTCzanonymous_2 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					call_write_copcreg(func, cop, rd, jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rt), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint));
+					call_write_copcreg(func, cop, rd, RGPR(rt));
 					return(true);
 					break;
 				}
 				case 0x10: {
 					/* COPzanonymous_4anonymous_2 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -1144,7 +1159,7 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x11: {
 					/* COPzanonymous_5anonymous_2 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -1153,7 +1168,7 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x12: {
 					/* COPzanonymous_6anonymous_2 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -1162,7 +1177,7 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x13: {
 					/* COPzanonymous_7anonymous_2 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -1171,7 +1186,7 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x14: {
 					/* COPzanonymous_8anonymous_2 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -1180,7 +1195,7 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x15: {
 					/* COPzanonymous_9anonymous_2 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -1189,7 +1204,7 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x16: {
 					/* COPzanonymous_10anonymous_2 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -1198,7 +1213,7 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x17: {
 					/* COPzanonymous_11anonymous_2 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -1207,7 +1222,7 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x18: {
 					/* COPzanonymous_12anonymous_2 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -1216,7 +1231,7 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x19: {
 					/* COPzanonymous_13anonymous_2 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -1225,7 +1240,7 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x1a: {
 					/* COPzanonymous_14anonymous_2 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -1234,7 +1249,7 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x1b: {
 					/* COPzanonymous_15anonymous_2 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -1243,7 +1258,7 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x1c: {
 					/* COPzanonymous_16anonymous_2 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -1252,7 +1267,7 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x1d: {
 					/* COPzanonymous_17anonymous_2 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -1261,7 +1276,7 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x1e: {
 					/* COPzanonymous_18anonymous_2 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -1270,7 +1285,7 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x1f: {
 					/* COPzanonymous_19anonymous_2 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -1284,47 +1299,47 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 			switch(((inst) >> (0x15)) & (0x1f)) {
 				case 0x0: {
 					/* MFCzanonymous_3 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					if((rt) != (0x0)) { jit_insn_store_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rt), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, call_read_copreg(func, cop, rd)); }
+					if((rt) != (0x0)) { WGPR(rt, call_read_copreg(func, cop, rd)); }
 					return(true);
 					break;
 				}
 				case 0x2: {
 					/* CFCzanonymous_3 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					if((rt) != (0x0)) { jit_insn_store_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rt), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, call_read_copcreg(func, cop, rd)); }
+					if((rt) != (0x0)) { WGPR(rt, call_read_copcreg(func, cop, rd)); }
 					return(true);
 					break;
 				}
 				case 0x4: {
 					/* MTCzanonymous_3 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					call_write_copreg(func, cop, rd, jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rt), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint));
+					call_write_copreg(func, cop, rd, RGPR(rt));
 					return(true);
 					break;
 				}
 				case 0x6: {
 					/* CTCzanonymous_3 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					call_write_copcreg(func, cop, rd, jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rt), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint));
+					call_write_copcreg(func, cop, rd, RGPR(rt));
 					return(true);
 					break;
 				}
 				case 0x10: {
 					/* COPzanonymous_4anonymous_3 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -1333,7 +1348,7 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x11: {
 					/* COPzanonymous_5anonymous_3 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -1342,7 +1357,7 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x12: {
 					/* COPzanonymous_6anonymous_3 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -1351,7 +1366,7 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x13: {
 					/* COPzanonymous_7anonymous_3 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -1360,7 +1375,7 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x14: {
 					/* COPzanonymous_8anonymous_3 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -1369,7 +1384,7 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x15: {
 					/* COPzanonymous_9anonymous_3 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -1378,7 +1393,7 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x16: {
 					/* COPzanonymous_10anonymous_3 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -1387,7 +1402,7 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x17: {
 					/* COPzanonymous_11anonymous_3 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -1396,7 +1411,7 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x18: {
 					/* COPzanonymous_12anonymous_3 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -1405,7 +1420,7 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x19: {
 					/* COPzanonymous_13anonymous_3 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -1414,7 +1429,7 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x1a: {
 					/* COPzanonymous_14anonymous_3 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -1423,7 +1438,7 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x1b: {
 					/* COPzanonymous_15anonymous_3 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -1432,7 +1447,7 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x1c: {
 					/* COPzanonymous_16anonymous_3 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -1441,7 +1456,7 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x1d: {
 					/* COPzanonymous_17anonymous_3 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -1450,7 +1465,7 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x1e: {
 					/* COPzanonymous_18anonymous_3 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -1459,7 +1474,7 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 				}
 				case 0x1f: {
 					/* COPzanonymous_19anonymous_3 */
-					jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					call_copfun(func, cop, cofun);
@@ -1471,89 +1486,89 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 		}
 		case 0x20: {
 			/* LB */
-			jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+			WPC(make_uint(pc));
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
 			uint32_t offset = signext(0x10, imm);
-			if((rt) != (0x0)) { jit_insn_store_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rt), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, call_signext(func, 8, call_load_memory(func, 8, jit_insn_add(func, jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rs), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint), jit_value_create_nint_constant(func, jit_type_uint, offset))))); }
+			if((rt) != (0x0)) { WGPR(rt, call_signext(func, 8, call_load_memory(func, 8, jit_insn_add(func, RGPR(rs), make_uint(offset))))); }
 			return(true);
 			break;
 		}
 		case 0x21: {
 			/* LH */
-			jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+			WPC(make_uint(pc));
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
 			uint32_t offset = signext(0x10, imm);
-			if((rt) != (0x0)) { jit_insn_store_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rt), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, call_signext(func, 16, call_load_memory(func, 16, jit_insn_add(func, jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rs), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint), jit_value_create_nint_constant(func, jit_type_uint, offset))))); }
+			if((rt) != (0x0)) { WGPR(rt, call_signext(func, 16, call_load_memory(func, 16, jit_insn_add(func, RGPR(rs), make_uint(offset))))); }
 			return(true);
 			break;
 		}
 		case 0x23: {
 			/* LW */
-			jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+			WPC(make_uint(pc));
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
 			uint32_t offset = signext(0x10, imm);
-			if((rt) != (0x0)) { jit_insn_store_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rt), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, call_load_memory(func, 32, jit_insn_add(func, jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rs), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint), jit_value_create_nint_constant(func, jit_type_uint, offset)))); }
+			if((rt) != (0x0)) { WGPR(rt, call_load_memory(func, 32, jit_insn_add(func, RGPR(rs), make_uint(offset)))); }
 			return(true);
 			break;
 		}
 		case 0x24: {
 			/* LBU */
-			jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+			WPC(make_uint(pc));
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
 			uint32_t offset = signext(0x10, imm);
-			if((rt) != (0x0)) { jit_insn_store_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rt), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, call_load_memory(func, 8, jit_insn_add(func, jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rs), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint), jit_value_create_nint_constant(func, jit_type_uint, offset)))); }
+			if((rt) != (0x0)) { WGPR(rt, call_load_memory(func, 8, jit_insn_add(func, RGPR(rs), make_uint(offset)))); }
 			return(true);
 			break;
 		}
 		case 0x25: {
 			/* LHU */
-			jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+			WPC(make_uint(pc));
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
 			uint32_t offset = signext(0x10, imm);
-			if((rt) != (0x0)) { jit_insn_store_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rt), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, call_load_memory(func, 16, jit_insn_add(func, jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rs), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint), jit_value_create_nint_constant(func, jit_type_uint, offset)))); }
+			if((rt) != (0x0)) { WGPR(rt, call_load_memory(func, 16, jit_insn_add(func, RGPR(rs), make_uint(offset)))); }
 			return(true);
 			break;
 		}
 		case 0x28: {
 			/* SB */
-			jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+			WPC(make_uint(pc));
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
 			uint32_t offset = signext(0x10, imm);
-			call_store_memory(func, 8, jit_insn_add(func, jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rs), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint), jit_value_create_nint_constant(func, jit_type_uint, offset)), jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rt), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint));
+			call_store_memory(func, 8, jit_insn_add(func, RGPR(rs), make_uint(offset)), RGPR(rt));
 			return(true);
 			break;
 		}
 		case 0x29: {
 			/* SH */
-			jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+			WPC(make_uint(pc));
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
 			uint32_t offset = signext(0x10, imm);
-			call_store_memory(func, 16, jit_insn_add(func, jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rs), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint), jit_value_create_nint_constant(func, jit_type_uint, offset)), jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rt), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint));
+			call_store_memory(func, 16, jit_insn_add(func, RGPR(rs), make_uint(offset)), RGPR(rt));
 			return(true);
 			break;
 		}
 		case 0x2b: {
 			/* SW */
-			jit_insn_store_relative(func, state, 32*4, jit_value_create_nint_constant(func, jit_type_uint, pc));
+			WPC(make_uint(pc));
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
 			uint32_t offset = signext(0x10, imm);
-			call_store_memory(func, 32, jit_insn_add(func, jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rs), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint), jit_value_create_nint_constant(func, jit_type_uint, offset)), jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, jit_value_create_nint_constant(func, jit_type_uint, rt), jit_value_create_nint_constant(func, jit_type_uint, 4))), 0, jit_type_uint));
+			call_store_memory(func, 32, jit_insn_add(func, RGPR(rs), make_uint(offset)), RGPR(rt));
 			return(true);
 			break;
 		}

@@ -15,6 +15,16 @@ jit_value_t _make_uint(jit_function_t func, uint32_t val) {
 }
 #define make_uint(val) _make_uint(func, (val))
 
+#define WGPR(gpr, val) jit_insn_store_relative(func, jit_insn_add(func, state, jit_insn_mul(func, make_uint(gpr), make_uint(4))), 0, (val))
+#define RGPR(gpr) jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, make_uint(gpr), make_uint(4))), 0, jit_type_uint)
+
+#define WPC(val) jit_insn_store_relative(func, state, 32*4, (val));
+#define RPC() jit_insn_load_relative(func, state, 32*4, jit_type_uint)
+#define WHI(val) jit_insn_store_relative(func, state, 33*4, (val));
+#define RHI() jit_insn_load_relative(func, state, 33*4, jit_type_uint)
+#define WLO(val) jit_insn_store_relative(func, state, 34*4, (val));
+#define RLO() jit_insn_load_relative(func, state, 34*4, jit_type_uint)
+
 jit_type_t sig_1, sig_2, sig_3;
 void store_memory(int size, uint32_t ptr, uint32_t val) {
 }
@@ -149,8 +159,9 @@ void init_decompiler() {
 }
 
 jit_function_t create_function() {
-	auto func = jit_function_create(context, signature);
+	auto func = jit_function_create(context, block_sig);
 	auto statevar = jit_value_get_param(func, 0);
+	bool branched = false;
 	decompile(func, statevar, 0xDEADBEE0, 0x0, branched);
-	return 0;
+	return func;
 }

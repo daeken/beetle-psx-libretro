@@ -223,9 +223,9 @@ def tempname():
 	return 'temp_%i' % temp_i
 
 def to_val(val):
-	if val.startswith('jit_') or val.startswith('call_'):
+	if val.startswith('jit_') or val.startswith('call_') or val.split('(')[0] in ('RGPR', 'WGPR', 'RPC', 'WPC', 'RHI', 'WHI', 'RLO', 'WLO'):
 		return val
-	return 'jit_value_create_nint_constant(func, jit_type_uint, %s)' % val
+	return 'make_uint(%s)' % val
 
 def emitter(sexp, storing=False):
 	if isinstance(sexp, list):
@@ -247,13 +247,13 @@ def emitter(sexp, storing=False):
 		if isinstance(lvalue, list) and len(lvalue) == 1:
 			lvalue = lvalue[0]
 		if lvalue[0] == 'reg':
-			return 'jit_insn_store_relative(func, jit_insn_add(func, state, jit_insn_mul(func, %s, %s)), 0, %s);' % (to_val(emitter(lvalue[1])), to_val('4'), to_val(emitter(sexp[2])))
+			return 'WGPR(%s, %s);' % (emitter(lvalue[1]), to_val(emitter(sexp[2])))
 		elif lvalue[0] == 'pc':
-			return 'jit_insn_store_relative(func, state, 32*4, %s);' % to_val(emitter(sexp[2]))
+			return 'WPC(%s);' % to_val(emitter(sexp[2]))
 		elif lvalue[0] == 'hi':
-			return 'jit_insn_store_relative(func, state, 33*4, %s);' % to_val(emitter(sexp[2]))
+			return 'WHI(%s)' % to_val(emitter(sexp[2]))
 		elif lvalue[0] == 'lo':
-			return 'jit_insn_store_relative(func, state, 34*4, %s);' % to_val(emitter(sexp[2]))
+			return 'WLO(%s)' % to_val(emitter(sexp[2]))
 		elif lvalue[0] == 'copreg':
 			return 'call_write_copreg(func, %s, %s, %s);' % (emitter(lvalue[1]), emitter(lvalue[2]), to_val(emitter(sexp[2])))
 		elif lvalue[0] == 'copcreg':
@@ -262,13 +262,13 @@ def emitter(sexp, storing=False):
 			print 'Unknown lvalue', lvalue
 			raise False
 	elif op == 'reg':
-		return 'jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, %s, %s)), 0, jit_type_uint)' % (to_val(emitter(sexp[1])), to_val('4'))
+		return 'RGPR(%s)' % emitter(sexp[1])
 	elif op == 'pc':
-		return 'jit_insn_load_relative(func, state, 32*4, jit_type_uint)'
+		return 'RPC()'
 	elif op == 'hi':
-		return 'jit_insn_load_relative(func, state, 33*4, jit_type_uint)'
+		return 'RHI()'
 	elif op == 'lo':
-		return 'jit_insn_load_relative(func, state, 34*4, jit_type_uint)'
+		return 'RLO()'
 	elif op == 'copreg':
 		return 'call_read_copreg(func, %s, %s)' % (emitter(sexp[1]), emitter(sexp[2]))
 	elif op == 'copcreg':
