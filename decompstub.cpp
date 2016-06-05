@@ -29,16 +29,9 @@ jit_value_t _make_uint(jit_function_t func, uint32_t val) {
 #define DO_LDS() do { } while(0)
 
 jit_type_t sig_1, sig_2, sig_3;
-void store_memory(int size, uint32_t ptr, uint32_t val) {
-}
-
 void call_store_memory(jit_function_t func, int size, jit_value_t ptr, jit_value_t val) {
 	jit_value_t args[] = {make_uint(size), ptr, val};
 	jit_insn_call_native(func, 0, (void *) store_memory, sig_3, args, 3, 0);
-}
-
-uint32_t load_memory(int size, uint32_t ptr) {
-	return 0;
 }
 
 jit_value_t call_load_memory(jit_function_t func, int size, jit_value_t ptr) {
@@ -118,6 +111,7 @@ void call_break(jit_function_t func, uint32_t code) {
 }
 
 void branch(uint32_t target) {
+	// XXX: Implement branch logic
 }
 
 void call_branch(jit_function_t func, jit_value_t val) {
@@ -126,11 +120,17 @@ void call_branch(jit_function_t func, jit_value_t val) {
 }
 
 void overflow(uint32_t a, uint32_t b, int dir) {
+	// XXX: Implement overflow checks.
 }
 
 void call_overflow(jit_function_t func, jit_value_t a, jit_value_t b, int dir) {
 	jit_value_t args[] = {a, b, make_uint(dir)};
 	jit_insn_call_native(func, 0, (void *) overflow, sig_3, args, 3, 0);
+}
+
+void call_timestamp_inc(jit_function_t func, uint32_t amount) {
+	jit_value_t args[] = {make_uint(amount)};
+	jit_insn_call_native(func, 0, (void *) timestamp_inc, sig_1, args, 1, 0);
 }
 
 jit_context_t context;
@@ -167,4 +167,9 @@ jit_function_t create_function() {
 	jit_function_t func = jit_function_create(context, block_sig);
 	state = jit_value_get_param(func, 0);
 	return func;
+}
+
+void compile_function(jit_function_t func) {
+	jit_function_compile(func);
+	jit_context_build_end(context);
 }

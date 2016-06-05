@@ -37,6 +37,8 @@ extern bool psx_cpu_overclock;
 
 						// Does lock mode prevent the actual data payload from being modified, while allowing tags to be modified/updated???
 
+PS_CPU *cpu;
+
 PS_CPU::PS_CPU()
 {
    uint64_t a;
@@ -55,6 +57,7 @@ PS_CPU::PS_CPU()
    GTE_Init();
 
    init_decompiler();
+   cpu = this;
 
    for(i = 0; i < 24; i++)
    {
@@ -127,10 +130,6 @@ void PS_CPU::Power(void)
    memset(ReadAbsorb, 0, sizeof(ReadAbsorb));
    ReadAbsorbWhich = 0;
    ReadFudge = 0;
-
-   //WriteAbsorb = 0;
-   //WriteAbsorbCount = 0;
-   //WriteAbsorbMonkey = 0;
 
    CP0.SR |= (1 << 22);	// BEV
    CP0.SR |= (1 << 21);	// TS
@@ -280,14 +279,21 @@ void PS_CPU::PokeMemory(uint32 address, T value)
       PSX_MemPoke32(address, value);
 }
 
+uint32_t load_memory(int size, uint32_t ptr) {
+   switch(size) {
+      case 8:
+         return cpu->PeekMem8(ptr);
+      case 16:
+         return cpu->PeekMem16(ptr);
+      default:
+         return cpu->PeekMem32(ptr);
+   }
+}
+
 template<typename T>
 INLINE T PS_CPU::ReadMemory(int32_t &timestamp, uint32_t address, bool DS24, bool LWC_timing)
 {
    T ret;
-
-   //WriteAbsorb >>= WriteAbsorbMonkey * 8;
-   //WriteAbsorbCount -= WriteAbsorbMonkey;
-   //WriteAbsorbMonkey = WriteAbsorbCount;
 
    ReadAbsorb[ReadAbsorbWhich] = 0;
    ReadAbsorbWhich = 0;
@@ -332,6 +338,20 @@ INLINE T PS_CPU::ReadMemory(int32_t &timestamp, uint32_t address, bool DS24, boo
    return(ret);
 }
 
+void store_memory(int size, uint32_t ptr, uint32_t val) {
+   switch(size) {
+      case 8:
+         cpu->PokeMem8(ptr, val);
+         break;
+      case 16:
+         cpu->PokeMem16(ptr, val);
+         break;
+      case 32:
+         cpu->PokeMem32(ptr, val);
+         break;
+   }
+}
+
 template<typename T>
 INLINE void PS_CPU::WriteMemory(int32_t &timestamp, uint32_t address, uint32_t value, bool DS24)
 {
@@ -348,18 +368,6 @@ INLINE void PS_CPU::WriteMemory(int32_t &timestamp, uint32_t address, uint32_t v
 
          return;
       }
-
-      //if(WriteAbsorbCount == 4)
-      //{
-      // WriteAbsorb >>= 8;
-      // WriteAbsorbCount--;
-      //
-      // if(WriteAbsorbMonkey)
-      //  WriteAbsorbMonkey--;
-      //}
-      //timestamp += 3;
-      //WriteAbsorb |= (3U << (WriteAbsorbCount * 8));
-      //WriteAbsorbCount++;
 
       if(sizeof(T) == 1)
          PSX_MemWrite8(timestamp, address, value);
@@ -470,16 +478,21 @@ uint32_t PS_CPU::Exception(uint32_t code, uint32_t PC, const uint32 NP, const ui
 #define GPR_RES(n) { unsigned tn = (n); ReadAbsorb[tn] = 0; }
 #define GPR_DEPRES_END ReadAbsorb[0] = back; }
 
+volatile int32_t gtimestamp;
+void timestamp_inc(int amt) {
+   gtimestamp += amt;
+}
+
 template<bool DebugMode>
 int32_t PS_CPU::RunReal(int32_t timestamp_in)
 {
-   register int32_t timestamp = timestamp_in;
+   int32_t timestamp = timestamp_in;
 
-   register uint32_t PC;
-   register uint32_t new_PC;
-   register uint32_t new_PC_mask;
-   register uint32_t LDWhich;
-   register uint32_t LDValue;
+   uint32_t PC;
+   uint32_t new_PC;
+   uint32_t new_PC_mask;
+   uint32_t LDWhich;
+   uint32_t LDValue;
 
    gte_ts_done += timestamp;
    muldiv_ts_done += timestamp;
@@ -498,10 +511,8 @@ int32_t PS_CPU::RunReal(int32_t timestamp_in)
 
          if(ICache[(PC & 0xFFC) >> 2].TV != PC)
          {
-            // This needs to happen at runtime!
             ReadAbsorb[ReadAbsorbWhich] = 0;
             ReadAbsorbWhich = 0;
-            // !
 
             // FIXME: Handle executing out of scratchpad.
             if(PC >= 0xA0000000 || !(BIU & 0x800))
@@ -560,12 +571,12 @@ int32_t PS_CPU::RunReal(int32_t timestamp_in)
             }
          }
 
-         // Needs to happen at runtime!
          if(ReadAbsorb[ReadAbsorbWhich])
             ReadAbsorb[ReadAbsorbWhich]--;
          else
-            timestamp++;
-         // !
+            loadtime++;
+
+         call_timestamp_inc(func, loadtime);
 
          if(branched) {
             did_delay = true;
@@ -582,7 +593,23 @@ int32_t PS_CPU::RunReal(int32_t timestamp_in)
          PC += 4;
    }
 
-   // Run loop goes here
+   gtimestamp = 0;
+
+   compile_function(func);
+   uint32_t args[35];
+   memcpy(args, GPR, 4*32);
+   BACKING_TO_ACTIVE; // Get the original PC
+   args[32] = PC;
+   args[33] = HI;
+   args[34] = LO;
+   jit_function_apply(func, (void **) args, NULL);
+   assert(args[0] == 0); // Sanity check R0 == 0
+   memcpy(GPR, args, 4*32);
+   PC = args[32];
+   HI = args[33];
+   LO = args[34];
+
+   timestamp += gtimestamp;
 
    if(gte_ts_done > 0)
       gte_ts_done -= timestamp;
