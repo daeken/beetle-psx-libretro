@@ -483,6 +483,11 @@ void timestamp_inc(int amt) {
    gtimestamp += amt;
 }
 
+volatile uint32_t branch_to;
+void branch(uint32_t target) {
+   branch_to = target;
+}
+
 template<bool DebugMode>
 int32_t PS_CPU::RunReal(int32_t timestamp_in)
 {
@@ -502,6 +507,7 @@ int32_t PS_CPU::RunReal(int32_t timestamp_in)
    bool branched = false;
    bool did_delay = false;
    jit_function_t func = create_function();
+   printf("recompiling %08x\n", PC);
    while(!did_delay) {
          uint32_t instr;
          uint32_t opf;
@@ -584,7 +590,7 @@ int32_t PS_CPU::RunReal(int32_t timestamp_in)
          }
 
          if(!decompile(func, PC, instr, branched)) {
-            PSX_WARNING("[CPU] Unknown instruction @%08x = %08x, op=%02x, funct=%02x", PC, instr, instr >> 26, (instr & 0x3F));
+            printf("[CPU] Unknown instruction @%08x = %08x, op=%02x, funct=%02x", PC, instr, instr >> 26, (instr & 0x3F));
             exit(0); // XXX: Handle this properly...
          }
 
@@ -595,6 +601,8 @@ int32_t PS_CPU::RunReal(int32_t timestamp_in)
 
    gtimestamp = 0;
 
+   branch_to = -1;
+
    compile_function(func);
    uint32_t state[35];
    memcpy(state, GPR, 4*32);
@@ -602,14 +610,24 @@ int32_t PS_CPU::RunReal(int32_t timestamp_in)
    state[32] = PC;
    state[33] = HI;
    state[34] = LO;
+   uint32_t *stateptr = state;
    void *args[1];
-   args[0] = state;
+   args[0] = &stateptr;
    jit_function_apply(func, args, NULL);
    assert(state[0] == 0); // Sanity check R0 == 0
    memcpy(GPR, state, 4*32);
    PC = state[32];
    HI = state[33];
    LO = state[34];
+
+   for(int i = 0; i < 35; ++i) {
+      printf("r%i = %08x\n", i, state[i]);
+   }
+
+   if(branch_to != -1) {
+      printf("branching to %08x\n", branch_to);
+      PC = branch_to;
+   }
 
    timestamp += gtimestamp;
 

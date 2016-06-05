@@ -110,10 +110,6 @@ void call_break(jit_function_t func, uint32_t code) {
 	jit_insn_call_native(func, 0, (void *) break_, sig_1, args, 1, 0);
 }
 
-void branch(uint32_t target) {
-	// XXX: Implement branch logic
-}
-
 void call_branch(jit_function_t func, jit_value_t val) {
 	jit_value_t args[] = {val};
 	jit_insn_call_native(func, 0, (void *) branch, sig_1, args, 1, 0);
@@ -172,4 +168,5 @@ jit_function_t create_function() {
 void compile_function(jit_function_t func) {
 	jit_function_compile(func);
 	jit_context_build_end(context);
+	//jit_dump_function(stdout, func, "block");
 }

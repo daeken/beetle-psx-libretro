@@ -3,7 +3,6 @@
 
 #include "../mednafen.h"
 #include "../masmem.h"
-#include "../include/trio/trio.h"
 
 #include "../cdrom/cdromif.h"
 #include "../general.h"
@@ -14,8 +13,9 @@
 #define PSX_EVENT_SYSTEM_CHECKS 1
 
 // It's highly unlikely the user will want these if they're intentionally compiling without the debugger.
+// XXX: WANT_DEBUGGER seems to blow things up, so just disabling the dbgprint undef
 #ifndef WANT_DEBUGGER
-#undef PSX_DBGPRINT_ENABLE
+//#undef PSX_DBGPRINT_ENABLE
 #undef PSX_EVENT_SYSTEM_CHECKS
 #endif
 

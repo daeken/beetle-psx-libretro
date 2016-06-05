@@ -2,6 +2,7 @@
 #define __MDFN_PSX_DECOMP_H
 
 #include <jit/jit.h>
+#include <jit/jit-dump.h>
 #include <stdint.h>
 
 void init_decompiler();
@@ -14,5 +15,7 @@ void timestamp_inc(int amt);
 
 uint32_t load_memory(int size, uint32_t ptr);
 void store_memory(int size, uint32_t ptr, uint32_t val);
+
+void branch(uint32_t target);
 
 #endif
