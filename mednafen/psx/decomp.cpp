@@ -176,6 +176,10 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					uint32_t shamt = ((inst) >> (0x6)) & (0x1f);
+					BEGIN_DEPRES();
+					DEP(rt);
+					RES(rd);
+					END_DEPRES();
 					if((rd) != (0x0)) { WGPR(rd, jit_insn_shl(func, RGPR(rt), make_uint(shamt))); }
 					return(true);
 					break;
@@ -186,6 +190,10 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					uint32_t shamt = ((inst) >> (0x6)) & (0x1f);
+					BEGIN_DEPRES();
+					DEP(rt);
+					RES(rd);
+					END_DEPRES();
 					if((rd) != (0x0)) { WGPR(rd, jit_insn_ushr(func, RGPR(rt), make_uint(shamt))); }
 					return(true);
 					break;
@@ -196,6 +204,10 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					uint32_t shamt = ((inst) >> (0x6)) & (0x1f);
+					BEGIN_DEPRES();
+					DEP(rt);
+					RES(rd);
+					END_DEPRES();
 					if((rd) != (0x0)) { WGPR(rd, jit_insn_sshr(func, RGPR(rt), make_uint(shamt))); }
 					return(true);
 					break;
@@ -206,6 +218,11 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
+					BEGIN_DEPRES();
+					DEP(rs);
+					DEP(rt);
+					RES(rd);
+					END_DEPRES();
 					if((rd) != (0x0)) { WGPR(rd, jit_insn_shl(func, RGPR(rt), RGPR(rs))); }
 					return(true);
 					break;
@@ -216,6 +233,11 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
+					BEGIN_DEPRES();
+					DEP(rs);
+					DEP(rt);
+					RES(rd);
+					END_DEPRES();
 					if((rd) != (0x0)) { WGPR(rd, jit_insn_ushr(func, RGPR(rt), RGPR(rs))); }
 					return(true);
 					break;
@@ -226,6 +248,11 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
+					BEGIN_DEPRES();
+					DEP(rs);
+					DEP(rt);
+					RES(rd);
+					END_DEPRES();
 					if((rd) != (0x0)) { WGPR(rd, jit_insn_sshr(func, RGPR(rt), RGPR(rs))); }
 					return(true);
 					break;
@@ -234,6 +261,9 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 					/* JR */
 					WPC(make_uint(pc));
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
+					BEGIN_DEPRES();
+					DEP(rs);
+					END_DEPRES();
 					call_branch(func, RGPR(rs));
 					branched = true;
 					return(true);
@@ -244,6 +274,10 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 					WPC(make_uint(pc));
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
+					BEGIN_DEPRES();
+					DEP(rs);
+					RES(rd);
+					END_DEPRES();
 					if((rd) != (0x0)) { WGPR(rd, jit_insn_add(func, jit_insn_add(func, make_uint(pc), make_uint(0x4)), make_uint(0x4))); }
 					call_branch(func, RGPR(rs));
 					branched = true;
@@ -270,6 +304,9 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 					/* MFHI */
 					WPC(make_uint(pc));
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
+					BEGIN_DEPRES();
+					RES(rd);
+					END_DEPRES();
 					if((rd) != (0x0)) { WGPR(rd, RHI()); }
 					return(true);
 					break;
@@ -278,6 +315,9 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 					/* MTHI */
 					WPC(make_uint(pc));
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
+					BEGIN_DEPRES();
+					DEP(rd);
+					END_DEPRES();
 					WHI(RGPR(rd))
 					return(true);
 					break;
@@ -286,6 +326,9 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 					/* MFLO */
 					WPC(make_uint(pc));
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
+					BEGIN_DEPRES();
+					RES(rd);
+					END_DEPRES();
 					if((rd) != (0x0)) { WGPR(rd, RLO()); }
 					return(true);
 					break;
@@ -294,6 +337,9 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 					/* MTLO */
 					WPC(make_uint(pc));
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
+					BEGIN_DEPRES();
+					DEP(rd);
+					END_DEPRES();
 					WLO(RGPR(rd))
 					return(true);
 					break;
@@ -303,6 +349,10 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 					WPC(make_uint(pc));
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
+					BEGIN_DEPRES();
+					DEP(rs);
+					DEP(rt);
+					END_DEPRES();
 					/* Unhandled list */
 					return(true);
 					break;
@@ -312,6 +362,10 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 					WPC(make_uint(pc));
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
+					BEGIN_DEPRES();
+					DEP(rs);
+					DEP(rt);
+					END_DEPRES();
 					/* Unhandled list */
 					return(true);
 					break;
@@ -321,6 +375,10 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 					WPC(make_uint(pc));
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
+					BEGIN_DEPRES();
+					DEP(rs);
+					DEP(rt);
+					END_DEPRES();
 					WLO(jit_insn_div(func, RGPR(rs), RGPR(rt)))
 					WHI(jit_insn_rem(func, RGPR(rs), RGPR(rt)))
 					return(true);
@@ -331,6 +389,10 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 					WPC(make_uint(pc));
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
+					BEGIN_DEPRES();
+					DEP(rs);
+					DEP(rt);
+					END_DEPRES();
 					WLO(jit_insn_div(func, RGPR(rs), RGPR(rt)))
 					WHI(jit_insn_rem(func, RGPR(rs), RGPR(rt)))
 					return(true);
@@ -342,6 +404,11 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
+					BEGIN_DEPRES();
+					DEP(rs);
+					DEP(rt);
+					RES(rd);
+					END_DEPRES();
 					call_overflow(func, RGPR(rs), RGPR(rt), 1);
 					if((rd) != (0x0)) { WGPR(rd, jit_insn_add(func, RGPR(rs), RGPR(rt))); }
 					return(true);
@@ -353,6 +420,11 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
+					BEGIN_DEPRES();
+					DEP(rs);
+					DEP(rt);
+					RES(rd);
+					END_DEPRES();
 					if((rd) != (0x0)) { WGPR(rd, jit_insn_add(func, RGPR(rs), RGPR(rt))); }
 					return(true);
 					break;
@@ -363,6 +435,11 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
+					BEGIN_DEPRES();
+					DEP(rs);
+					DEP(rt);
+					RES(rd);
+					END_DEPRES();
 					call_overflow(func, RGPR(rs), RGPR(rt), -1);
 					if((rd) != (0x0)) { WGPR(rd, jit_insn_sub(func, RGPR(rs), RGPR(rt))); }
 					return(true);
@@ -374,6 +451,11 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
+					BEGIN_DEPRES();
+					DEP(rs);
+					DEP(rt);
+					RES(rd);
+					END_DEPRES();
 					if((rd) != (0x0)) { WGPR(rd, jit_insn_sub(func, RGPR(rs), RGPR(rt))); }
 					return(true);
 					break;
@@ -384,6 +466,11 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
+					BEGIN_DEPRES();
+					DEP(rs);
+					DEP(rt);
+					RES(rd);
+					END_DEPRES();
 					if((rd) != (0x0)) { WGPR(rd, jit_insn_and(func, RGPR(rs), RGPR(rt))); }
 					return(true);
 					break;
@@ -394,6 +481,11 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
+					BEGIN_DEPRES();
+					DEP(rs);
+					DEP(rt);
+					RES(rd);
+					END_DEPRES();
 					if((rd) != (0x0)) { WGPR(rd, jit_insn_or(func, RGPR(rs), RGPR(rt))); }
 					return(true);
 					break;
@@ -404,6 +496,11 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
+					BEGIN_DEPRES();
+					DEP(rs);
+					DEP(rt);
+					RES(rd);
+					END_DEPRES();
 					if((rd) != (0x0)) { WGPR(rd, jit_insn_xor(func, RGPR(rs), RGPR(rt))); }
 					return(true);
 					break;
@@ -414,6 +511,11 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
+					BEGIN_DEPRES();
+					DEP(rs);
+					DEP(rt);
+					RES(rd);
+					END_DEPRES();
 					if((rd) != (0x0)) { WGPR(rd, jit_insn_not(func, jit_insn_or(func, RGPR(rs), RGPR(rt)))); }
 					return(true);
 					break;
@@ -424,6 +526,11 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
+					BEGIN_DEPRES();
+					DEP(rs);
+					DEP(rt);
+					RES(rd);
+					END_DEPRES();
 					jit_label_t temp_1 = jit_label_undefined, temp_2 = jit_label_undefined;
 					jit_insn_branch_if(func, jit_insn_lt(func, RGPR(rs), RGPR(rt)), &temp_1);
 					jit_label_t temp_3 = jit_label_undefined;
@@ -446,6 +553,11 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
+					BEGIN_DEPRES();
+					DEP(rs);
+					DEP(rt);
+					RES(rd);
+					END_DEPRES();
 					jit_label_t temp_5 = jit_label_undefined, temp_6 = jit_label_undefined;
 					jit_insn_branch_if(func, jit_insn_lt(func, RGPR(rs), RGPR(rt)), &temp_5);
 					jit_label_t temp_7 = jit_label_undefined;
@@ -472,6 +584,9 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 					WPC(make_uint(pc));
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
+					BEGIN_DEPRES();
+					DEP(rs);
+					END_DEPRES();
 					uint32_t target = ((pc) + (0x4)) + (signext(0x12, (imm) << (0x2)));
 					jit_label_t temp_9 = jit_label_undefined;
 					jit_insn_branch_if_not(func, jit_insn_lt(func, RGPR(rs), make_uint(0x0)), &temp_9);
@@ -486,6 +601,9 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 					WPC(make_uint(pc));
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
+					BEGIN_DEPRES();
+					DEP(rs);
+					END_DEPRES();
 					uint32_t target = ((pc) + (0x4)) + (signext(0x12, (imm) << (0x2)));
 					jit_label_t temp_10 = jit_label_undefined;
 					jit_insn_branch_if_not(func, jit_insn_ge(func, RGPR(rs), make_uint(0x0)), &temp_10);
@@ -500,6 +618,10 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 					WPC(make_uint(pc));
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
+					BEGIN_DEPRES();
+					DEP(rs);
+					RES(0x1f);
+					END_DEPRES();
 					if((0x1f) != (0x0)) { WGPR(0x1f, jit_insn_add(func, make_uint(pc), make_uint(0x4))); }
 					uint32_t target = ((pc) + (0x4)) + (signext(0x12, (imm) << (0x2)));
 					jit_label_t temp_11 = jit_label_undefined;
@@ -515,6 +637,10 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 					WPC(make_uint(pc));
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
+					BEGIN_DEPRES();
+					DEP(rs);
+					RES(0x1f);
+					END_DEPRES();
 					if((0x1f) != (0x0)) { WGPR(0x1f, jit_insn_add(func, make_uint(pc), make_uint(0x4))); }
 					uint32_t target = ((pc) + (0x4)) + (signext(0x12, (imm) << (0x2)));
 					jit_label_t temp_12 = jit_label_undefined;
@@ -542,6 +668,9 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 			/* JAL */
 			WPC(make_uint(pc));
 			uint32_t imm = (inst) & (0x3ffffff);
+			BEGIN_DEPRES();
+			RES(0x1f);
+			END_DEPRES();
 			if((0x1f) != (0x0)) { WGPR(0x1f, jit_insn_add(func, jit_insn_add(func, make_uint(pc), make_uint(0x4)), make_uint(0x4))); }
 			uint32_t target = (((pc) + (0x4)) & (0xf0000000)) + (0x1c);
 			call_branch(func, make_uint(target));
@@ -555,6 +684,10 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
+			BEGIN_DEPRES();
+			DEP(rs);
+			DEP(rt);
+			END_DEPRES();
 			uint32_t target = ((pc) + (0x4)) + (signext(0x12, (imm) << (0x2)));
 			jit_label_t temp_13 = jit_label_undefined;
 			jit_insn_branch_if_not(func, jit_insn_eq(func, RGPR(rs), RGPR(rt)), &temp_13);
@@ -570,6 +703,10 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
+			BEGIN_DEPRES();
+			DEP(rs);
+			DEP(rt);
+			END_DEPRES();
 			uint32_t target = ((pc) + (0x4)) + (signext(0x12, (imm) << (0x2)));
 			jit_label_t temp_14 = jit_label_undefined;
 			jit_insn_branch_if_not(func, jit_insn_ne(func, RGPR(rs), RGPR(rt)), &temp_14);
@@ -586,6 +723,9 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 					WPC(make_uint(pc));
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
+					BEGIN_DEPRES();
+					DEP(rs);
+					END_DEPRES();
 					uint32_t target = ((pc) + (0x4)) + (signext(0x12, (imm) << (0x2)));
 					jit_label_t temp_15 = jit_label_undefined;
 					jit_insn_branch_if_not(func, jit_insn_le(func, RGPR(rs), make_uint(0x0)), &temp_15);
@@ -605,6 +745,9 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 					WPC(make_uint(pc));
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
+					BEGIN_DEPRES();
+					DEP(rs);
+					END_DEPRES();
 					uint32_t target = ((pc) + (0x4)) + (signext(0x12, (imm) << (0x2)));
 					jit_label_t temp_16 = jit_label_undefined;
 					jit_insn_branch_if_not(func, jit_insn_gt(func, RGPR(rs), make_uint(0x0)), &temp_16);
@@ -623,6 +766,10 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
+			BEGIN_DEPRES();
+			DEP(rs);
+			RES(rt);
+			END_DEPRES();
 			uint32_t eimm = signext(0x10, imm);
 			call_overflow(func, RGPR(rs), make_uint(eimm), 1);
 			if((rt) != (0x0)) { WGPR(rt, jit_insn_add(func, RGPR(rs), make_uint(eimm))); }
@@ -635,6 +782,10 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
+			BEGIN_DEPRES();
+			DEP(rs);
+			RES(rt);
+			END_DEPRES();
 			uint32_t eimm = signext(0x10, imm);
 			if((rt) != (0x0)) { WGPR(rt, jit_insn_add(func, RGPR(rs), make_uint(eimm))); }
 			return(true);
@@ -646,6 +797,10 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
+			BEGIN_DEPRES();
+			DEP(rs);
+			RES(rt);
+			END_DEPRES();
 			uint32_t eimm = signext(0x10, imm);
 			jit_label_t temp_17 = jit_label_undefined, temp_18 = jit_label_undefined;
 			jit_insn_branch_if(func, jit_insn_lt(func, RGPR(rs), make_uint(eimm)), &temp_17);
@@ -669,6 +824,10 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
+			BEGIN_DEPRES();
+			DEP(rs);
+			RES(rt);
+			END_DEPRES();
 			uint32_t eimm = signext(0x10, imm);
 			jit_label_t temp_21 = jit_label_undefined, temp_22 = jit_label_undefined;
 			jit_insn_branch_if(func, jit_insn_lt(func, RGPR(rs), make_uint(eimm)), &temp_21);
@@ -692,6 +851,10 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
+			BEGIN_DEPRES();
+			DEP(rs);
+			RES(rt);
+			END_DEPRES();
 			uint32_t eimm = 0x10;
 			if((rt) != (0x0)) { WGPR(rt, jit_insn_and(func, RGPR(rs), make_uint(eimm))); }
 			return(true);
@@ -703,6 +866,10 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
+			BEGIN_DEPRES();
+			DEP(rs);
+			RES(rt);
+			END_DEPRES();
 			uint32_t eimm = 0x10;
 			if((rt) != (0x0)) { WGPR(rt, jit_insn_or(func, RGPR(rs), make_uint(eimm))); }
 			return(true);
@@ -714,6 +881,10 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
+			BEGIN_DEPRES();
+			DEP(rs);
+			RES(rt);
+			END_DEPRES();
 			uint32_t eimm = 0x10;
 			if((rt) != (0x0)) { WGPR(rt, jit_insn_xor(func, RGPR(rs), make_uint(eimm))); }
 			return(true);
@@ -724,6 +895,9 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 			WPC(make_uint(pc));
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
+			BEGIN_DEPRES();
+			RES(rt);
+			END_DEPRES();
 			if((rt) != (0x0)) { WGPR(rt, jit_insn_shl(func, make_uint(imm), make_uint(0x10))); }
 			return(true);
 			break;
@@ -736,6 +910,9 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
+					BEGIN_DEPRES();
+					RES(rt);
+					END_DEPRES();
 					if((rt) != (0x0)) { WGPR(rt, call_read_copreg(func, cop, rd)); }
 					return(true);
 					break;
@@ -746,6 +923,9 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
+					BEGIN_DEPRES();
+					RES(rt);
+					END_DEPRES();
 					if((rt) != (0x0)) { WGPR(rt, call_read_copcreg(func, cop, rd)); }
 					return(true);
 					break;
@@ -756,6 +936,9 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
+					BEGIN_DEPRES();
+					DEP(rt);
+					END_DEPRES();
 					call_write_copreg(func, cop, rd, RGPR(rt));
 					return(true);
 					break;
@@ -766,6 +949,9 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
+					BEGIN_DEPRES();
+					DEP(rt);
+					END_DEPRES();
 					call_write_copcreg(func, cop, rd, RGPR(rt));
 					return(true);
 					break;
@@ -925,6 +1111,9 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
+					BEGIN_DEPRES();
+					RES(rt);
+					END_DEPRES();
 					if((rt) != (0x0)) { WGPR(rt, call_read_copreg(func, cop, rd)); }
 					return(true);
 					break;
@@ -935,6 +1124,9 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
+					BEGIN_DEPRES();
+					RES(rt);
+					END_DEPRES();
 					if((rt) != (0x0)) { WGPR(rt, call_read_copcreg(func, cop, rd)); }
 					return(true);
 					break;
@@ -945,6 +1137,9 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
+					BEGIN_DEPRES();
+					DEP(rt);
+					END_DEPRES();
 					call_write_copreg(func, cop, rd, RGPR(rt));
 					return(true);
 					break;
@@ -955,6 +1150,9 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
+					BEGIN_DEPRES();
+					DEP(rt);
+					END_DEPRES();
 					call_write_copcreg(func, cop, rd, RGPR(rt));
 					return(true);
 					break;
@@ -1114,6 +1312,9 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
+					BEGIN_DEPRES();
+					RES(rt);
+					END_DEPRES();
 					if((rt) != (0x0)) { WGPR(rt, call_read_copreg(func, cop, rd)); }
 					return(true);
 					break;
@@ -1124,6 +1325,9 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
+					BEGIN_DEPRES();
+					RES(rt);
+					END_DEPRES();
 					if((rt) != (0x0)) { WGPR(rt, call_read_copcreg(func, cop, rd)); }
 					return(true);
 					break;
@@ -1134,6 +1338,9 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
+					BEGIN_DEPRES();
+					DEP(rt);
+					END_DEPRES();
 					call_write_copreg(func, cop, rd, RGPR(rt));
 					return(true);
 					break;
@@ -1144,6 +1351,9 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
+					BEGIN_DEPRES();
+					DEP(rt);
+					END_DEPRES();
 					call_write_copcreg(func, cop, rd, RGPR(rt));
 					return(true);
 					break;
@@ -1303,6 +1513,9 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
+					BEGIN_DEPRES();
+					RES(rt);
+					END_DEPRES();
 					if((rt) != (0x0)) { WGPR(rt, call_read_copreg(func, cop, rd)); }
 					return(true);
 					break;
@@ -1313,6 +1526,9 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
+					BEGIN_DEPRES();
+					RES(rt);
+					END_DEPRES();
 					if((rt) != (0x0)) { WGPR(rt, call_read_copcreg(func, cop, rd)); }
 					return(true);
 					break;
@@ -1323,6 +1539,9 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
+					BEGIN_DEPRES();
+					DEP(rt);
+					END_DEPRES();
 					call_write_copreg(func, cop, rd, RGPR(rt));
 					return(true);
 					break;
@@ -1333,6 +1552,9 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
+					BEGIN_DEPRES();
+					DEP(rt);
+					END_DEPRES();
 					call_write_copcreg(func, cop, rd, RGPR(rt));
 					return(true);
 					break;
@@ -1490,6 +1712,10 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
+			BEGIN_DEPRES();
+			DEP(rs);
+			RES(rt);
+			END_DEPRES();
 			uint32_t offset = signext(0x10, imm);
 			if((rt) != (0x0)) { WGPR(rt, call_signext(func, 8, call_load_memory(func, 8, jit_insn_add(func, RGPR(rs), make_uint(offset))))); }
 			return(true);
@@ -1501,6 +1727,10 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
+			BEGIN_DEPRES();
+			DEP(rs);
+			RES(rt);
+			END_DEPRES();
 			uint32_t offset = signext(0x10, imm);
 			if((rt) != (0x0)) { WGPR(rt, call_signext(func, 16, call_load_memory(func, 16, jit_insn_add(func, RGPR(rs), make_uint(offset))))); }
 			return(true);
@@ -1512,6 +1742,10 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
+			BEGIN_DEPRES();
+			DEP(rs);
+			RES(rt);
+			END_DEPRES();
 			uint32_t offset = signext(0x10, imm);
 			if((rt) != (0x0)) { WGPR(rt, call_load_memory(func, 32, jit_insn_add(func, RGPR(rs), make_uint(offset)))); }
 			return(true);
@@ -1523,6 +1757,10 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
+			BEGIN_DEPRES();
+			DEP(rs);
+			RES(rt);
+			END_DEPRES();
 			uint32_t offset = signext(0x10, imm);
 			if((rt) != (0x0)) { WGPR(rt, call_load_memory(func, 8, jit_insn_add(func, RGPR(rs), make_uint(offset)))); }
 			return(true);
@@ -1534,6 +1772,10 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
+			BEGIN_DEPRES();
+			DEP(rs);
+			RES(rt);
+			END_DEPRES();
 			uint32_t offset = signext(0x10, imm);
 			if((rt) != (0x0)) { WGPR(rt, call_load_memory(func, 16, jit_insn_add(func, RGPR(rs), make_uint(offset)))); }
 			return(true);
@@ -1545,6 +1787,10 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
+			BEGIN_DEPRES();
+			DEP(rs);
+			DEP(rt);
+			END_DEPRES();
 			uint32_t offset = signext(0x10, imm);
 			call_store_memory(func, 8, jit_insn_add(func, RGPR(rs), make_uint(offset)), RGPR(rt));
 			return(true);
@@ -1556,6 +1802,10 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
+			BEGIN_DEPRES();
+			DEP(rs);
+			DEP(rt);
+			END_DEPRES();
 			uint32_t offset = signext(0x10, imm);
 			call_store_memory(func, 16, jit_insn_add(func, RGPR(rs), make_uint(offset)), RGPR(rt));
 			return(true);
@@ -1567,6 +1817,10 @@ bool decompile(jit_function_t func, jit_value_t state, uint32_t pc, uint32_t ins
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
+			BEGIN_DEPRES();
+			DEP(rs);
+			DEP(rt);
+			END_DEPRES();
 			uint32_t offset = signext(0x10, imm);
 			call_store_memory(func, 32, jit_insn_add(func, RGPR(rs), make_uint(offset)), RGPR(rt));
 			return(true);

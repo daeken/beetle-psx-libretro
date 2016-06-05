@@ -324,11 +324,35 @@ def emitter(sexp, storing=False):
 		print 'Unknown', sexp
 	return ''
 
+def findDepres(dag):
+	dep, res = set(), set()
+	if not isinstance(dag, list):
+		return dep, res
+
+	if dag[0] == 'set':
+		if dag[1][0] == 'gpr':
+			res.add(dag[1][1])
+		sdep, sres = findDepres(dag[2])
+		dep.update(sdep)
+		res.update(sres)
+	elif dag[0] == 'gpr':
+		dep.add(dag[1])
+	else:
+		for sdep, sres in map(findDepres, dag):
+			dep.update(sdep)
+			res.update(sres)
+	return dep, res
+
 def genDecomp((name, type, dasm, dag)):
 	code = [('comment', name), ('emit', ('=', ('pc', ), '$pc'))]
 	vars = []
 	decoder(code, vars, type, dag)
 	has_branch = [False]
+
+	dep, res = findDepres(dag)
+	if len(dep) != 0 or len(res) != 0:
+		depres = [('DEP', x) for x in dep] + [('RES', x) for x in res]
+		code += [('BEGIN_DEPRES',)] + depres + [('END_DEPRES',)]
 
 	def subgen(dag):
 		if isinstance(dag, str) or isinstance(dag, unicode):
