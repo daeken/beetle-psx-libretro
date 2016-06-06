@@ -6,15 +6,25 @@ typedef struct state_s {
 	uint32_t reg[32];
 	uint32_t pc;
 	uint32_t hi, lo;
+	uint32_t fake; // Used for load delay stuff
 } state_t;
 
 jit_value_t _make_uint(jit_function_t func, uint32_t val) {
 	return jit_value_create_nint_constant(func, jit_type_uint, val);
 }
 #define make_uint(val) _make_uint(func, (val))
+jit_value_t _make_ubyte(jit_function_t func, uint32_t val) {
+	return jit_value_create_nint_constant(func, jit_type_ubyte, val);
+}
+#define make_ubyte(val) _make_ubyte(func, (val))
 
-#define WGPR(gpr, val) jit_insn_store_relative(func, jit_insn_add(func, state, jit_insn_mul(func, make_uint(gpr), make_uint(4))), 0, (val))
-#define RGPR(gpr) jit_insn_load_relative(func, jit_insn_add(func, state, jit_insn_mul(func, make_uint(gpr), make_uint(4))), 0, jit_type_uint)
+#define LOAD(ptr, type) jit_insn_load_relative(func, (ptr), 0, type)
+#define STORE(ptr, value) jit_insn_store_relative(func, (ptr), 0, (value))
+#define CAST(value, type) jit_insn_convert(func, (value), (type), 0)
+
+#define WGPR(gpr, val) jit_insn_store_elem(func, state, make_uint(gpr), (val))
+#define WGPR_VAL(gpr, val) jit_insn_store_elem(func, state, gpr, (val))
+#define RGPR(gpr) jit_insn_load_elem(func, state, make_uint(gpr), jit_type_uint)
 
 #define WPC(val) jit_insn_store_relative(func, state, 32*4, (val));
 #define RPC() jit_insn_load_relative(func, state, 32*4, jit_type_uint)
@@ -23,13 +33,28 @@ jit_value_t _make_uint(jit_function_t func, uint32_t val) {
 #define WLO(val) jit_insn_store_relative(func, state, 34*4, (val));
 #define RLO() jit_insn_load_relative(func, state, 34*4, jit_type_uint)
 
-#define BEGIN_DEPRES() do { } while(0)
-#define DEP(gpr) do { } while(0)
-#define RES(gpr) do { } while(0)
-#define END_DEPRES() do { } while(0)
-#define DO_LDS() do { } while(0)
+#define DEP(gpr) do { if(gpr != 0) WRA(make_ubyte(gpr), make_ubyte(0)); } while(0)
+#define RES(gpr) do { if(gpr != 0) WRA(make_ubyte(gpr), make_ubyte(0)); } while(0)
 
 jit_type_t sig_1, sig_2, sig_3;
+jit_value_t state, ReadAbsorb, ReadAbsorbWhich, ReadFudge, LDWhich, LDValue, LDAbsorb;
+
+#define WRA(idx, val) jit_insn_store_relative(func, jit_insn_add(func, state, idx), 0, (val))
+
+void do_lds(jit_function_t func) {
+	jit_value_t ldw = LOAD(LDWhich, jit_type_uint);
+	WGPR_VAL(ldw, LOAD(LDValue, jit_type_uint));
+	WRA(ldw, jit_insn_load(func, LDAbsorb));
+	STORE(ReadFudge, CAST(ldw, jit_type_ubyte));
+	STORE(ReadAbsorbWhich, CAST(jit_insn_or(func, LOAD(ReadAbsorbWhich, jit_type_ubyte), jit_insn_and(func, ldw, make_uint(0x1F))), jit_type_ubyte));
+	STORE(LDWhich, make_uint(34));
+}
+
+void defer_set(jit_function_t func, int reg, jit_value_t val) {
+    STORE(LDWhich, make_uint(reg));
+	STORE(LDValue, val);
+}
+
 void call_store_memory(jit_function_t func, int size, jit_value_t ptr, jit_value_t val) {
 	jit_value_t args[] = {make_uint(size), ptr, val};
 	jit_insn_call_native(func, 0, (void *) store_memory, sig_3, args, 3, 0);
@@ -40,17 +65,9 @@ jit_value_t call_load_memory(jit_function_t func, int size, jit_value_t ptr) {
 	return jit_insn_call_native(func, 0, (void *) load_memory, sig_2, args, 2, 0);
 }
 
-uint32_t read_copreg(int cop, int reg) {
-	return 0;
-}
-
 jit_value_t call_read_copreg(jit_function_t func, int cop, int reg) {
 	jit_value_t args[] = {make_uint(cop), make_uint(reg)};
 	return jit_insn_call_native(func, 0, (void *) read_copreg, sig_2, args, 2, 0);
-}
-
-uint32_t read_copcreg(int cop, int reg) {
-	return 0;
 }
 
 jit_value_t call_read_copcreg(jit_function_t func, int cop, int reg) {
@@ -58,15 +75,9 @@ jit_value_t call_read_copcreg(jit_function_t func, int cop, int reg) {
 	return jit_insn_call_native(func, 0, (void *) read_copcreg, sig_2, args, 2, 0);
 }
 
-void write_copreg(int cop, int reg, uint32_t val) {
-}
-
 void call_write_copreg(jit_function_t func, int cop, int reg, jit_value_t val) {
 	jit_value_t args[] = {make_uint(cop), make_uint(reg), val};
 	jit_insn_call_native(func, 0, (void *) write_copreg, sig_3, args, 3, 0);
-}
-
-void write_copcreg(int cop, int reg, uint32_t val) {
 }
 
 void call_write_copcreg(jit_function_t func, int cop, int reg, jit_value_t val) {
@@ -74,12 +85,9 @@ void call_write_copcreg(jit_function_t func, int cop, int reg, jit_value_t val) 
 	jit_insn_call_native(func, 0, (void *) write_copcreg, sig_3, args, 3, 0);
 }
 
-void copfun(int cop, int cofun) {
-}
-
-jit_value_t call_copfun(jit_function_t func, int cop, int cofun) {
-	jit_value_t args[] = {make_uint(cop), make_uint(cofun)};
-	return jit_insn_call_native(func, 0, (void *) copfun, sig_2, args, 2, 0);
+jit_value_t call_copfun(jit_function_t func, int cop, int cofun, uint32_t inst) {
+	jit_value_t args[] = {make_uint(cop), make_uint(cofun), make_uint(inst)};
+	return jit_insn_call_native(func, 0, (void *) copfun, sig_3, args, 3, 0);
 }
 
 int32_t signext(int size, uint32_t imm) {
@@ -98,9 +106,6 @@ int32_t signext(int size, uint32_t imm) {
 jit_value_t call_signext(jit_function_t func, int size, jit_value_t val) {
 	jit_value_t args[] = {make_uint(size), val};
 	return jit_insn_call_native(func, 0, (void *) signext, sig_2, args, 2, 0);
-}
-
-void syscall(int code) {
 }
 
 void call_syscall(jit_function_t func, uint32_t code) {
@@ -158,16 +163,26 @@ void init_decompiler() {
 	lparams[0] = jit_type_uint;
 	sig_1 = jit_type_create_signature(jit_abi_cdecl, jit_type_uint, lparams, 1, 1);
 
-	jit_type_t params[1];
-	params[0] = jit_type_create_pointer(jit_type_uint, 0);
-	block_sig = jit_type_create_signature(jit_abi_cdecl, jit_type_void, params, 1, 1);
+	jit_type_t params[7];
+	params[0] = jit_type_create_pointer(jit_type_uint, 0); // State
+	params[1] = jit_type_create_pointer(jit_type_ubyte, 0); // ReadAbsorb
+	params[2] = jit_type_create_pointer(jit_type_ubyte, 0); // ReadAbsorbWhich
+	params[3] = jit_type_create_pointer(jit_type_ubyte, 0); // ReadFudge
+	params[4] = jit_type_create_pointer(jit_type_ubyte, 0); // LDWhich
+	params[5] = jit_type_create_pointer(jit_type_uint, 0); // LDValue
+	params[6] = jit_type_create_pointer(jit_type_ubyte, 0); // LDAbsorb
+	block_sig = jit_type_create_signature(jit_abi_cdecl, jit_type_void, params, 7, 1);
 }
-
-jit_value_t state;
 
 jit_function_t create_function() {
 	jit_function_t func = jit_function_create(context, block_sig);
 	state = jit_value_get_param(func, 0);
+	ReadAbsorb = jit_value_get_param(func, 1);
+	ReadAbsorbWhich = jit_value_get_param(func, 2);
+	ReadFudge = jit_value_get_param(func, 3);
+	LDWhich = jit_value_get_param(func, 4);
+	LDValue = jit_value_get_param(func, 5);
+	LDAbsorb = jit_value_get_param(func, 6);
 	return func;
 }
 
@@ -187,11 +202,9 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					uint32_t shamt = ((inst) >> (0x6)) & (0x1f);
-					BEGIN_DEPRES();
 					DEP(rt);
 					RES(rd);
-					END_DEPRES();
-					DO_LDS();
+					do_lds(func);
 					if((rd) != (0x0)) { WGPR(rd, jit_insn_shl(func, RGPR(rt), make_uint(shamt))); }
 					return(true);
 					break;
@@ -202,11 +215,9 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					uint32_t shamt = ((inst) >> (0x6)) & (0x1f);
-					BEGIN_DEPRES();
 					DEP(rt);
 					RES(rd);
-					END_DEPRES();
-					DO_LDS();
+					do_lds(func);
 					if((rd) != (0x0)) { WGPR(rd, jit_insn_ushr(func, RGPR(rt), make_uint(shamt))); }
 					return(true);
 					break;
@@ -217,11 +228,9 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					uint32_t shamt = ((inst) >> (0x6)) & (0x1f);
-					BEGIN_DEPRES();
 					DEP(rt);
 					RES(rd);
-					END_DEPRES();
-					DO_LDS();
+					do_lds(func);
 					if((rd) != (0x0)) { WGPR(rd, jit_insn_sshr(func, RGPR(rt), make_uint(shamt))); }
 					return(true);
 					break;
@@ -232,12 +241,10 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					BEGIN_DEPRES();
 					DEP(rs);
 					DEP(rt);
 					RES(rd);
-					END_DEPRES();
-					DO_LDS();
+					do_lds(func);
 					if((rd) != (0x0)) { WGPR(rd, jit_insn_shl(func, RGPR(rt), RGPR(rs))); }
 					return(true);
 					break;
@@ -248,12 +255,10 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					BEGIN_DEPRES();
 					DEP(rs);
 					DEP(rt);
 					RES(rd);
-					END_DEPRES();
-					DO_LDS();
+					do_lds(func);
 					if((rd) != (0x0)) { WGPR(rd, jit_insn_ushr(func, RGPR(rt), RGPR(rs))); }
 					return(true);
 					break;
@@ -264,12 +269,10 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					BEGIN_DEPRES();
 					DEP(rs);
 					DEP(rt);
 					RES(rd);
-					END_DEPRES();
-					DO_LDS();
+					do_lds(func);
 					if((rd) != (0x0)) { WGPR(rd, jit_insn_sshr(func, RGPR(rt), RGPR(rs))); }
 					return(true);
 					break;
@@ -278,10 +281,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					/* JR */
 					WPC(make_uint(pc));
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
-					BEGIN_DEPRES();
 					DEP(rs);
-					END_DEPRES();
-					DO_LDS();
+					do_lds(func);
 					call_branch(func, RGPR(rs));
 					branched = true;
 					return(true);
@@ -292,11 +293,9 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					BEGIN_DEPRES();
 					DEP(rs);
 					RES(rd);
-					END_DEPRES();
-					DO_LDS();
+					do_lds(func);
 					if((rd) != (0x0)) { WGPR(rd, jit_insn_add(func, jit_insn_add(func, make_uint(pc), make_uint(0x4)), make_uint(0x4))); }
 					call_branch(func, RGPR(rs));
 					branched = true;
@@ -307,7 +306,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					/* SYSCALL */
 					WPC(make_uint(pc));
 					uint32_t code = ((inst) >> (0x6)) & (0xfffff);
-					DO_LDS();
+					do_lds(func);
 					call_syscall(func, code);
 					return(true);
 					break;
@@ -316,7 +315,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					/* BREAK */
 					WPC(make_uint(pc));
 					uint32_t code = ((inst) >> (0x6)) & (0xfffff);
-					DO_LDS();
+					do_lds(func);
 					call_break(func, code);
 					return(true);
 					break;
@@ -325,10 +324,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					/* MFHI */
 					WPC(make_uint(pc));
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					BEGIN_DEPRES();
 					RES(rd);
-					END_DEPRES();
-					DO_LDS();
+					do_lds(func);
 					if((rd) != (0x0)) { WGPR(rd, RHI()); }
 					return(true);
 					break;
@@ -337,10 +334,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					/* MTHI */
 					WPC(make_uint(pc));
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					BEGIN_DEPRES();
 					DEP(rd);
-					END_DEPRES();
-					DO_LDS();
+					do_lds(func);
 					WHI(RGPR(rd))
 					return(true);
 					break;
@@ -349,10 +344,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					/* MFLO */
 					WPC(make_uint(pc));
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					BEGIN_DEPRES();
 					RES(rd);
-					END_DEPRES();
-					DO_LDS();
+					do_lds(func);
 					if((rd) != (0x0)) { WGPR(rd, RLO()); }
 					return(true);
 					break;
@@ -361,10 +354,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					/* MTLO */
 					WPC(make_uint(pc));
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					BEGIN_DEPRES();
 					DEP(rd);
-					END_DEPRES();
-					DO_LDS();
+					do_lds(func);
 					WLO(RGPR(rd))
 					return(true);
 					break;
@@ -374,11 +365,9 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
-					BEGIN_DEPRES();
 					DEP(rs);
 					DEP(rt);
-					END_DEPRES();
-					DO_LDS();
+					do_lds(func);
 					/* Unhandled list */
 					return(true);
 					break;
@@ -388,11 +377,9 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
-					BEGIN_DEPRES();
 					DEP(rs);
 					DEP(rt);
-					END_DEPRES();
-					DO_LDS();
+					do_lds(func);
 					/* Unhandled list */
 					return(true);
 					break;
@@ -402,11 +389,9 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
-					BEGIN_DEPRES();
 					DEP(rs);
 					DEP(rt);
-					END_DEPRES();
-					DO_LDS();
+					do_lds(func);
 					WLO(jit_insn_div(func, RGPR(rs), RGPR(rt)))
 					WHI(jit_insn_rem(func, RGPR(rs), RGPR(rt)))
 					return(true);
@@ -417,11 +402,9 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
-					BEGIN_DEPRES();
 					DEP(rs);
 					DEP(rt);
-					END_DEPRES();
-					DO_LDS();
+					do_lds(func);
 					WLO(jit_insn_div(func, RGPR(rs), RGPR(rt)))
 					WHI(jit_insn_rem(func, RGPR(rs), RGPR(rt)))
 					return(true);
@@ -433,12 +416,10 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					BEGIN_DEPRES();
 					DEP(rs);
 					DEP(rt);
 					RES(rd);
-					END_DEPRES();
-					DO_LDS();
+					do_lds(func);
 					call_overflow(func, RGPR(rs), RGPR(rt), 1);
 					if((rd) != (0x0)) { WGPR(rd, jit_insn_add(func, RGPR(rs), RGPR(rt))); }
 					return(true);
@@ -450,12 +431,10 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					BEGIN_DEPRES();
 					DEP(rs);
 					DEP(rt);
 					RES(rd);
-					END_DEPRES();
-					DO_LDS();
+					do_lds(func);
 					if((rd) != (0x0)) { WGPR(rd, jit_insn_add(func, RGPR(rs), RGPR(rt))); }
 					return(true);
 					break;
@@ -466,12 +445,10 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					BEGIN_DEPRES();
 					DEP(rs);
 					DEP(rt);
 					RES(rd);
-					END_DEPRES();
-					DO_LDS();
+					do_lds(func);
 					call_overflow(func, RGPR(rs), RGPR(rt), -1);
 					if((rd) != (0x0)) { WGPR(rd, jit_insn_sub(func, RGPR(rs), RGPR(rt))); }
 					return(true);
@@ -483,12 +460,10 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					BEGIN_DEPRES();
 					DEP(rs);
 					DEP(rt);
 					RES(rd);
-					END_DEPRES();
-					DO_LDS();
+					do_lds(func);
 					if((rd) != (0x0)) { WGPR(rd, jit_insn_sub(func, RGPR(rs), RGPR(rt))); }
 					return(true);
 					break;
@@ -499,12 +474,10 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					BEGIN_DEPRES();
 					DEP(rs);
 					DEP(rt);
 					RES(rd);
-					END_DEPRES();
-					DO_LDS();
+					do_lds(func);
 					if((rd) != (0x0)) { WGPR(rd, jit_insn_and(func, RGPR(rs), RGPR(rt))); }
 					return(true);
 					break;
@@ -515,12 +488,10 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					BEGIN_DEPRES();
 					DEP(rs);
 					DEP(rt);
 					RES(rd);
-					END_DEPRES();
-					DO_LDS();
+					do_lds(func);
 					if((rd) != (0x0)) { WGPR(rd, jit_insn_or(func, RGPR(rs), RGPR(rt))); }
 					return(true);
 					break;
@@ -531,12 +502,10 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					BEGIN_DEPRES();
 					DEP(rs);
 					DEP(rt);
 					RES(rd);
-					END_DEPRES();
-					DO_LDS();
+					do_lds(func);
 					if((rd) != (0x0)) { WGPR(rd, jit_insn_xor(func, RGPR(rs), RGPR(rt))); }
 					return(true);
 					break;
@@ -547,12 +516,10 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					BEGIN_DEPRES();
 					DEP(rs);
 					DEP(rt);
 					RES(rd);
-					END_DEPRES();
-					DO_LDS();
+					do_lds(func);
 					if((rd) != (0x0)) { WGPR(rd, jit_insn_not(func, jit_insn_or(func, RGPR(rs), RGPR(rt)))); }
 					return(true);
 					break;
@@ -563,12 +530,10 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					BEGIN_DEPRES();
 					DEP(rs);
 					DEP(rt);
 					RES(rd);
-					END_DEPRES();
-					DO_LDS();
+					do_lds(func);
 					jit_label_t temp_1 = jit_label_undefined, temp_2 = jit_label_undefined;
 					jit_insn_branch_if(func, jit_insn_lt(func, RGPR(rs), RGPR(rt)), &temp_1);
 					jit_label_t temp_3 = jit_label_undefined;
@@ -591,12 +556,10 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					BEGIN_DEPRES();
 					DEP(rs);
 					DEP(rt);
 					RES(rd);
-					END_DEPRES();
-					DO_LDS();
+					do_lds(func);
 					jit_label_t temp_5 = jit_label_undefined, temp_6 = jit_label_undefined;
 					jit_insn_branch_if(func, jit_insn_lt(func, RGPR(rs), RGPR(rt)), &temp_5);
 					jit_label_t temp_7 = jit_label_undefined;
@@ -623,10 +586,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
-					BEGIN_DEPRES();
 					DEP(rs);
-					END_DEPRES();
-					DO_LDS();
+					do_lds(func);
 					uint32_t target = ((pc) + (0x4)) + (signext(0x12, (imm) << (0x2)));
 					jit_label_t temp_9 = jit_label_undefined;
 					jit_insn_branch_if_not(func, jit_insn_lt(func, RGPR(rs), make_uint(0x0)), &temp_9);
@@ -641,10 +602,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
-					BEGIN_DEPRES();
 					DEP(rs);
-					END_DEPRES();
-					DO_LDS();
+					do_lds(func);
 					uint32_t target = ((pc) + (0x4)) + (signext(0x12, (imm) << (0x2)));
 					jit_label_t temp_10 = jit_label_undefined;
 					jit_insn_branch_if_not(func, jit_insn_ge(func, RGPR(rs), make_uint(0x0)), &temp_10);
@@ -659,11 +618,9 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
-					BEGIN_DEPRES();
 					DEP(rs);
 					RES(0x1f);
-					END_DEPRES();
-					DO_LDS();
+					do_lds(func);
 					if((0x1f) != (0x0)) { WGPR(0x1f, jit_insn_add(func, make_uint(pc), make_uint(0x4))); }
 					uint32_t target = ((pc) + (0x4)) + (signext(0x12, (imm) << (0x2)));
 					jit_label_t temp_11 = jit_label_undefined;
@@ -679,11 +636,9 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
-					BEGIN_DEPRES();
 					DEP(rs);
 					RES(0x1f);
-					END_DEPRES();
-					DO_LDS();
+					do_lds(func);
 					if((0x1f) != (0x0)) { WGPR(0x1f, jit_insn_add(func, make_uint(pc), make_uint(0x4))); }
 					uint32_t target = ((pc) + (0x4)) + (signext(0x12, (imm) << (0x2)));
 					jit_label_t temp_12 = jit_label_undefined;
@@ -701,7 +656,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 			/* J */
 			WPC(make_uint(pc));
 			uint32_t imm = (inst) & (0x3ffffff);
-			DO_LDS();
+			do_lds(func);
 			uint32_t target = (((pc) + (0x4)) & (0xf0000000)) + ((imm) << (0x2));
 			call_branch(func, make_uint(target));
 			branched = true;
@@ -712,10 +667,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 			/* JAL */
 			WPC(make_uint(pc));
 			uint32_t imm = (inst) & (0x3ffffff);
-			BEGIN_DEPRES();
 			RES(0x1f);
-			END_DEPRES();
-			DO_LDS();
+			do_lds(func);
 			if((0x1f) != (0x0)) { WGPR(0x1f, jit_insn_add(func, jit_insn_add(func, make_uint(pc), make_uint(0x4)), make_uint(0x4))); }
 			uint32_t target = (((pc) + (0x4)) & (0xf0000000)) + ((imm) << (0x2));
 			call_branch(func, make_uint(target));
@@ -729,11 +682,9 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
-			BEGIN_DEPRES();
 			DEP(rs);
 			DEP(rt);
-			END_DEPRES();
-			DO_LDS();
+			do_lds(func);
 			uint32_t target = ((pc) + (0x4)) + (signext(0x12, (imm) << (0x2)));
 			jit_label_t temp_13 = jit_label_undefined;
 			jit_insn_branch_if_not(func, jit_insn_eq(func, RGPR(rs), RGPR(rt)), &temp_13);
@@ -749,11 +700,9 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
-			BEGIN_DEPRES();
 			DEP(rs);
 			DEP(rt);
-			END_DEPRES();
-			DO_LDS();
+			do_lds(func);
 			uint32_t target = ((pc) + (0x4)) + (signext(0x12, (imm) << (0x2)));
 			jit_label_t temp_14 = jit_label_undefined;
 			jit_insn_branch_if_not(func, jit_insn_ne(func, RGPR(rs), RGPR(rt)), &temp_14);
@@ -770,10 +719,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
-					BEGIN_DEPRES();
 					DEP(rs);
-					END_DEPRES();
-					DO_LDS();
+					do_lds(func);
 					uint32_t target = ((pc) + (0x4)) + (signext(0x12, (imm) << (0x2)));
 					jit_label_t temp_15 = jit_label_undefined;
 					jit_insn_branch_if_not(func, jit_insn_le(func, RGPR(rs), make_uint(0x0)), &temp_15);
@@ -793,10 +740,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
-					BEGIN_DEPRES();
 					DEP(rs);
-					END_DEPRES();
-					DO_LDS();
+					do_lds(func);
 					uint32_t target = ((pc) + (0x4)) + (signext(0x12, (imm) << (0x2)));
 					jit_label_t temp_16 = jit_label_undefined;
 					jit_insn_branch_if_not(func, jit_insn_gt(func, RGPR(rs), make_uint(0x0)), &temp_16);
@@ -815,11 +760,9 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
-			BEGIN_DEPRES();
 			DEP(rs);
 			RES(rt);
-			END_DEPRES();
-			DO_LDS();
+			do_lds(func);
 			uint32_t eimm = signext(0x10, imm);
 			call_overflow(func, RGPR(rs), make_uint(eimm), 1);
 			if((rt) != (0x0)) { WGPR(rt, jit_insn_add(func, RGPR(rs), make_uint(eimm))); }
@@ -832,11 +775,9 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
-			BEGIN_DEPRES();
 			DEP(rs);
 			RES(rt);
-			END_DEPRES();
-			DO_LDS();
+			do_lds(func);
 			uint32_t eimm = signext(0x10, imm);
 			if((rt) != (0x0)) { WGPR(rt, jit_insn_add(func, RGPR(rs), make_uint(eimm))); }
 			return(true);
@@ -848,11 +789,9 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
-			BEGIN_DEPRES();
 			DEP(rs);
 			RES(rt);
-			END_DEPRES();
-			DO_LDS();
+			do_lds(func);
 			uint32_t eimm = signext(0x10, imm);
 			jit_label_t temp_17 = jit_label_undefined, temp_18 = jit_label_undefined;
 			jit_insn_branch_if(func, jit_insn_lt(func, RGPR(rs), make_uint(eimm)), &temp_17);
@@ -876,11 +815,9 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
-			BEGIN_DEPRES();
 			DEP(rs);
 			RES(rt);
-			END_DEPRES();
-			DO_LDS();
+			do_lds(func);
 			uint32_t eimm = signext(0x10, imm);
 			jit_label_t temp_21 = jit_label_undefined, temp_22 = jit_label_undefined;
 			jit_insn_branch_if(func, jit_insn_lt(func, RGPR(rs), make_uint(eimm)), &temp_21);
@@ -904,11 +841,9 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
-			BEGIN_DEPRES();
 			DEP(rs);
 			RES(rt);
-			END_DEPRES();
-			DO_LDS();
+			do_lds(func);
 			uint32_t eimm = imm;
 			if((rt) != (0x0)) { WGPR(rt, jit_insn_and(func, RGPR(rs), make_uint(eimm))); }
 			return(true);
@@ -920,11 +855,9 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
-			BEGIN_DEPRES();
 			DEP(rs);
 			RES(rt);
-			END_DEPRES();
-			DO_LDS();
+			do_lds(func);
 			uint32_t eimm = imm;
 			if((rt) != (0x0)) { WGPR(rt, jit_insn_or(func, RGPR(rs), make_uint(eimm))); }
 			return(true);
@@ -936,11 +869,9 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
-			BEGIN_DEPRES();
 			DEP(rs);
 			RES(rt);
-			END_DEPRES();
-			DO_LDS();
+			do_lds(func);
 			uint32_t eimm = imm;
 			if((rt) != (0x0)) { WGPR(rt, jit_insn_xor(func, RGPR(rs), make_uint(eimm))); }
 			return(true);
@@ -951,10 +882,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 			WPC(make_uint(pc));
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
-			BEGIN_DEPRES();
 			RES(rt);
-			END_DEPRES();
-			DO_LDS();
+			do_lds(func);
 			if((rt) != (0x0)) { WGPR(rt, jit_insn_shl(func, make_uint(imm), make_uint(0x10))); }
 			return(true);
 			break;
@@ -967,10 +896,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					BEGIN_DEPRES();
 					RES(rt);
-					END_DEPRES();
-					DO_LDS();
+					do_lds(func);
 					if((rt) != (0x0)) { WGPR(rt, call_read_copreg(func, cop, rd)); }
 					return(true);
 					break;
@@ -981,10 +908,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					BEGIN_DEPRES();
 					RES(rt);
-					END_DEPRES();
-					DO_LDS();
+					do_lds(func);
 					if((rt) != (0x0)) { WGPR(rt, call_read_copcreg(func, cop, rd)); }
 					return(true);
 					break;
@@ -995,10 +920,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					BEGIN_DEPRES();
 					DEP(rt);
-					END_DEPRES();
-					DO_LDS();
+					do_lds(func);
 					call_write_copreg(func, cop, rd, RGPR(rt));
 					return(true);
 					break;
@@ -1009,10 +932,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					BEGIN_DEPRES();
 					DEP(rt);
-					END_DEPRES();
-					DO_LDS();
+					do_lds(func);
 					call_write_copcreg(func, cop, rd, RGPR(rt));
 					return(true);
 					break;
@@ -1022,8 +943,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1032,8 +953,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1042,8 +963,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1052,8 +973,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1062,8 +983,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1072,8 +993,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1082,8 +1003,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1092,8 +1013,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1102,8 +1023,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1112,8 +1033,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1122,8 +1043,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1132,8 +1053,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1142,8 +1063,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1152,8 +1073,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1162,8 +1083,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1172,8 +1093,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1188,10 +1109,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					BEGIN_DEPRES();
 					RES(rt);
-					END_DEPRES();
-					DO_LDS();
+					do_lds(func);
 					if((rt) != (0x0)) { WGPR(rt, call_read_copreg(func, cop, rd)); }
 					return(true);
 					break;
@@ -1202,10 +1121,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					BEGIN_DEPRES();
 					RES(rt);
-					END_DEPRES();
-					DO_LDS();
+					do_lds(func);
 					if((rt) != (0x0)) { WGPR(rt, call_read_copcreg(func, cop, rd)); }
 					return(true);
 					break;
@@ -1216,10 +1133,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					BEGIN_DEPRES();
 					DEP(rt);
-					END_DEPRES();
-					DO_LDS();
+					do_lds(func);
 					call_write_copreg(func, cop, rd, RGPR(rt));
 					return(true);
 					break;
@@ -1230,10 +1145,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					BEGIN_DEPRES();
 					DEP(rt);
-					END_DEPRES();
-					DO_LDS();
+					do_lds(func);
 					call_write_copcreg(func, cop, rd, RGPR(rt));
 					return(true);
 					break;
@@ -1243,8 +1156,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1253,8 +1166,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1263,8 +1176,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1273,8 +1186,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1283,8 +1196,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1293,8 +1206,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1303,8 +1216,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1313,8 +1226,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1323,8 +1236,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1333,8 +1246,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1343,8 +1256,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1353,8 +1266,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1363,8 +1276,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1373,8 +1286,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1383,8 +1296,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1393,8 +1306,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1409,10 +1322,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					BEGIN_DEPRES();
 					RES(rt);
-					END_DEPRES();
-					DO_LDS();
+					do_lds(func);
 					if((rt) != (0x0)) { WGPR(rt, call_read_copreg(func, cop, rd)); }
 					return(true);
 					break;
@@ -1423,10 +1334,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					BEGIN_DEPRES();
 					RES(rt);
-					END_DEPRES();
-					DO_LDS();
+					do_lds(func);
 					if((rt) != (0x0)) { WGPR(rt, call_read_copcreg(func, cop, rd)); }
 					return(true);
 					break;
@@ -1437,10 +1346,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					BEGIN_DEPRES();
 					DEP(rt);
-					END_DEPRES();
-					DO_LDS();
+					do_lds(func);
 					call_write_copreg(func, cop, rd, RGPR(rt));
 					return(true);
 					break;
@@ -1451,10 +1358,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					BEGIN_DEPRES();
 					DEP(rt);
-					END_DEPRES();
-					DO_LDS();
+					do_lds(func);
 					call_write_copcreg(func, cop, rd, RGPR(rt));
 					return(true);
 					break;
@@ -1464,8 +1369,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1474,8 +1379,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1484,8 +1389,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1494,8 +1399,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1504,8 +1409,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1514,8 +1419,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1524,8 +1429,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1534,8 +1439,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1544,8 +1449,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1554,8 +1459,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1564,8 +1469,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1574,8 +1479,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1584,8 +1489,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1594,8 +1499,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1604,8 +1509,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1614,8 +1519,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1630,10 +1535,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					BEGIN_DEPRES();
 					RES(rt);
-					END_DEPRES();
-					DO_LDS();
+					do_lds(func);
 					if((rt) != (0x0)) { WGPR(rt, call_read_copreg(func, cop, rd)); }
 					return(true);
 					break;
@@ -1644,10 +1547,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					BEGIN_DEPRES();
 					RES(rt);
-					END_DEPRES();
-					DO_LDS();
+					do_lds(func);
 					if((rt) != (0x0)) { WGPR(rt, call_read_copcreg(func, cop, rd)); }
 					return(true);
 					break;
@@ -1658,10 +1559,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					BEGIN_DEPRES();
 					DEP(rt);
-					END_DEPRES();
-					DO_LDS();
+					do_lds(func);
 					call_write_copreg(func, cop, rd, RGPR(rt));
 					return(true);
 					break;
@@ -1672,10 +1571,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
-					BEGIN_DEPRES();
 					DEP(rt);
-					END_DEPRES();
-					DO_LDS();
+					do_lds(func);
 					call_write_copcreg(func, cop, rd, RGPR(rt));
 					return(true);
 					break;
@@ -1685,8 +1582,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1695,8 +1592,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1705,8 +1602,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1715,8 +1612,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1725,8 +1622,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1735,8 +1632,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1745,8 +1642,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1755,8 +1652,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1765,8 +1662,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1775,8 +1672,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1785,8 +1682,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1795,8 +1692,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1805,8 +1702,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1815,8 +1712,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1825,8 +1722,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1835,8 +1732,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
-					call_copfun(func, cop, cofun);
+					do_lds(func);
+					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
@@ -1849,13 +1746,11 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
-			BEGIN_DEPRES();
 			DEP(rs);
-			RES(rt);
-			END_DEPRES();
-			DO_LDS();
+			DEP(rt);
+			do_lds(func);
 			uint32_t offset = signext(0x10, imm);
-			if((rt) != (0x0)) { WGPR(rt, call_signext(func, 8, call_load_memory(func, 8, jit_insn_add(func, RGPR(rs), make_uint(offset))))); }
+			if((rt) != (0x0)) { defer_set(func, rt, call_signext(func, 8, call_load_memory(func, 8, jit_insn_add(func, RGPR(rs), make_uint(offset))))); }
 			return(true);
 			break;
 		}
@@ -1865,13 +1760,11 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
-			BEGIN_DEPRES();
 			DEP(rs);
-			RES(rt);
-			END_DEPRES();
-			DO_LDS();
+			DEP(rt);
+			do_lds(func);
 			uint32_t offset = signext(0x10, imm);
-			if((rt) != (0x0)) { WGPR(rt, call_signext(func, 16, call_load_memory(func, 16, jit_insn_add(func, RGPR(rs), make_uint(offset))))); }
+			if((rt) != (0x0)) { defer_set(func, rt, call_signext(func, 16, call_load_memory(func, 16, jit_insn_add(func, RGPR(rs), make_uint(offset))))); }
 			return(true);
 			break;
 		}
@@ -1881,11 +1774,9 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
-			BEGIN_DEPRES();
 			DEP(rs);
 			RES(rt);
-			END_DEPRES();
-			DO_LDS();
+			do_lds(func);
 			uint32_t offset = signext(0x10, imm);
 			if((rt) != (0x0)) { WGPR(rt, call_load_memory(func, 32, jit_insn_add(func, RGPR(rs), make_uint(offset)))); }
 			return(true);
@@ -1897,13 +1788,11 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
-			BEGIN_DEPRES();
 			DEP(rs);
-			RES(rt);
-			END_DEPRES();
-			DO_LDS();
+			DEP(rt);
+			do_lds(func);
 			uint32_t offset = signext(0x10, imm);
-			if((rt) != (0x0)) { WGPR(rt, call_load_memory(func, 8, jit_insn_add(func, RGPR(rs), make_uint(offset)))); }
+			if((rt) != (0x0)) { defer_set(func, rt, call_load_memory(func, 8, jit_insn_add(func, RGPR(rs), make_uint(offset)))); }
 			return(true);
 			break;
 		}
@@ -1913,13 +1802,11 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
-			BEGIN_DEPRES();
 			DEP(rs);
-			RES(rt);
-			END_DEPRES();
-			DO_LDS();
+			DEP(rt);
+			do_lds(func);
 			uint32_t offset = signext(0x10, imm);
-			if((rt) != (0x0)) { WGPR(rt, call_load_memory(func, 16, jit_insn_add(func, RGPR(rs), make_uint(offset)))); }
+			if((rt) != (0x0)) { defer_set(func, rt, call_load_memory(func, 16, jit_insn_add(func, RGPR(rs), make_uint(offset)))); }
 			return(true);
 			break;
 		}
@@ -1929,11 +1816,9 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
-			BEGIN_DEPRES();
 			DEP(rs);
 			DEP(rt);
-			END_DEPRES();
-			DO_LDS();
+			do_lds(func);
 			uint32_t offset = signext(0x10, imm);
 			call_store_memory(func, 8, jit_insn_add(func, RGPR(rs), make_uint(offset)), RGPR(rt));
 			return(true);
@@ -1945,11 +1830,9 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
-			BEGIN_DEPRES();
 			DEP(rs);
 			DEP(rt);
-			END_DEPRES();
-			DO_LDS();
+			do_lds(func);
 			uint32_t offset = signext(0x10, imm);
 			call_store_memory(func, 16, jit_insn_add(func, RGPR(rs), make_uint(offset)), RGPR(rt));
 			return(true);
@@ -1961,11 +1844,9 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
-			BEGIN_DEPRES();
 			DEP(rs);
 			DEP(rt);
-			END_DEPRES();
-			DO_LDS();
+			do_lds(func);
 			uint32_t offset = signext(0x10, imm);
 			call_store_memory(func, 32, jit_insn_add(func, RGPR(rs), make_uint(offset)), RGPR(rt));
 			return(true);

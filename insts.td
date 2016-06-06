@@ -39,6 +39,7 @@ def if : DagOp;
 def let : DagOp;
 def rlet: DagOp;
 def set : DagOp;
+def defer_set : DagOp;
 def when : DagOp;
 def unsigned : DagOp;
 def signed : DagOp;
@@ -230,7 +231,7 @@ multiclass COPzType<string disasm, dag eval> {
 	defm : CFDef<0b010000, 0b11111, disasm, eval>;
 }
 defm COPz : COPzType<"cop$cop $cofun", 
-	(copfun $cop, $cofun)
+	(copfun $cop, $cofun, $inst)
 >;
 
 defm CTCz : CFDef<0b010000, 0b00110, "ctc$cop %$rt, $rd", 
@@ -274,22 +275,22 @@ def JR : RType<0b001000, "jr %$rs",
 
 def LB : IType<0b100000, "lb %$rt, $offset(%$rs)", 
 	(let $offset, (signext 16, $imm), 
-		(set (gpr $rt), (signext 8, (load 8, (unsigned (add (gpr $rs), $offset))))))
+		(defer_set (gpr $rt), (signext 8, (load 8, (unsigned (add (gpr $rs), $offset))))))
 >;
 
 def LBU : IType<0b100100, "lbu %$rt, $offset(%$rs)", 
 	(let $offset, (signext 16, $imm), 
-		(set (gpr $rt), (zeroext 8, (load 8, (unsigned (add (gpr $rs), $offset))))))
+		(defer_set (gpr $rt), (zeroext 8, (load 8, (unsigned (add (gpr $rs), $offset))))))
 >;
 
 def LH : IType<0b100001, "lh %$rt, $offset(%$rs)", 
 	(let $offset, (signext 16, $imm), 
-		(set (gpr $rt), (signext 16, (load 16, (unsigned (add (gpr $rs), $offset))))))
+		(defer_set (gpr $rt), (signext 16, (load 16, (unsigned (add (gpr $rs), $offset))))))
 >;
 
 def LHU : IType<0b100101, "lhu %$rt, $offset(%$rs)", 
 	(let $offset, (signext 16, $imm), 
-		(set (gpr $rt), (zeroext 16, (load 16, (add (gpr $rs), $offset)))))
+		(defer_set (gpr $rt), (zeroext 16, (load 16, (add (gpr $rs), $offset)))))
 >;
 
 def LUI : IType<0b001111, "lui %$rt, $imm", 

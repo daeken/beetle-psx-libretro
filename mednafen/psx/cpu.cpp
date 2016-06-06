@@ -37,6 +37,11 @@ extern bool psx_cpu_overclock;
 
 						// Does lock mode prevent the actual data payload from being modified, while allowing tags to be modified/updated???
 
+volatile int32_t gtimestamp;
+void timestamp_inc(int amt) {
+   gtimestamp += amt;
+}
+
 PS_CPU *cpu;
 
 PS_CPU::PS_CPU()
@@ -292,7 +297,7 @@ uint32_t load_memory(int size, uint32_t ptr) {
 }
 
 template<typename T>
-INLINE T PS_CPU::ReadMemory(int32_t &timestamp, uint32_t address, bool DS24, bool LWC_timing)
+INLINE T PS_CPU::ReadMemory(uint32_t address, bool DS24, bool LWC_timing)
 {
    T ret;
 
@@ -310,11 +315,11 @@ INLINE T PS_CPU::ReadMemory(int32_t &timestamp, uint32_t address, bool DS24, boo
       return ScratchRAM.Read<T>(address & 0x3FF);
    }
 
-   timestamp += (ReadFudge >> 4) & 2;
+   gtimestamp += (ReadFudge >> 4) & 2;
 
    //assert(!(CP0.SR & 0x10000));
 
-   int32_t lts = timestamp;
+   int32_t lts = gtimestamp;
 
    if(sizeof(T) == 1)
       ret = PSX_MemRead8(lts, address);
@@ -333,8 +338,8 @@ INLINE T PS_CPU::ReadMemory(int32_t &timestamp, uint32_t address, bool DS24, boo
    else
       lts += 2;
 
-   LDAbsorb = (lts - timestamp);
-   timestamp = lts;
+   LDAbsorb = (lts - gtimestamp);
+   gtimestamp = lts;
 
    return(ret);
 }
@@ -355,7 +360,7 @@ void store_memory(int size, uint32_t ptr, uint32_t val) {
 }
 
 template<typename T>
-INLINE void PS_CPU::WriteMemory(int32_t &timestamp, uint32_t address, uint32_t value, bool DS24)
+INLINE void PS_CPU::WriteMemory(uint32_t address, uint32_t value, bool DS24)
 {
    if(MDFN_LIKELY(!(CP0.SR & 0x10000)))
    {
@@ -372,15 +377,15 @@ INLINE void PS_CPU::WriteMemory(int32_t &timestamp, uint32_t address, uint32_t v
       }
 
       if(sizeof(T) == 1)
-         PSX_MemWrite8(timestamp, address, value);
+         PSX_MemWrite8(gtimestamp, address, value);
       else if(sizeof(T) == 2)
-         PSX_MemWrite16(timestamp, address, value);
+         PSX_MemWrite16(gtimestamp, address, value);
       else
       {
          if(DS24)
-            PSX_MemWrite24(timestamp, address, value);
+            PSX_MemWrite24(gtimestamp, address, value);
          else
-            PSX_MemWrite32(timestamp, address, value);
+            PSX_MemWrite32(gtimestamp, address, value);
       }
    }
    else
@@ -480,29 +485,48 @@ uint32_t PS_CPU::Exception(uint32_t code, uint32_t PC, const uint32 NP, const ui
 #define GPR_RES(n) { unsigned tn = (n); ReadAbsorb[tn] = 0; }
 #define GPR_DEPRES_END ReadAbsorb[0] = back; }
 
-volatile int32_t gtimestamp;
-void timestamp_inc(int amt) {
-   gtimestamp += amt;
-}
-
 volatile uint32_t branch_to;
 void branch(uint32_t target) {
    branch_to = target;
 }
 
+void syscall(int code) {
+   printf("SYSCALL!\n");
+}
+
+void copfun(int cop, int cofun, uint32_t inst) {
+   printf("COPfun %i, %i, %08x\n", cop, cofun, inst);
+}
+
+void write_copreg(int cop, int reg, uint32_t val) {
+   printf("COPreg %i, %i, %08x\n", cop, reg, val);
+}
+
+uint32_t read_copreg(int cop, int reg) {
+   printf("COPreg %i, %i\n", cop, reg);
+   return 0;
+}
+
+void write_copcreg(int cop, int reg, uint32_t val) {
+   printf("COPCreg %i, %i, %08x\n", cop, reg, val);
+}
+
+uint32_t read_copcreg(int cop, int reg) {
+   printf("COPCreg %i, %i\n", cop, reg);
+   return 0;
+}
+
 template<bool DebugMode>
 int32_t PS_CPU::RunReal(int32_t timestamp_in)
 {
-   int32_t timestamp = timestamp_in;
-
    uint32_t PC;
    uint32_t new_PC;
    uint32_t new_PC_mask;
    uint32_t LDWhich;
    uint32_t LDValue;
 
-   gte_ts_done += timestamp;
-   muldiv_ts_done += timestamp;
+   gte_ts_done += timestamp_in;
+   muldiv_ts_done += timestamp_in;
 
    BACKING_TO_ACTIVE;
 
@@ -513,7 +537,7 @@ int32_t PS_CPU::RunReal(int32_t timestamp_in)
    while(!did_delay) {
          uint32_t instr;
          uint32_t opf;
-         uint32_t loadtime = 0;
+         gtimestamp = 0;
 
          instr = ICache[(PC & 0xFFC) >> 2].Data;
 
@@ -533,7 +557,7 @@ int32_t PS_CPU::RunReal(int32_t timestamp_in)
                   // (executing out of 0xA0000000+); it can be 5 in 
                   // *some* sequences of code(like a lot of sequential "nop"s, 
                   // probably other simple instructions too).
-                  loadtime += 4;	
+                  gtimestamp += 4;	
                }
             }
             else
@@ -549,28 +573,28 @@ int32_t PS_CPU::RunReal(int32_t timestamp_in)
 
                // When overclock is enabled, remove code cache fetch latency
                if (!psx_cpu_overclock)
-                  loadtime += 3;
+                  gtimestamp += 3;
 
                switch(PC & 0xC)
                {
                   case 0x0:
                      if (!psx_cpu_overclock)
-                        loadtime++;
+                        gtimestamp++;
                      ICI[0x00].TV &= ~0x2;
                      ICI[0x00].Data = LoadU32_LE(&FMP[0]);
                   case 0x4:
                      if (!psx_cpu_overclock)
-                        loadtime++;
+                        gtimestamp++;
                      ICI[0x01].TV &= ~0x2;
                      ICI[0x01].Data = LoadU32_LE(&FMP[1]);
                   case 0x8:
                      if (!psx_cpu_overclock)
-                        loadtime++;
+                        gtimestamp++;
                      ICI[0x02].TV &= ~0x2;
                      ICI[0x02].Data = LoadU32_LE(&FMP[2]);
                   case 0xC:
                      if (!psx_cpu_overclock)
-                        loadtime++;
+                        gtimestamp++;
                      ICI[0x03].TV &= ~0x2;
                      ICI[0x03].Data = LoadU32_LE(&FMP[3]);
                      break;
@@ -582,9 +606,9 @@ int32_t PS_CPU::RunReal(int32_t timestamp_in)
          if(ReadAbsorb[ReadAbsorbWhich])
             ReadAbsorb[ReadAbsorbWhich]--;
          else
-            loadtime++;
+            gtimestamp++;
 
-         call_timestamp_inc(func, loadtime);
+         call_timestamp_inc(func, gtimestamp);
 
          if(branched) {
             did_delay = true;
@@ -603,26 +627,39 @@ int32_t PS_CPU::RunReal(int32_t timestamp_in)
 
    printf("ended at %08x\n", PC);
 
-   gtimestamp = 0;
+   gtimestamp = timestamp_in;
 
    branch_to = -1;
 
    compile_function(func);
-   uint32_t state[35];
+   uint32_t state[36];
    memcpy(state, GPR, 4*32);
    BACKING_TO_ACTIVE; // Get the original PC
    state[32] = PC;
    state[33] = HI;
    state[34] = LO;
+   state[35] = GPR[32]; // Fake for loads
    uint32_t *stateptr = state;
-   void *args[1];
+
+   void *raptr = &ReadAbsorb, *rawptr = &ReadAbsorbWhich, *rfptr = &ReadFudge, 
+      *ldwptr = &LDWhich, *ldvptr = &LDValue, *ldaptr = &LDAbsorb;
+
+   void *args[7];
    args[0] = &stateptr;
+   args[1] = &raptr;
+   args[2] = &rawptr;
+   args[3] = &rfptr;
+   args[4] = &ldwptr;
+   args[5] = &ldvptr;
+   args[6] = &ldaptr;
    jit_function_apply(func, args, NULL);
+
    assert(state[0] == 0); // Sanity check R0 == 0
    memcpy(GPR, state, 4*32);
    PC = state[32] + 4; // We don't set PC after instructions
    HI = state[33];
    LO = state[34];
+   GPR[32] = state[35];
 
    for(int i = 0; i < 35; ++i) {
       printf("r%i = %08x\n", i, state[i]);
@@ -633,17 +670,15 @@ int32_t PS_CPU::RunReal(int32_t timestamp_in)
       PC = branch_to;
    }
 
-   timestamp += gtimestamp;
-
    if(gte_ts_done > 0)
-      gte_ts_done -= timestamp;
+      gte_ts_done -= gtimestamp;
 
    if(muldiv_ts_done > 0)
-      muldiv_ts_done -= timestamp;
+      muldiv_ts_done -= gtimestamp;
 
    ACTIVE_TO_BACKING;
 
-   return(timestamp);
+   return(gtimestamp);
 }
 
 int32_t PS_CPU::Run(int32_t timestamp_in)

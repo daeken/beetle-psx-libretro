@@ -18,4 +18,12 @@ void store_memory(int size, uint32_t ptr, uint32_t val);
 
 void branch(uint32_t target);
 
+void syscall(int code);
+
+void copfun(int cop, int cofun, uint32_t inst);
+uint32_t read_copreg(int cop, int reg);
+void write_copreg(int cop, int reg, uint32_t val);
+uint32_t read_copcreg(int cop, int reg);
+void write_copcreg(int cop, int reg, uint32_t val);
+
 #endif

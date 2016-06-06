@@ -157,8 +157,8 @@ class PS_CPU
 
       template<typename T> T PeekMemory(uint32_t address) MDFN_COLD;
       template<typename T> void PokeMemory(uint32 address, T value) MDFN_COLD;
-      template<typename T> T ReadMemory(int32_t &timestamp, uint32_t address, bool DS24 = false, bool LWC_timing = false);
-      template<typename T> void WriteMemory(int32_t &timestamp, uint32_t address, uint32_t value, bool DS24 = false);
+      template<typename T> T ReadMemory(uint32_t address, bool DS24 = false, bool LWC_timing = false);
+      template<typename T> void WriteMemory(uint32_t address, uint32_t value, bool DS24 = false);
 
       // Mednafen debugger stuff follows:
    public:

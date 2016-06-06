@@ -17,6 +17,7 @@ def dag2expr(dag):
 		return dag
 
 if not os.path.exists('insts.td.cache') or os.path.getmtime('insts.td') > os.path.getmtime('insts.td.cache'):
+	print 'Rebuilding instruction cache'
 	insts = interpret('insts.td').deriving('BaseInst')
 	ops = []
 	for name, (bases, data) in insts:
@@ -261,6 +262,8 @@ def emitter(sexp, storing=False):
 		else:
 			print 'Unknown lvalue', lvalue
 			raise False
+	elif op == 'defer_set':
+		return 'defer_set(func, %s, %s);' % (emitter(sexp[1][1]), to_val(emitter(sexp[2])))
 	elif op == 'reg':
 		return 'RGPR(%s)' % emitter(sexp[1])
 	elif op == 'pc':
@@ -280,7 +283,7 @@ def emitter(sexp, storing=False):
 	elif op == 'break_':
 		return 'call_break(func, %s);' % (emitter(sexp[1]))
 	elif op == 'copfun':
-		return 'call_copfun(func, %s, %s);' % (emitter(sexp[1]), emitter(sexp[2]))
+		return 'call_copfun(func, %s, %s, %s);' % (emitter(sexp[1]), emitter(sexp[2]), emitter(sexp[3]))
 	elif op == 'emit':
 		return emitter(sexp[1], storing=storing)
 	elif op == 'store':
@@ -352,9 +355,9 @@ def genDecomp((name, type, dasm, dag)):
 	dep, res = findDepres(dag)
 	if len(dep) != 0 or len(res) != 0:
 		depres = [('DEP', x) for x in dep] + [('RES', x) for x in res]
-		code += [('BEGIN_DEPRES',)] + depres + [('END_DEPRES',)]
+		code += depres
 
-	code += [('DO_LDS',)]
+	code += [('do_lds', 'func')]
 
 	def subgen(dag):
 		if isinstance(dag, str) or isinstance(dag, unicode):
@@ -377,6 +380,13 @@ def genDecomp((name, type, dasm, dag)):
 			left = dag[1]
 			leftjs = subgen(left)
 			ret = [('emit', ('=', leftjs, subgen(dag[2])))]
+			if left[0] == 'gpr':
+				ret = [('when', ('neq', left[1], 0), ret)]
+			return ret
+		elif op == 'defer_set':
+			left = dag[1]
+			leftjs = subgen(left)
+			ret = [('emit', ('defer_set', leftjs, subgen(dag[2])))]
 			if left[0] == 'gpr':
 				ret = [('when', ('neq', left[1], 0), ret)]
 			return ret
@@ -423,7 +433,7 @@ def genDecomp((name, type, dasm, dag)):
 		elif op == 'store':
 			return [('emit', ('store', dag[1], subgen(dag[2]), subgen(dag[3])))]
 		elif op == 'copfun':
-			return [('emit', ('copfun', subgen(dag[1]), subgen(dag[2])))]
+			return [('emit', ('copfun', subgen(dag[1]), subgen(dag[2]), subgen(dag[3])))]
 		else:
 			print 'Unknown op:', op
 			return []
