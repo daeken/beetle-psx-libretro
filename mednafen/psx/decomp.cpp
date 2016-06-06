@@ -90,6 +90,11 @@ jit_value_t call_copfun(jit_function_t func, int cop, int cofun, uint32_t inst) 
 	return jit_insn_call_native(func, 0, (void *) copfun, sig_3, args, 3, 0);
 }
 
+void call_step(jit_function_t func, uint32_t arg) {
+	jit_value_t args[] = {make_uint(arg)};
+	jit_insn_call_native(func, 0, (void *) step, sig_1, args, 1, 0);
+}
+
 int32_t signext(int size, uint32_t imm) {
 	if(size == 8)
 		return (int8_t) ((uint8_t) imm);

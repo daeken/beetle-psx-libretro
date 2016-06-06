@@ -16,6 +16,9 @@ jit_function_t create_function();
 block_t compile_function(jit_function_t func);
 bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, bool &no_delay);
 
+void step(uint32_t arg);
+void call_step(jit_function_t func, uint32_t arg);
+
 void call_timestamp_inc(jit_function_t func, uint32_t amount);
 void timestamp_inc(int amt);
 

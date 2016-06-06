@@ -294,8 +294,8 @@ uint32_t load_memory(int size, uint32_t ptr) {
       default:
          val = cpu->ReadMemory<uint32_t>(ptr);
    }
-   //if(ptr == 0x1f801814)
-   //   printf("Reading %i bits at %08x <-- %08x\n", size, ptr, val);
+   if(ptr == 0x1f801814)
+      printf("Reading %i bits at %08x <-- %08x\n", size, ptr, val);
    return val;
 }
 
@@ -590,6 +590,11 @@ uint32_t read_copcreg(int cop, int reg) {
    return 0;
 }
 
+void step(uint32_t arg) {
+   // Called for every instruction
+   //printf("step... %08x\n", arg);
+}
+
 template<bool DebugMode>
 int32_t PS_CPU::RunReal(int32_t timestamp_in)
 {
@@ -704,6 +709,8 @@ int32_t PS_CPU::RunReal(int32_t timestamp_in)
                      printf("[CPU] Unknown instruction @%08x = %08x, op=%02x, funct=%02x\n", PC, instr, instr >> 26, (instr & 0x3F));
                      exit(0); // XXX: Handle this properly...
                   }
+
+                  call_step(func, PC);
 
                   assert(!branched || (!did_delay && branched)); // No branch in branch delay slot...
 
