@@ -62,6 +62,7 @@ PS_CPU::PS_CPU()
 
    init_decompiler();
    cpu = this;
+   LastblockPC = -1;
 
    for(i = 0; i < 24; i++)
    {
@@ -293,7 +294,8 @@ uint32_t load_memory(int size, uint32_t ptr) {
       default:
          val = cpu->ReadMemory<uint32_t>(ptr);
    }
-   //printf("Reading %i bits at %08x <-- %08x\n", size, ptr, val);
+   //if(ptr == 0x1f801814)
+   //   printf("Reading %i bits at %08x <-- %08x\n", size, ptr, val);
    return val;
 }
 
@@ -346,8 +348,9 @@ INLINE T PS_CPU::ReadMemory(uint32_t address, bool DS24, bool LWC_timing)
 }
 
 void store_memory(int size, uint32_t ptr, uint32_t val) {
-   if(ptr == 0x1f801810)
+   if(ptr >= 0x1f801800 && ptr <= 0x1f801900) {
       printf("Storing %i bits at %08x --> %08x\n", size, ptr, val);
+   }
    switch(size) {
       case 8:
          cpu->WriteMemory<uint8_t>(ptr, val);
@@ -494,7 +497,7 @@ void branch(uint32_t target) {
 
 void syscall(int code, uint32_t pc, uint32_t instr) {
    printf("syscall?\n");
-   //branch(cpu->Exception(EXCEPTION_SYSCALL, pc, 0, 0, instr));
+   branch(cpu->Exception(EXCEPTION_SYSCALL, pc + 4, 0, 0, instr));
 }
 
 void copfun(int cop, int cofun, uint32_t inst) {
@@ -603,14 +606,14 @@ int32_t PS_CPU::RunReal(int32_t timestamp_in)
    BACKING_TO_ACTIVE;
 
    gtimestamp = timestamp_in;
-   block_t lastblock;
-   uint32_t lastblock_PC = -1;
 
    do {
       while(MDFN_LIKELY(gtimestamp < next_event_ts)) {
          uint32_t initPC = PC;
          block_t block;
-         if(PC != lastblock_PC && BlockCache.find(PC) == BlockCache.end()) {
+         if(initPC != LastblockPC)
+            printf("block %08x\n", initPC);
+         if(PC != LastblockPC && BlockCache.find(PC) == BlockCache.end()) {
             bool branched = false;
             bool no_delay = false;
             bool did_delay = false;
@@ -699,7 +702,7 @@ int32_t PS_CPU::RunReal(int32_t timestamp_in)
                   }
 
                   if(!decompile(func, PC, instr, branched, no_delay)) {
-                     printf("[CPU] Unknown instruction @%08x = %08x, op=%02x, funct=%02x", PC, instr, instr >> 26, (instr & 0x3F));
+                     printf("[CPU] Unknown instruction @%08x = %08x, op=%02x, funct=%02x\n", PC, instr, instr >> 26, (instr & 0x3F));
                      exit(0); // XXX: Handle this properly...
                   }
 
@@ -715,13 +718,13 @@ int32_t PS_CPU::RunReal(int32_t timestamp_in)
 
             block = compile_function(func);
             BlockCache[initPC] = block;
-         } else if(lastblock_PC == initPC)
-            block = lastblock;
+         } else if(LastblockPC == initPC)
+            block = Lastblock;
          else
             block = BlockCache[initPC];
 
-         lastblock = block;
-         lastblock_PC = initPC;
+         Lastblock = block;
+         LastblockPC = initPC;
 
          branch_to = -1;
 
@@ -743,6 +746,14 @@ int32_t PS_CPU::RunReal(int32_t timestamp_in)
          HI = state[33];
          LO = state[34];
          GPR[32] = state[35];
+
+         /*if(initPC == 0x80059d84) {
+            printf("...\n");
+            for(int i = 0; i < 32; ++i) {
+               printf("$%i == %08x\n", i, state[i]);
+            }
+            exit(0);
+         }*/
 
          if(branch_to != -1)
             PC = branch_to;

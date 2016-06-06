@@ -302,6 +302,7 @@ def LW : IType<0b100011, "lw %$rt, $offset(%$rs)",
 		(defer_set (gpr $rt), (load 32, (unsigned (add (gpr $rs), $offset)))))
 >;
 
+/* STUBS
 def LWL : IType<0b100010, "lwl %$rt, $offset(%$rs)", 
 	(let $offset, (signext 16, $imm), 
 		(set (gpr $rt), 0))
@@ -310,6 +311,7 @@ def LWR : IType<0b100110, "lwr %$rt, $offset(%$rs)",
 	(let $offset, (signext 16, $imm), 
 		(set (gpr $rt), 0))
 >;
+*/
 defm MFCz : CFDef<0b010000, 0b00000, "mfc$cop %$rt, $rd", 
 	(defer_set (gpr $rt), (copreg $cop, $rd))
 >;

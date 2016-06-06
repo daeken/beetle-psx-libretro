@@ -285,7 +285,10 @@ endif
 
 OBJECTS := $(SOURCES_CXX:.cpp=.o) $(SOURCES_C:.c=.o)
 
-all: $(TARGET)
+all: mednafen/psx/decomp.cpp $(TARGET)
+
+mednafen/psx/decomp.cpp: generator.py insts.td decompstub.cpp
+	python generator.py
 
 ifeq ($(DEBUG),0)
    FLAGS += -O2 $(EXTRA_GCC_FLAGS)

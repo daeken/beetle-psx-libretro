@@ -181,6 +181,8 @@ class PS_CPU
       void (*ADDBT)(uint32_t from, uint32_t to, bool exception);
 
       map<uint32_t, block_t> BlockCache;
+      block_t Lastblock;
+      uint32_t LastblockPC;
 };
 
 #endif

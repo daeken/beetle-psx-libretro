@@ -187,6 +187,7 @@ jit_function_t create_function() {
 }
 
 block_t compile_function(jit_function_t func) {
+	//jit_dump_function(stdout, func, "block");
 	jit_function_compile(func);
 	jit_context_build_end(context);
 	//jit_dump_function(stdout, func, "block");
@@ -1773,18 +1774,6 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 			return(true);
 			break;
 		}
-		case 0x22: {
-			/* LWL */
-			WPC(make_uint(pc));
-			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
-			uint32_t imm = (inst) & (0xffff);
-			RES(rt);
-			do_lds(func);
-			uint32_t offset = signext(0x10, imm);
-			if((rt) != (0x0)) { WGPR(rt, make_uint(0x0)); }
-			return(true);
-			break;
-		}
 		case 0x23: {
 			/* LW */
 			WPC(make_uint(pc));
@@ -1824,18 +1813,6 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 			do_lds(func);
 			uint32_t offset = signext(0x10, imm);
 			if((rt) != (0x0)) { defer_set(func, rt, call_load_memory(func, 16, jit_insn_add(func, RGPR(rs), make_uint(offset)))); }
-			return(true);
-			break;
-		}
-		case 0x26: {
-			/* LWR */
-			WPC(make_uint(pc));
-			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
-			uint32_t imm = (inst) & (0xffff);
-			RES(rt);
-			do_lds(func);
-			uint32_t offset = signext(0x10, imm);
-			if((rt) != (0x0)) { WGPR(rt, make_uint(0x0)); }
 			return(true);
 			break;
 		}

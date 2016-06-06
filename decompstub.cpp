@@ -186,6 +186,7 @@ jit_function_t create_function() {
 }
 
 block_t compile_function(jit_function_t func) {
+	//jit_dump_function(stdout, func, "block");
 	jit_function_compile(func);
 	jit_context_build_end(context);
 	//jit_dump_function(stdout, func, "block");
