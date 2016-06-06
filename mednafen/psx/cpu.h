@@ -73,8 +73,6 @@ class PS_CPU
 
       int StateAction(StateMem *sm, int load, int data_only);
 
-   private:
-
       uint32_t GPR[32 + 1];	// GPR[32] Used as dummy in load delay simulation(indexing past the end of real GPR)
       uint32_t LO;
       uint32_t HI;
@@ -157,7 +155,6 @@ class PS_CPU
 
       template<typename T> T PeekMemory(uint32_t address) MDFN_COLD;
       template<typename T> void PokeMemory(uint32 address, T value) MDFN_COLD;
-   public: // Needs to be public for JIT callbacks
       template<typename T> T ReadMemory(uint32_t address, bool DS24 = false, bool LWC_timing = false);
       template<typename T> void WriteMemory(uint32_t address, uint32_t value, bool DS24 = false);
 

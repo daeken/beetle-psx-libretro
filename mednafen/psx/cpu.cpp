@@ -498,12 +498,69 @@ void copfun(int cop, int cofun, uint32_t inst) {
    printf("COPfun %i, %i, %08x\n", cop, cofun, inst);
 }
 
+void write_copreg0(int reg, uint32_t val) {
+   switch(reg) {
+      case CP0REG_BPC:
+         cpu->CP0.BPC = val;
+         break;
+
+      case CP0REG_BDA:
+         cpu->CP0.BDA = val;
+         break;
+
+      case CP0REG_TAR:
+         cpu->CP0.TAR = val;
+         break;
+
+      case CP0REG_DCIC:
+         cpu->CP0.DCIC = val & 0xFF80003F;
+         break;
+
+      case CP0REG_BDAM:
+         cpu->CP0.BDAM = val;
+         break;
+
+      case CP0REG_BPCM:
+         cpu->CP0.BPCM = val;
+         break;
+
+      case CP0REG_CAUSE:
+         cpu->CP0.CAUSE &= ~(0x3 << 8);
+         cpu->CP0.CAUSE |= val & (0x3 << 8);
+         cpu->RecalcIPCache();
+         break;
+
+      case CP0REG_SR:
+         if((cpu->CP0.SR ^ val) & 0x10000)
+            PSX_DBG(PSX_DBG_SPARSE, "[CPU] IsC %u->%u\n", (bool)(cpu->CP0.SR & (1U << 16)), (bool)(val & (1U << 16)));
+
+         cpu->CP0.SR = val & ~( (0x3 << 26) | (0x3 << 23) | (0x3 << 6));
+         cpu->RecalcIPCache();
+         break;
+   }
+}
+
 void write_copreg(int cop, int reg, uint32_t val) {
    printf("COPreg %i, %i, %08x\n", cop, reg, val);
+   switch(cop) {
+      case 0:
+         write_copreg0(reg, val);
+         break;
+      case 1:
+         break;
+   }
+}
+
+uint32_t read_copreg0(int reg) {
+   return cpu->CP0.Regs[reg];
 }
 
 uint32_t read_copreg(int cop, int reg) {
    printf("COPreg %i, %i\n", cop, reg);
+   switch(cop) {
+      case 0:
+         return read_copreg0(reg);
+   }
    return 0;
 }
 

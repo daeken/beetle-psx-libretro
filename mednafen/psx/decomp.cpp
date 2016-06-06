@@ -189,7 +189,7 @@ jit_function_t create_function() {
 void compile_function(jit_function_t func) {
 	jit_function_compile(func);
 	jit_context_build_end(context);
-	jit_dump_function(stdout, func, "block");
+	//jit_dump_function(stdout, func, "block");
 }
 
 bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) {
