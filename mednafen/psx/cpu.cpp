@@ -288,11 +288,11 @@ uint32_t load_memory(int size, uint32_t ptr) {
    printf("Reading %i bits at %08x\n", size, ptr);
    switch(size) {
       case 8:
-         return cpu->PeekMem8(ptr);
+         return cpu->ReadMemory<uint8_t>(ptr);
       case 16:
-         return cpu->PeekMem16(ptr);
+         return cpu->ReadMemory<uint16_t>(ptr);
       default:
-         return cpu->PeekMem32(ptr);
+         return cpu->ReadMemory<uint32_t>(ptr);
    }
 }
 
@@ -348,13 +348,13 @@ void store_memory(int size, uint32_t ptr, uint32_t val) {
    printf("Storing %i bits at %08x -- %x\n", size, ptr, val);
    switch(size) {
       case 8:
-         cpu->PokeMem8(ptr, val);
+         cpu->WriteMemory<uint8_t>(ptr, val);
          break;
       case 16:
-         cpu->PokeMem16(ptr, val);
+         cpu->WriteMemory<uint16_t>(ptr, val);
          break;
       case 32:
-         cpu->PokeMem32(ptr, val);
+         cpu->WriteMemory<uint32_t>(ptr, val);
          break;
    }
 }
