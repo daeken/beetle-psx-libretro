@@ -382,8 +382,6 @@ def genDecomp((name, type, dasm, dag)):
 			left = dag[1]
 			leftjs = subgen(left)
 			ret = [('emit', ('=', leftjs, subgen(dag[2])))]
-			if left[0] == 'gpr':
-				ret = [('when', ('neq', left[1], 0), ret)]
 			return ret
 		elif op == 'defer_set':
 			left = dag[1]

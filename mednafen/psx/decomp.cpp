@@ -209,7 +209,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					DEP(rt);
 					RES(rd);
 					do_lds(func);
-					if((rd) != (0x0)) { WGPR(rd, jit_insn_shl(func, RGPR(rt), make_uint(shamt))); }
+					WGPR(rd, jit_insn_shl(func, RGPR(rt), make_uint(shamt)));
 					return(true);
 					break;
 				}
@@ -222,7 +222,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					DEP(rt);
 					RES(rd);
 					do_lds(func);
-					if((rd) != (0x0)) { WGPR(rd, jit_insn_ushr(func, RGPR(rt), make_uint(shamt))); }
+					WGPR(rd, jit_insn_ushr(func, RGPR(rt), make_uint(shamt)));
 					return(true);
 					break;
 				}
@@ -235,7 +235,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					DEP(rt);
 					RES(rd);
 					do_lds(func);
-					if((rd) != (0x0)) { WGPR(rd, jit_insn_sshr(func, RGPR(rt), make_uint(shamt))); }
+					WGPR(rd, jit_insn_sshr(func, RGPR(rt), make_uint(shamt)));
 					return(true);
 					break;
 				}
@@ -249,7 +249,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					DEP(rt);
 					RES(rd);
 					do_lds(func);
-					if((rd) != (0x0)) { WGPR(rd, jit_insn_shl(func, RGPR(rt), RGPR(rs))); }
+					WGPR(rd, jit_insn_shl(func, RGPR(rt), RGPR(rs)));
 					return(true);
 					break;
 				}
@@ -263,7 +263,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					DEP(rt);
 					RES(rd);
 					do_lds(func);
-					if((rd) != (0x0)) { WGPR(rd, jit_insn_ushr(func, RGPR(rt), RGPR(rs))); }
+					WGPR(rd, jit_insn_ushr(func, RGPR(rt), RGPR(rs)));
 					return(true);
 					break;
 				}
@@ -277,7 +277,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					DEP(rt);
 					RES(rd);
 					do_lds(func);
-					if((rd) != (0x0)) { WGPR(rd, jit_insn_sshr(func, RGPR(rt), RGPR(rs))); }
+					WGPR(rd, jit_insn_sshr(func, RGPR(rt), RGPR(rs)));
 					return(true);
 					break;
 				}
@@ -300,7 +300,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					DEP(rs);
 					RES(rd);
 					do_lds(func);
-					if((rd) != (0x0)) { WGPR(rd, jit_insn_add(func, jit_insn_add(func, make_uint(pc), make_uint(0x4)), make_uint(0x4))); }
+					WGPR(rd, jit_insn_add(func, jit_insn_add(func, make_uint(pc), make_uint(0x4)), make_uint(0x4)));
 					call_branch(func, RGPR(rs));
 					branched = true;
 					return(true);
@@ -332,7 +332,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					RES(rd);
 					do_lds(func);
-					if((rd) != (0x0)) { WGPR(rd, RHI()); }
+					WGPR(rd, RHI());
 					return(true);
 					break;
 				}
@@ -352,7 +352,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					RES(rd);
 					do_lds(func);
-					if((rd) != (0x0)) { WGPR(rd, RLO()); }
+					WGPR(rd, RLO());
 					return(true);
 					break;
 				}
@@ -427,7 +427,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					RES(rd);
 					do_lds(func);
 					call_overflow(func, RGPR(rs), RGPR(rt), 1);
-					if((rd) != (0x0)) { WGPR(rd, jit_insn_add(func, RGPR(rs), RGPR(rt))); }
+					WGPR(rd, jit_insn_add(func, RGPR(rs), RGPR(rt)));
 					return(true);
 					break;
 				}
@@ -441,7 +441,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					DEP(rt);
 					RES(rd);
 					do_lds(func);
-					if((rd) != (0x0)) { WGPR(rd, jit_insn_add(func, RGPR(rs), RGPR(rt))); }
+					WGPR(rd, jit_insn_add(func, RGPR(rs), RGPR(rt)));
 					return(true);
 					break;
 				}
@@ -456,7 +456,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					RES(rd);
 					do_lds(func);
 					call_overflow(func, RGPR(rs), RGPR(rt), -1);
-					if((rd) != (0x0)) { WGPR(rd, jit_insn_sub(func, RGPR(rs), RGPR(rt))); }
+					WGPR(rd, jit_insn_sub(func, RGPR(rs), RGPR(rt)));
 					return(true);
 					break;
 				}
@@ -470,7 +470,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					DEP(rt);
 					RES(rd);
 					do_lds(func);
-					if((rd) != (0x0)) { WGPR(rd, jit_insn_sub(func, RGPR(rs), RGPR(rt))); }
+					WGPR(rd, jit_insn_sub(func, RGPR(rs), RGPR(rt)));
 					return(true);
 					break;
 				}
@@ -484,7 +484,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					DEP(rt);
 					RES(rd);
 					do_lds(func);
-					if((rd) != (0x0)) { WGPR(rd, jit_insn_and(func, RGPR(rs), RGPR(rt))); }
+					WGPR(rd, jit_insn_and(func, RGPR(rs), RGPR(rt)));
 					return(true);
 					break;
 				}
@@ -498,7 +498,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					DEP(rt);
 					RES(rd);
 					do_lds(func);
-					if((rd) != (0x0)) { WGPR(rd, jit_insn_or(func, RGPR(rs), RGPR(rt))); }
+					WGPR(rd, jit_insn_or(func, RGPR(rs), RGPR(rt)));
 					return(true);
 					break;
 				}
@@ -512,7 +512,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					DEP(rt);
 					RES(rd);
 					do_lds(func);
-					if((rd) != (0x0)) { WGPR(rd, jit_insn_xor(func, RGPR(rs), RGPR(rt))); }
+					WGPR(rd, jit_insn_xor(func, RGPR(rs), RGPR(rt)));
 					return(true);
 					break;
 				}
@@ -526,7 +526,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					DEP(rt);
 					RES(rd);
 					do_lds(func);
-					if((rd) != (0x0)) { WGPR(rd, jit_insn_not(func, jit_insn_or(func, RGPR(rs), RGPR(rt)))); }
+					WGPR(rd, jit_insn_not(func, jit_insn_or(func, RGPR(rs), RGPR(rt))));
 					return(true);
 					break;
 				}
@@ -540,19 +540,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					DEP(rt);
 					RES(rd);
 					do_lds(func);
-					jit_label_t temp_1 = jit_label_undefined, temp_2 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_lt(func, RGPR(rs), RGPR(rt)), &temp_1);
-					jit_label_t temp_3 = jit_label_undefined;
-					jit_insn_branch_if_not(func, jit_insn_ne(func, make_uint(rd), make_uint(0x0)), &temp_3);
-					WGPR(rd, make_uint(0x1));
-					jit_insn_label(func, &temp_3);
-					jit_insn_branch(func, &temp_2);
-					jit_insn_label(func, &temp_1);
-					jit_label_t temp_4 = jit_label_undefined;
-					jit_insn_branch_if_not(func, jit_insn_ne(func, make_uint(rd), make_uint(0x0)), &temp_4);
-					WGPR(rd, make_uint(0x0));
-					jit_insn_label(func, &temp_4);
-					jit_insn_label(func, &temp_2);
+					WGPR(rd, jit_insn_lt(func, RGPR(rs), RGPR(rt)));
 					return(true);
 					break;
 				}
@@ -566,19 +554,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					DEP(rt);
 					RES(rd);
 					do_lds(func);
-					jit_label_t temp_5 = jit_label_undefined, temp_6 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_lt(func, RGPR(rs), RGPR(rt)), &temp_5);
-					jit_label_t temp_7 = jit_label_undefined;
-					jit_insn_branch_if_not(func, jit_insn_ne(func, make_uint(rd), make_uint(0x0)), &temp_7);
-					WGPR(rd, make_uint(0x1));
-					jit_insn_label(func, &temp_7);
-					jit_insn_branch(func, &temp_6);
-					jit_insn_label(func, &temp_5);
-					jit_label_t temp_8 = jit_label_undefined;
-					jit_insn_branch_if_not(func, jit_insn_ne(func, make_uint(rd), make_uint(0x0)), &temp_8);
-					WGPR(rd, make_uint(0x0));
-					jit_insn_label(func, &temp_8);
-					jit_insn_label(func, &temp_6);
+					WGPR(rd, jit_insn_lt(func, RGPR(rs), RGPR(rt)));
 					return(true);
 					break;
 				}
@@ -595,10 +571,10 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					DEP(rs);
 					do_lds(func);
 					uint32_t target = ((pc) + (0x4)) + (signext(0x12, (imm) << (0x2)));
-					jit_label_t temp_9 = jit_label_undefined;
-					jit_insn_branch_if_not(func, jit_insn_lt(func, RGPR(rs), make_uint(0x0)), &temp_9);
+					jit_label_t temp_1 = jit_label_undefined;
+					jit_insn_branch_if_not(func, jit_insn_lt(func, RGPR(rs), make_uint(0x0)), &temp_1);
 					call_branch(func, make_uint(target));
-					jit_insn_label(func, &temp_9);
+					jit_insn_label(func, &temp_1);
 					branched = true;
 					return(true);
 					break;
@@ -611,10 +587,10 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					DEP(rs);
 					do_lds(func);
 					uint32_t target = ((pc) + (0x4)) + (signext(0x12, (imm) << (0x2)));
-					jit_label_t temp_10 = jit_label_undefined;
-					jit_insn_branch_if_not(func, jit_insn_ge(func, RGPR(rs), make_uint(0x0)), &temp_10);
+					jit_label_t temp_2 = jit_label_undefined;
+					jit_insn_branch_if_not(func, jit_insn_ge(func, RGPR(rs), make_uint(0x0)), &temp_2);
 					call_branch(func, make_uint(target));
-					jit_insn_label(func, &temp_10);
+					jit_insn_label(func, &temp_2);
 					branched = true;
 					return(true);
 					break;
@@ -627,12 +603,12 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					DEP(rs);
 					RES(0x1f);
 					do_lds(func);
-					if((0x1f) != (0x0)) { WGPR(0x1f, jit_insn_add(func, make_uint(pc), make_uint(0x4))); }
+					WGPR(0x1f, jit_insn_add(func, make_uint(pc), make_uint(0x4)));
 					uint32_t target = ((pc) + (0x4)) + (signext(0x12, (imm) << (0x2)));
-					jit_label_t temp_11 = jit_label_undefined;
-					jit_insn_branch_if_not(func, jit_insn_lt(func, RGPR(rs), make_uint(0x0)), &temp_11);
+					jit_label_t temp_3 = jit_label_undefined;
+					jit_insn_branch_if_not(func, jit_insn_lt(func, RGPR(rs), make_uint(0x0)), &temp_3);
 					call_branch(func, make_uint(target));
-					jit_insn_label(func, &temp_11);
+					jit_insn_label(func, &temp_3);
 					branched = true;
 					return(true);
 					break;
@@ -645,12 +621,12 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					DEP(rs);
 					RES(0x1f);
 					do_lds(func);
-					if((0x1f) != (0x0)) { WGPR(0x1f, jit_insn_add(func, make_uint(pc), make_uint(0x4))); }
+					WGPR(0x1f, jit_insn_add(func, make_uint(pc), make_uint(0x4)));
 					uint32_t target = ((pc) + (0x4)) + (signext(0x12, (imm) << (0x2)));
-					jit_label_t temp_12 = jit_label_undefined;
-					jit_insn_branch_if_not(func, jit_insn_ge(func, RGPR(rs), make_uint(0x0)), &temp_12);
+					jit_label_t temp_4 = jit_label_undefined;
+					jit_insn_branch_if_not(func, jit_insn_ge(func, RGPR(rs), make_uint(0x0)), &temp_4);
 					call_branch(func, make_uint(target));
-					jit_insn_label(func, &temp_12);
+					jit_insn_label(func, &temp_4);
 					branched = true;
 					return(true);
 					break;
@@ -675,7 +651,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 			uint32_t imm = (inst) & (0x3ffffff);
 			RES(0x1f);
 			do_lds(func);
-			if((0x1f) != (0x0)) { WGPR(0x1f, jit_insn_add(func, jit_insn_add(func, make_uint(pc), make_uint(0x4)), make_uint(0x4))); }
+			WGPR(0x1f, jit_insn_add(func, jit_insn_add(func, make_uint(pc), make_uint(0x4)), make_uint(0x4)));
 			uint32_t target = (((pc) + (0x4)) & (0xf0000000)) + ((imm) << (0x2));
 			call_branch(func, make_uint(target));
 			branched = true;
@@ -692,10 +668,10 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 			DEP(rt);
 			do_lds(func);
 			uint32_t target = ((pc) + (0x4)) + (signext(0x12, (imm) << (0x2)));
-			jit_label_t temp_13 = jit_label_undefined;
-			jit_insn_branch_if_not(func, jit_insn_eq(func, RGPR(rs), RGPR(rt)), &temp_13);
+			jit_label_t temp_5 = jit_label_undefined;
+			jit_insn_branch_if_not(func, jit_insn_eq(func, RGPR(rs), RGPR(rt)), &temp_5);
 			call_branch(func, make_uint(target));
-			jit_insn_label(func, &temp_13);
+			jit_insn_label(func, &temp_5);
 			branched = true;
 			return(true);
 			break;
@@ -710,10 +686,10 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 			DEP(rt);
 			do_lds(func);
 			uint32_t target = ((pc) + (0x4)) + (signext(0x12, (imm) << (0x2)));
-			jit_label_t temp_14 = jit_label_undefined;
-			jit_insn_branch_if_not(func, jit_insn_ne(func, RGPR(rs), RGPR(rt)), &temp_14);
+			jit_label_t temp_6 = jit_label_undefined;
+			jit_insn_branch_if_not(func, jit_insn_ne(func, RGPR(rs), RGPR(rt)), &temp_6);
 			call_branch(func, make_uint(target));
-			jit_insn_label(func, &temp_14);
+			jit_insn_label(func, &temp_6);
 			branched = true;
 			return(true);
 			break;
@@ -728,10 +704,10 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					DEP(rs);
 					do_lds(func);
 					uint32_t target = ((pc) + (0x4)) + (signext(0x12, (imm) << (0x2)));
-					jit_label_t temp_15 = jit_label_undefined;
-					jit_insn_branch_if_not(func, jit_insn_le(func, RGPR(rs), make_uint(0x0)), &temp_15);
+					jit_label_t temp_7 = jit_label_undefined;
+					jit_insn_branch_if_not(func, jit_insn_le(func, RGPR(rs), make_uint(0x0)), &temp_7);
 					call_branch(func, make_uint(target));
-					jit_insn_label(func, &temp_15);
+					jit_insn_label(func, &temp_7);
 					branched = true;
 					return(true);
 					break;
@@ -749,10 +725,10 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					DEP(rs);
 					do_lds(func);
 					uint32_t target = ((pc) + (0x4)) + (signext(0x12, (imm) << (0x2)));
-					jit_label_t temp_16 = jit_label_undefined;
-					jit_insn_branch_if_not(func, jit_insn_gt(func, RGPR(rs), make_uint(0x0)), &temp_16);
+					jit_label_t temp_8 = jit_label_undefined;
+					jit_insn_branch_if_not(func, jit_insn_gt(func, RGPR(rs), make_uint(0x0)), &temp_8);
 					call_branch(func, make_uint(target));
-					jit_insn_label(func, &temp_16);
+					jit_insn_label(func, &temp_8);
 					branched = true;
 					return(true);
 					break;
@@ -771,7 +747,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 			do_lds(func);
 			uint32_t eimm = signext(0x10, imm);
 			call_overflow(func, RGPR(rs), make_uint(eimm), 1);
-			if((rt) != (0x0)) { WGPR(rt, jit_insn_add(func, RGPR(rs), make_uint(eimm))); }
+			WGPR(rt, jit_insn_add(func, RGPR(rs), make_uint(eimm)));
 			return(true);
 			break;
 		}
@@ -785,7 +761,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 			RES(rt);
 			do_lds(func);
 			uint32_t eimm = signext(0x10, imm);
-			if((rt) != (0x0)) { WGPR(rt, jit_insn_add(func, RGPR(rs), make_uint(eimm))); }
+			WGPR(rt, jit_insn_add(func, RGPR(rs), make_uint(eimm)));
 			return(true);
 			break;
 		}
@@ -799,19 +775,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 			RES(rt);
 			do_lds(func);
 			uint32_t eimm = signext(0x10, imm);
-			jit_label_t temp_17 = jit_label_undefined, temp_18 = jit_label_undefined;
-			jit_insn_branch_if(func, jit_insn_lt(func, RGPR(rs), make_uint(eimm)), &temp_17);
-			jit_label_t temp_19 = jit_label_undefined;
-			jit_insn_branch_if_not(func, jit_insn_ne(func, make_uint(rt), make_uint(0x0)), &temp_19);
-			WGPR(rt, make_uint(0x1));
-			jit_insn_label(func, &temp_19);
-			jit_insn_branch(func, &temp_18);
-			jit_insn_label(func, &temp_17);
-			jit_label_t temp_20 = jit_label_undefined;
-			jit_insn_branch_if_not(func, jit_insn_ne(func, make_uint(rt), make_uint(0x0)), &temp_20);
-			WGPR(rt, make_uint(0x0));
-			jit_insn_label(func, &temp_20);
-			jit_insn_label(func, &temp_18);
+			WGPR(rt, jit_insn_lt(func, RGPR(rs), make_uint(eimm)));
 			return(true);
 			break;
 		}
@@ -825,19 +789,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 			RES(rt);
 			do_lds(func);
 			uint32_t eimm = signext(0x10, imm);
-			jit_label_t temp_21 = jit_label_undefined, temp_22 = jit_label_undefined;
-			jit_insn_branch_if(func, jit_insn_lt(func, RGPR(rs), make_uint(eimm)), &temp_21);
-			jit_label_t temp_23 = jit_label_undefined;
-			jit_insn_branch_if_not(func, jit_insn_ne(func, make_uint(rt), make_uint(0x0)), &temp_23);
-			WGPR(rt, make_uint(0x1));
-			jit_insn_label(func, &temp_23);
-			jit_insn_branch(func, &temp_22);
-			jit_insn_label(func, &temp_21);
-			jit_label_t temp_24 = jit_label_undefined;
-			jit_insn_branch_if_not(func, jit_insn_ne(func, make_uint(rt), make_uint(0x0)), &temp_24);
-			WGPR(rt, make_uint(0x0));
-			jit_insn_label(func, &temp_24);
-			jit_insn_label(func, &temp_22);
+			WGPR(rt, jit_insn_lt(func, RGPR(rs), make_uint(eimm)));
 			return(true);
 			break;
 		}
@@ -851,7 +803,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 			RES(rt);
 			do_lds(func);
 			uint32_t eimm = imm;
-			if((rt) != (0x0)) { WGPR(rt, jit_insn_and(func, RGPR(rs), make_uint(eimm))); }
+			WGPR(rt, jit_insn_and(func, RGPR(rs), make_uint(eimm)));
 			return(true);
 			break;
 		}
@@ -865,7 +817,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 			RES(rt);
 			do_lds(func);
 			uint32_t eimm = imm;
-			if((rt) != (0x0)) { WGPR(rt, jit_insn_or(func, RGPR(rs), make_uint(eimm))); }
+			WGPR(rt, jit_insn_or(func, RGPR(rs), make_uint(eimm)));
 			return(true);
 			break;
 		}
@@ -879,7 +831,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 			RES(rt);
 			do_lds(func);
 			uint32_t eimm = imm;
-			if((rt) != (0x0)) { WGPR(rt, jit_insn_xor(func, RGPR(rs), make_uint(eimm))); }
+			WGPR(rt, jit_insn_xor(func, RGPR(rs), make_uint(eimm)));
 			return(true);
 			break;
 		}
@@ -890,7 +842,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 			uint32_t imm = (inst) & (0xffff);
 			RES(rt);
 			do_lds(func);
-			if((rt) != (0x0)) { WGPR(rt, jit_insn_shl(func, make_uint(imm), make_uint(0x10))); }
+			WGPR(rt, jit_insn_shl(func, make_uint(imm), make_uint(0x10)));
 			return(true);
 			break;
 		}
@@ -916,7 +868,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					RES(rt);
 					do_lds(func);
-					if((rt) != (0x0)) { WGPR(rt, call_read_copcreg(func, cop, rd)); }
+					WGPR(rt, call_read_copcreg(func, cop, rd));
 					return(true);
 					break;
 				}
@@ -1129,7 +1081,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					RES(rt);
 					do_lds(func);
-					if((rt) != (0x0)) { WGPR(rt, call_read_copcreg(func, cop, rd)); }
+					WGPR(rt, call_read_copcreg(func, cop, rd));
 					return(true);
 					break;
 				}
@@ -1342,7 +1294,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					RES(rt);
 					do_lds(func);
-					if((rt) != (0x0)) { WGPR(rt, call_read_copcreg(func, cop, rd)); }
+					WGPR(rt, call_read_copcreg(func, cop, rd));
 					return(true);
 					break;
 				}
@@ -1555,7 +1507,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					RES(rt);
 					do_lds(func);
-					if((rt) != (0x0)) { WGPR(rt, call_read_copcreg(func, cop, rd)); }
+					WGPR(rt, call_read_copcreg(func, cop, rd));
 					return(true);
 					break;
 				}

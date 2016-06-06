@@ -496,8 +496,7 @@ void branch(uint32_t target) {
 }
 
 void syscall(int code, uint32_t pc, uint32_t instr) {
-   printf("syscall?\n");
-   branch(cpu->Exception(EXCEPTION_SYSCALL, pc + 4, 0, 0, instr));
+   branch(cpu->Exception(EXCEPTION_SYSCALL, pc, pc + 4, 0xFF, instr));
 }
 
 void copfun(int cop, int cofun, uint32_t inst) {
@@ -611,8 +610,8 @@ int32_t PS_CPU::RunReal(int32_t timestamp_in)
       while(MDFN_LIKELY(gtimestamp < next_event_ts)) {
          uint32_t initPC = PC;
          block_t block;
-         if(initPC != LastblockPC)
-            printf("block %08x\n", initPC);
+         //if(initPC != LastblockPC)
+         //   printf("block %08x\n", initPC);
          if(PC != LastblockPC && BlockCache.find(PC) == BlockCache.end()) {
             bool branched = false;
             bool no_delay = false;
@@ -740,7 +739,7 @@ int32_t PS_CPU::RunReal(int32_t timestamp_in)
             &LDWhich, &LDValue, &LDAbsorb
          );
 
-         assert(state[0] == 0); // Sanity check R0 == 0
+         state[0] = 0;
          memcpy(GPR, state, 4*32);
          PC = state[32] + 4; // We don't set PC after instructions
          HI = state[33];

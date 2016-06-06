@@ -380,29 +380,21 @@ def SLLV : RType<0b000100, "sllv %$rd, %$rt, %$rs",
 >;
 
 def SLT : RType<0b101010, "slt %$rd, %$rs, %$rt", 
-	(if (lt (signed (gpr $rs)), (signed (gpr $rt))),
-		(set (gpr $rd), 1), 
-		(set (gpr $rd), 0))
+	(set (gpr $rd), (lt (signed (gpr $rs)), (signed (gpr $rt))))
 >;
 
 def SLTI : IType<0b001010, "slti %$rt, %$rs, $eimm", 
 	(let $eimm, (signext 16, $imm), 
-		(if (lt (signed (gpr $rs)), $eimm),
-			(set (gpr $rt), 1), 
-			(set (gpr $rt), 0)))
+		(set (gpr $rt), (lt (unsigned (gpr $rs)), $eimm)))
 >;
 
 def SLTIU : IType<0b001011, "sltiu %$rt, %$rs, $eimm", 
 	(let $eimm, (unsigned (signext 16, $imm)), 
-		(if (lt (unsigned (gpr $rs)), $eimm),
-			(set (gpr $rt), 1), 
-			(set (gpr $rt), 0)))
+		(set (gpr $rt), (lt (unsigned (gpr $rs)), $eimm)))
 >;
 
 def SLTU : RType<0b101011, "sltu %$rd, %$rs, %$rt", 
-	(if (lt (unsigned (gpr $rs)), (unsigned (gpr $rt))),
-		(set (gpr $rd), 1), 
-		(set (gpr $rd), 0))
+	(set (gpr $rd), (lt (unsigned (gpr $rs)), (unsigned (gpr $rt))))
 >;
 
 def SRA : RType<0b000011, "sra %$rd, %$rt, $shamt", 
