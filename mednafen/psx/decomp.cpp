@@ -169,7 +169,7 @@ jit_function_t create_function() {
 void compile_function(jit_function_t func) {
 	jit_function_compile(func);
 	jit_context_build_end(context);
-	//jit_dump_function(stdout, func, "block");
+	jit_dump_function(stdout, func, "block");
 }
 
 bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) {
@@ -697,7 +697,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 			WPC(make_uint(pc));
 			uint32_t imm = (inst) & (0x3ffffff);
 			DO_LDS();
-			uint32_t target = (((pc) + (0x4)) & (0xf0000000)) + (0x1c);
+			uint32_t target = (((pc) + (0x4)) & (0xf0000000)) + ((imm) << (0x2));
 			call_branch(func, make_uint(target));
 			branched = true;
 			return(true);
@@ -712,7 +712,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 			END_DEPRES();
 			DO_LDS();
 			if((0x1f) != (0x0)) { WGPR(0x1f, jit_insn_add(func, jit_insn_add(func, make_uint(pc), make_uint(0x4)), make_uint(0x4))); }
-			uint32_t target = (((pc) + (0x4)) & (0xf0000000)) + (0x1c);
+			uint32_t target = (((pc) + (0x4)) & (0xf0000000)) + ((imm) << (0x2));
 			call_branch(func, make_uint(target));
 			branched = true;
 			return(true);
@@ -904,7 +904,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 			RES(rt);
 			END_DEPRES();
 			DO_LDS();
-			uint32_t eimm = 0x10;
+			uint32_t eimm = imm;
 			if((rt) != (0x0)) { WGPR(rt, jit_insn_and(func, RGPR(rs), make_uint(eimm))); }
 			return(true);
 			break;
@@ -920,7 +920,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 			RES(rt);
 			END_DEPRES();
 			DO_LDS();
-			uint32_t eimm = 0x10;
+			uint32_t eimm = imm;
 			if((rt) != (0x0)) { WGPR(rt, jit_insn_or(func, RGPR(rs), make_uint(eimm))); }
 			return(true);
 			break;
@@ -936,7 +936,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 			RES(rt);
 			END_DEPRES();
 			DO_LDS();
-			uint32_t eimm = 0x10;
+			uint32_t eimm = imm;
 			if((rt) != (0x0)) { WGPR(rt, jit_insn_xor(func, RGPR(rs), make_uint(eimm))); }
 			return(true);
 			break;

@@ -271,7 +271,7 @@ static bool TestConditions(const char *string)
  bool passed = 1;
 
  //printf("TR: %s\n", string);
- while(sscanf(string, "%u %c %.63s %.63s %.63s", &bytelen, &endian, address, operation, value) == 5 && passed)
+ while(sscanf(string, "%u %c %63s %63s %63s", &bytelen, &endian, address, operation, value) == 5 && passed)
  {
   uint32 v_address;
   uint64 v_value;

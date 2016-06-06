@@ -280,6 +280,7 @@ void PS_CPU::PokeMemory(uint32 address, T value)
 }
 
 uint32_t load_memory(int size, uint32_t ptr) {
+   printf("Reading %i bits at %08x\n", size, ptr);
    switch(size) {
       case 8:
          return cpu->PeekMem8(ptr);
@@ -339,6 +340,7 @@ INLINE T PS_CPU::ReadMemory(int32_t &timestamp, uint32_t address, bool DS24, boo
 }
 
 void store_memory(int size, uint32_t ptr, uint32_t val) {
+   printf("Storing %i bits at %08x -- %x\n", size, ptr, val);
    switch(size) {
       case 8:
          cpu->PokeMem8(ptr, val);
@@ -598,6 +600,8 @@ int32_t PS_CPU::RunReal(int32_t timestamp_in)
 
          PC += 4;
    }
+
+   printf("ended at %08x\n", PC);
 
    gtimestamp = 0;
 

@@ -101,7 +101,7 @@ def output(expr, top=True):
 	elif op in gops:
 		return output(gops[op](*expr[1:]))
 	elif op == 'zeroext':
-		return output(expr[1])
+		return output(expr[2])
 	else:
 		return '%s(%s)%s' % (op, ', '.join(output(x, top=False) for x in expr[1:]), ';' if top else '')
 
