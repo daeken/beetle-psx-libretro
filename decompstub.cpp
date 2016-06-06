@@ -21,9 +21,9 @@ jit_value_t _make_ubyte(jit_function_t func, uint32_t val) {
 #define STORE(ptr, value) jit_insn_store_relative(func, (ptr), 0, (value))
 #define CAST(value, type) jit_insn_convert(func, (value), (type), 0)
 
-#define WGPR(gpr, val) jit_insn_store_elem(func, state, make_uint(gpr), (val))
+#define WGPR(gpr, val) do { if(gpr != 0) jit_insn_store_elem(func, state, make_uint(gpr), (val)); } while(0)
 #define WGPR_VAL(gpr, val) jit_insn_store_elem(func, state, gpr, (val))
-#define RGPR(gpr) jit_insn_load_elem(func, state, make_uint(gpr), jit_type_uint)
+#define RGPR(gpr) ((gpr == 0) ? make_uint(0) : jit_insn_load_elem(func, state, make_uint(gpr), jit_type_uint))
 
 #define WPC(val) jit_insn_store_relative(func, state, 32*4, (val));
 #define RPC() jit_insn_load_relative(func, state, 32*4, jit_type_uint)
@@ -38,7 +38,7 @@ jit_value_t _make_ubyte(jit_function_t func, uint32_t val) {
 jit_type_t sig_1, sig_2, sig_3;
 jit_value_t state, ReadAbsorb, ReadAbsorbWhich, ReadFudge, LDWhich, LDValue, LDAbsorb;
 
-#define WRA(idx, val) jit_insn_store_relative(func, jit_insn_add(func, state, idx), 0, (val))
+#define WRA(idx, val) jit_insn_store_relative(func, jit_insn_add(func, ReadAbsorb, idx), 0, (val))
 
 void do_lds(jit_function_t func) {
 	jit_value_t ldw = LOAD(LDWhich, jit_type_uint);
@@ -107,9 +107,9 @@ jit_value_t call_signext(jit_function_t func, int size, jit_value_t val) {
 	return jit_insn_call_native(func, 0, (void *) signext, sig_2, args, 2, 0);
 }
 
-void call_syscall(jit_function_t func, uint32_t code) {
-	jit_value_t args[] = {make_uint(code)};
-	jit_insn_call_native(func, 0, (void *) syscall, sig_1, args, 1, 0);
+void call_syscall(jit_function_t func, uint32_t code, uint32_t pc, uint32_t inst) {
+	jit_value_t args[] = {make_uint(code), make_uint(pc), make_uint(inst)};
+	jit_insn_call_native(func, 0, (void *) syscall, sig_3, args, 3, 0);
 }
 
 void break_(int code) {
@@ -188,7 +188,7 @@ jit_function_t create_function() {
 block_t compile_function(jit_function_t func) {
 	jit_function_compile(func);
 	jit_context_build_end(context);
-	jit_dump_function(stdout, func, "block");
+	//jit_dump_function(stdout, func, "block");
 	return (block_t) jit_function_to_closure(func);
 }
 

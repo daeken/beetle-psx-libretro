@@ -284,15 +284,17 @@ void PS_CPU::PokeMemory(uint32 address, T value)
 }
 
 uint32_t load_memory(int size, uint32_t ptr) {
-   //printf("Reading %i bits at %08x\n", size, ptr);
+   uint32_t val;
    switch(size) {
       case 8:
-         return cpu->ReadMemory<uint8_t>(ptr);
+         val = (uint32_t) cpu->ReadMemory<uint8_t>(ptr);
       case 16:
-         return cpu->ReadMemory<uint16_t>(ptr);
+         val = (uint32_t) cpu->ReadMemory<uint16_t>(ptr);
       default:
-         return cpu->ReadMemory<uint32_t>(ptr);
+         val = cpu->ReadMemory<uint32_t>(ptr);
    }
+   //printf("Reading %i bits at %08x <-- %08x\n", size, ptr, val);
+   return val;
 }
 
 template<typename T>
@@ -344,7 +346,8 @@ INLINE T PS_CPU::ReadMemory(uint32_t address, bool DS24, bool LWC_timing)
 }
 
 void store_memory(int size, uint32_t ptr, uint32_t val) {
-   //printf("Storing %i bits at %08x -- %x\n", size, ptr, val);
+   if(ptr == 0x1f801810)
+      printf("Storing %i bits at %08x --> %08x\n", size, ptr, val);
    switch(size) {
       case 8:
          cpu->WriteMemory<uint8_t>(ptr, val);
@@ -489,8 +492,9 @@ void branch(uint32_t target) {
    branch_to = target;
 }
 
-void syscall(int code) {
-   printf("SYSCALL!\n");
+void syscall(int code, uint32_t pc, uint32_t instr) {
+   printf("syscall?\n");
+   //branch(cpu->Exception(EXCEPTION_SYSCALL, pc, 0, 0, instr));
 }
 
 void copfun(int cop, int cofun, uint32_t inst) {
@@ -554,11 +558,23 @@ uint32_t read_copreg0(int reg) {
    return cpu->CP0.Regs[reg];
 }
 
+uint32_t read_copreg2(int reg) {
+   if(gtimestamp < cpu->gte_ts_done) {
+      cpu->LDAbsorb = cpu->gte_ts_done - gtimestamp;
+      gtimestamp = cpu->gte_ts_done;
+   } else
+      cpu->LDAbsorb = 0;
+
+   return GTE_ReadDR(reg);
+}
+
 uint32_t read_copreg(int cop, int reg) {
    printf("COPreg %i, %i\n", cop, reg);
    switch(cop) {
       case 0:
          return read_copreg0(reg);
+      case 2:
+         return read_copreg2(reg);
    }
    return 0;
 }
@@ -587,18 +603,16 @@ int32_t PS_CPU::RunReal(int32_t timestamp_in)
    BACKING_TO_ACTIVE;
 
    gtimestamp = timestamp_in;
-   printf("running ...\n");
    block_t lastblock;
    uint32_t lastblock_PC = -1;
 
    do {
       while(MDFN_LIKELY(gtimestamp < next_event_ts)) {
          uint32_t initPC = PC;
-         if(PC != 0xBFC00250)
-            printf("block %08x\n", PC);
          block_t block;
          if(PC != lastblock_PC && BlockCache.find(PC) == BlockCache.end()) {
             bool branched = false;
+            bool no_delay = false;
             bool did_delay = false;
             jit_function_t func = create_function();
             printf("recompiling %08x\n", PC);
@@ -684,12 +698,15 @@ int32_t PS_CPU::RunReal(int32_t timestamp_in)
                      branched = false;
                   }
 
-                  if(!decompile(func, PC, instr, branched)) {
+                  if(!decompile(func, PC, instr, branched, no_delay)) {
                      printf("[CPU] Unknown instruction @%08x = %08x, op=%02x, funct=%02x", PC, instr, instr >> 26, (instr & 0x3F));
                      exit(0); // XXX: Handle this properly...
                   }
 
                   assert(!branched || (!did_delay && branched)); // No branch in branch delay slot...
+
+                  if(branched && no_delay)
+                     did_delay = true;
 
                   PC += 4;
             }
@@ -706,21 +723,15 @@ int32_t PS_CPU::RunReal(int32_t timestamp_in)
          lastblock = block;
          lastblock_PC = initPC;
 
-         gtimestamp = timestamp_in;
-
          branch_to = -1;
-
-         //if(initPC == 0xBFC00250)
-         //   printf("%08x %08x\n", GPR[10], GPR[11]);
 
          uint32_t state[36];
          memcpy(state, GPR, 4*32);
-         printf("BEFORE %08x %08x\n", GPR[10], state[10]);
          state[32] = initPC;
          state[33] = HI;
          state[34] = LO;
          state[35] = GPR[32]; // Fake for loads
-         
+
          block(
             state, ReadAbsorb, &ReadAbsorbWhich, &ReadFudge, 
             &LDWhich, &LDValue, &LDAbsorb
@@ -728,19 +739,16 @@ int32_t PS_CPU::RunReal(int32_t timestamp_in)
 
          assert(state[0] == 0); // Sanity check R0 == 0
          memcpy(GPR, state, 4*32);
-         printf("AFTER %08x %08x\n", GPR[10], state[10]);
          PC = state[32] + 4; // We don't set PC after instructions
          HI = state[33];
          LO = state[34];
          GPR[32] = state[35];
 
-         if(branch_to != -1) {
+         if(branch_to != -1)
             PC = branch_to;
-         }
+         fflush(stdout);
       }
    } while(MDFN_LIKELY(PSX_EventHandler(gtimestamp)));
-
-   printf("returning...\n");
 
    if(gte_ts_done > 0)
       gte_ts_done -= gtimestamp;

@@ -299,14 +299,19 @@ def LUI : IType<0b001111, "lui %$rt, $imm",
 
 def LW : IType<0b100011, "lw %$rt, $offset(%$rs)", 
 	(let $offset, (signext 16, $imm), 
-		(set (gpr $rt), (load 32, (unsigned (add (gpr $rs), $offset)))))
+		(defer_set (gpr $rt), (load 32, (unsigned (add (gpr $rs), $offset)))))
 >;
 
-// XXX: LWCz instruction
-// XXX: LWL instruction
-// XXX: LWR instruction
+def LWL : IType<0b100010, "lwl %$rt, $offset(%$rs)", 
+	(let $offset, (signext 16, $imm), 
+		(set (gpr $rt), 0))
+>;
+def LWR : IType<0b100110, "lwr %$rt, $offset(%$rs)", 
+	(let $offset, (signext 16, $imm), 
+		(set (gpr $rt), 0))
+>;
 defm MFCz : CFDef<0b010000, 0b00000, "mfc$cop %$rt, $rd", 
-	(set (gpr $rt), (copreg $cop, $rd))
+	(defer_set (gpr $rt), (copreg $cop, $rd))
 >;
 
 def MFHI : RType<0b010000, "mfhi %$rd", 
@@ -434,7 +439,7 @@ def SW : IType<0b101011, "sw %$rt, $offset(%$rs)",
 // XXX: SWR instruction
 
 def SYSCALL : SType<0b001100, "syscall $code", 
-	(syscall $code)
+	(syscall $code, $pc, $inst)
 >;
 
 def XOR : RType<0b100110, "xor %$rd, %$rs, %$rt", 
