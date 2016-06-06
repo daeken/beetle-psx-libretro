@@ -17,7 +17,6 @@
 
 #include "psx.h"
 #include "cpu.h"
-#include "decomp.h"
 
 
 extern bool psx_cpu_overclock;
@@ -285,7 +284,7 @@ void PS_CPU::PokeMemory(uint32 address, T value)
 }
 
 uint32_t load_memory(int size, uint32_t ptr) {
-   printf("Reading %i bits at %08x\n", size, ptr);
+   //printf("Reading %i bits at %08x\n", size, ptr);
    switch(size) {
       case 8:
          return cpu->ReadMemory<uint8_t>(ptr);
@@ -345,7 +344,7 @@ INLINE T PS_CPU::ReadMemory(uint32_t address, bool DS24, bool LWC_timing)
 }
 
 void store_memory(int size, uint32_t ptr, uint32_t val) {
-   printf("Storing %i bits at %08x -- %x\n", size, ptr, val);
+   //printf("Storing %i bits at %08x -- %x\n", size, ptr, val);
    switch(size) {
       case 8:
          cpu->WriteMemory<uint8_t>(ptr, val);
@@ -587,112 +586,119 @@ int32_t PS_CPU::RunReal(int32_t timestamp_in)
 
    BACKING_TO_ACTIVE;
 
-   bool branched = false;
-   bool did_delay = false;
-   jit_function_t func = create_function();
-   printf("recompiling %08x\n", PC);
-   while(!did_delay) {
-         uint32_t instr;
-         uint32_t opf;
-         gtimestamp = 0;
+   uint32_t initPC = PC;
+   jit_function_t func;
 
-         instr = ICache[(PC & 0xFFC) >> 2].Data;
+   if(BlockCache.find(PC) == BlockCache.end()) {
+      bool branched = false;
+      bool did_delay = false;
+      func = create_function();
+      printf("recompiling %08x\n", PC);
+      while(!did_delay) {
+            uint32_t instr;
+            uint32_t opf;
+            gtimestamp = 0;
 
-         if(ICache[(PC & 0xFFC) >> 2].TV != PC)
-         {
-            ReadAbsorb[ReadAbsorbWhich] = 0;
-            ReadAbsorbWhich = 0;
+            instr = ICache[(PC & 0xFFC) >> 2].Data;
 
-            // FIXME: Handle executing out of scratchpad.
-            if(PC >= 0xA0000000 || !(BIU & 0x800))
+            if(ICache[(PC & 0xFFC) >> 2].TV != PC)
             {
-               instr = LoadU32_LE((uint32_t *)&FastMap[PC >> FAST_MAP_SHIFT][PC]);
+               ReadAbsorb[ReadAbsorbWhich] = 0;
+               ReadAbsorbWhich = 0;
 
-               if (!psx_cpu_overclock)
+               // FIXME: Handle executing out of scratchpad.
+               if(PC >= 0xA0000000 || !(BIU & 0x800))
                {
-                  // Approximate best-case cache-disabled time, per PS1 tests
-                  // (executing out of 0xA0000000+); it can be 5 in 
-                  // *some* sequences of code(like a lot of sequential "nop"s, 
-                  // probably other simple instructions too).
-                  gtimestamp += 4;	
+                  instr = LoadU32_LE((uint32_t *)&FastMap[PC >> FAST_MAP_SHIFT][PC]);
+
+                  if (!psx_cpu_overclock)
+                  {
+                     // Approximate best-case cache-disabled time, per PS1 tests
+                     // (executing out of 0xA0000000+); it can be 5 in 
+                     // *some* sequences of code(like a lot of sequential "nop"s, 
+                     // probably other simple instructions too).
+                     gtimestamp += 4;	
+                  }
+               }
+               else
+               {
+                  __ICache *ICI = &ICache[((PC & 0xFF0) >> 2)];
+                  const uint32_t *FMP = (uint32_t *)&FastMap[(PC &~ 0xF) >> FAST_MAP_SHIFT][PC &~ 0xF];
+
+                  // | 0x2 to simulate (in)validity bits.
+                  ICI[0x00].TV = (PC &~ 0xF) | 0x00 | 0x2;
+                  ICI[0x01].TV = (PC &~ 0xF) | 0x04 | 0x2;
+                  ICI[0x02].TV = (PC &~ 0xF) | 0x08 | 0x2;
+                  ICI[0x03].TV = (PC &~ 0xF) | 0x0C | 0x2;
+
+                  // When overclock is enabled, remove code cache fetch latency
+                  if (!psx_cpu_overclock)
+                     gtimestamp += 3;
+
+                  switch(PC & 0xC)
+                  {
+                     case 0x0:
+                        if (!psx_cpu_overclock)
+                           gtimestamp++;
+                        ICI[0x00].TV &= ~0x2;
+                        ICI[0x00].Data = LoadU32_LE(&FMP[0]);
+                     case 0x4:
+                        if (!psx_cpu_overclock)
+                           gtimestamp++;
+                        ICI[0x01].TV &= ~0x2;
+                        ICI[0x01].Data = LoadU32_LE(&FMP[1]);
+                     case 0x8:
+                        if (!psx_cpu_overclock)
+                           gtimestamp++;
+                        ICI[0x02].TV &= ~0x2;
+                        ICI[0x02].Data = LoadU32_LE(&FMP[2]);
+                     case 0xC:
+                        if (!psx_cpu_overclock)
+                           gtimestamp++;
+                        ICI[0x03].TV &= ~0x2;
+                        ICI[0x03].Data = LoadU32_LE(&FMP[3]);
+                        break;
+                  }
+                  instr = ICache[(PC & 0xFFC) >> 2].Data;
                }
             }
+
+            if(ReadAbsorb[ReadAbsorbWhich])
+               ReadAbsorb[ReadAbsorbWhich]--;
             else
-            {
-               __ICache *ICI = &ICache[((PC & 0xFF0) >> 2)];
-               const uint32_t *FMP = (uint32_t *)&FastMap[(PC &~ 0xF) >> FAST_MAP_SHIFT][PC &~ 0xF];
+               gtimestamp++;
 
-               // | 0x2 to simulate (in)validity bits.
-               ICI[0x00].TV = (PC &~ 0xF) | 0x00 | 0x2;
-               ICI[0x01].TV = (PC &~ 0xF) | 0x04 | 0x2;
-               ICI[0x02].TV = (PC &~ 0xF) | 0x08 | 0x2;
-               ICI[0x03].TV = (PC &~ 0xF) | 0x0C | 0x2;
+            call_timestamp_inc(func, gtimestamp);
 
-               // When overclock is enabled, remove code cache fetch latency
-               if (!psx_cpu_overclock)
-                  gtimestamp += 3;
-
-               switch(PC & 0xC)
-               {
-                  case 0x0:
-                     if (!psx_cpu_overclock)
-                        gtimestamp++;
-                     ICI[0x00].TV &= ~0x2;
-                     ICI[0x00].Data = LoadU32_LE(&FMP[0]);
-                  case 0x4:
-                     if (!psx_cpu_overclock)
-                        gtimestamp++;
-                     ICI[0x01].TV &= ~0x2;
-                     ICI[0x01].Data = LoadU32_LE(&FMP[1]);
-                  case 0x8:
-                     if (!psx_cpu_overclock)
-                        gtimestamp++;
-                     ICI[0x02].TV &= ~0x2;
-                     ICI[0x02].Data = LoadU32_LE(&FMP[2]);
-                  case 0xC:
-                     if (!psx_cpu_overclock)
-                        gtimestamp++;
-                     ICI[0x03].TV &= ~0x2;
-                     ICI[0x03].Data = LoadU32_LE(&FMP[3]);
-                     break;
-               }
-               instr = ICache[(PC & 0xFFC) >> 2].Data;
+            if(branched) {
+               did_delay = true;
+               branched = false;
             }
-         }
 
-         if(ReadAbsorb[ReadAbsorbWhich])
-            ReadAbsorb[ReadAbsorbWhich]--;
-         else
-            gtimestamp++;
+            if(!decompile(func, PC, instr, branched)) {
+               printf("[CPU] Unknown instruction @%08x = %08x, op=%02x, funct=%02x", PC, instr, instr >> 26, (instr & 0x3F));
+               exit(0); // XXX: Handle this properly...
+            }
 
-         call_timestamp_inc(func, gtimestamp);
+            assert(!branched || (!did_delay && branched)); // No branch in branch delay slot...
 
-         if(branched) {
-            did_delay = true;
-            branched = false;
-         }
+            PC += 4;
+      }
 
-         if(!decompile(func, PC, instr, branched)) {
-            printf("[CPU] Unknown instruction @%08x = %08x, op=%02x, funct=%02x", PC, instr, instr >> 26, (instr & 0x3F));
-            exit(0); // XXX: Handle this properly...
-         }
+      printf("ended at %08x\n", PC);
 
-         assert(!branched || (!did_delay && branched)); // No branch in branch delay slot...
-
-         PC += 4;
-   }
-
-   printf("ended at %08x\n", PC);
+      compile_function(func);
+      BlockCache[initPC] = func;
+   } else
+      func = BlockCache[initPC];
 
    gtimestamp = timestamp_in;
 
    branch_to = -1;
 
-   compile_function(func);
    uint32_t state[36];
    memcpy(state, GPR, 4*32);
-   BACKING_TO_ACTIVE; // Get the original PC
-   state[32] = PC;
+   state[32] = initPC;
    state[33] = HI;
    state[34] = LO;
    state[35] = GPR[32]; // Fake for loads
@@ -718,9 +724,9 @@ int32_t PS_CPU::RunReal(int32_t timestamp_in)
    LO = state[34];
    GPR[32] = state[35];
 
-   for(int i = 0; i < 35; ++i) {
+   /*for(int i = 0; i < 35; ++i) {
       printf("r%i = %08x\n", i, state[i]);
-   }
+   }*/
 
    if(branch_to != -1) {
       printf("branching to %08x\n", branch_to);

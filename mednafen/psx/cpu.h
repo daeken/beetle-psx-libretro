@@ -2,6 +2,9 @@
 #define __MDFN_PSX_CPU_H
 
 #include "gte.h"
+#include "decomp.h"
+#include <map>
+using namespace std;
 
 #define PS_CPU_EMULATE_ICACHE 1
 
@@ -176,6 +179,8 @@ class PS_CPU
    private:
       void (*CPUHook)(const int32_t timestamp, uint32_t pc);
       void (*ADDBT)(uint32_t from, uint32_t to, bool exception);
+
+      map<uint32_t, jit_function_t> BlockCache;
 };
 
 #endif
