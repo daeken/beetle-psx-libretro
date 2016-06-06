@@ -149,13 +149,13 @@ def ANDI : IType<0b001100, "andi %$rt, %$rs, $eimm",
 >;
 
 def BEQ : IType<0b000100, "beq %$rs, %$rt, $target", 
-	(let $target, (add (pcd), (signext 18, (shl $imm, 2))), 
+	(let $target, (add (pcd), (shl (signext 16, $imm), 2)), 
 		(when (eq (unsigned (gpr $rs)), (unsigned (gpr $rt))), 
 			(branch $target)))
 >;
 
 def BGEZ : RIType<0b000001, 0b00001, "bgez %$rs, $target", 
-	(let $target, (add (pcd), (signext 18, (shl $imm, 2))), 
+	(let $target, (add (pcd), (shl (signext 16, $imm), 2)), 
 		(when (ge (signed (gpr $rs)), 0), 
 			(branch $target)))
 >;
@@ -163,27 +163,27 @@ def BGEZ : RIType<0b000001, 0b00001, "bgez %$rs, $target",
 def BGEZAL : RIType<0b000001, 0b10001, "bgezal %$rs, $target", 
 	(block
 		(set (gpr 31), (pcd)), 
-		(let $target, (add (pcd), (signext 18, (shl $imm, 2))), 
+		(let $target, (add (pcd), (shl (signext 16, $imm), 2)), 
 			(when (ge (signed (gpr $rs)), 0), 
 				(branch $target))))
 >;
 
 // This isn't really RIType, but that lets us constrain rt
 def BGTZ : RIType<0b000111, 0b00000, "bgtz %$rs, $target", 
-	(let $target, (add (pcd), (signext 18, (shl $imm, 2))), 
+	(let $target, (add (pcd), (shl (signext 16, $imm), 2)), 
 		(when (gt (signed (gpr $rs)), 0), 
 			(branch $target)))
 >;
 
 // This isn't really RIType, but that lets us constrain rt
 def BLEZ : RIType<0b000110, 0b00000, "blez %$rs, $target", 
-	(let $target, (add (pcd), (signext 18, (shl $imm, 2))), 
+	(let $target, (add (pcd), (shl (signext 16, $imm), 2)), 
 		(when (le (signed (gpr $rs)), 0), 
 			(branch $target)))
 >;
 
 def BLTZ : RIType<0b000001, 0b00000, "bltz %$rs, $target", 
-	(let $target, (add (pcd), (signext 18, (shl $imm, 2))), 
+	(let $target, (add (pcd), (shl (signext 16, $imm), 2)), 
 		(when (lt (signed (gpr $rs)), 0), 
 			(branch $target)))
 >;
@@ -191,13 +191,13 @@ def BLTZ : RIType<0b000001, 0b00000, "bltz %$rs, $target",
 def BLTZAL : RIType<0b000001, 0b10000, "bltzal %$rs, $target", 
 	(block
 		(set (gpr 31), (pcd)), 
-		(let $target, (add (pcd), (signext 18, (shl $imm, 2))), 
+		(let $target, (add (pcd), (shl (signext 16, $imm), 2)), 
 			(when (lt (signed (gpr $rs)), 0), 
 				(branch $target))))
 >;
 
 def BNE : IType<0b000101, "bne %$rs, %$rt, $target", 
-	(let $target, (add (pcd), (signext 18, (shl $imm, 2))),  
+	(let $target, (add (pcd), (shl (signext 16, $imm), 2)),  
 		(when (neq (gpr $rs), (gpr $rt)), 
 			(branch $target)))
 >;
