@@ -180,7 +180,7 @@ class PS_CPU
       void (*CPUHook)(const int32_t timestamp, uint32_t pc);
       void (*ADDBT)(uint32_t from, uint32_t to, bool exception);
 
-      map<uint32_t, jit_function_t> BlockCache;
+      map<uint32_t, block_t> BlockCache;
 };
 
 #endif

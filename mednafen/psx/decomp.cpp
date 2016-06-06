@@ -47,7 +47,7 @@ void do_lds(jit_function_t func) {
 	WRA(ldw, jit_insn_load(func, LDAbsorb));
 	STORE(ReadFudge, CAST(ldw, jit_type_ubyte));
 	STORE(ReadAbsorbWhich, CAST(jit_insn_or(func, LOAD(ReadAbsorbWhich, jit_type_ubyte), jit_insn_and(func, ldw, make_uint(0x1F))), jit_type_ubyte));
-	STORE(LDWhich, make_uint(34));
+	STORE(LDWhich, make_uint(35));
 }
 
 void defer_set(jit_function_t func, int reg, jit_value_t val) {
@@ -168,9 +168,9 @@ void init_decompiler() {
 	params[1] = jit_type_create_pointer(jit_type_ubyte, 0); // ReadAbsorb
 	params[2] = jit_type_create_pointer(jit_type_ubyte, 0); // ReadAbsorbWhich
 	params[3] = jit_type_create_pointer(jit_type_ubyte, 0); // ReadFudge
-	params[4] = jit_type_create_pointer(jit_type_ubyte, 0); // LDWhich
+	params[4] = jit_type_create_pointer(jit_type_uint, 0); // LDWhich
 	params[5] = jit_type_create_pointer(jit_type_uint, 0); // LDValue
-	params[6] = jit_type_create_pointer(jit_type_ubyte, 0); // LDAbsorb
+	params[6] = jit_type_create_pointer(jit_type_uint, 0); // LDAbsorb
 	block_sig = jit_type_create_signature(jit_abi_cdecl, jit_type_void, params, 7, 1);
 }
 
@@ -186,11 +186,14 @@ jit_function_t create_function() {
 	return func;
 }
 
-void compile_function(jit_function_t func) {
+block_t compile_function(jit_function_t func) {
 	jit_function_compile(func);
 	jit_context_build_end(context);
-	//jit_dump_function(stdout, func, "block");
+	jit_dump_function(stdout, func, "block");
+	return (block_t) jit_function_to_closure(func);
 }
+
+#define INSNLOG(name) printf(#name "\n")
 
 bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) {
 	switch((inst) >> (0x1a)) {
@@ -205,6 +208,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					DEP(rt);
 					RES(rd);
 					do_lds(func);
+					INSNLOG(SLL);
 					if((rd) != (0x0)) { WGPR(rd, jit_insn_shl(func, RGPR(rt), make_uint(shamt))); }
 					return(true);
 					break;
@@ -218,6 +222,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					DEP(rt);
 					RES(rd);
 					do_lds(func);
+					INSNLOG(SRL);
 					if((rd) != (0x0)) { WGPR(rd, jit_insn_ushr(func, RGPR(rt), make_uint(shamt))); }
 					return(true);
 					break;
@@ -231,6 +236,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					DEP(rt);
 					RES(rd);
 					do_lds(func);
+					INSNLOG(SRA);
 					if((rd) != (0x0)) { WGPR(rd, jit_insn_sshr(func, RGPR(rt), make_uint(shamt))); }
 					return(true);
 					break;
@@ -245,6 +251,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					DEP(rt);
 					RES(rd);
 					do_lds(func);
+					INSNLOG(SLLV);
 					if((rd) != (0x0)) { WGPR(rd, jit_insn_shl(func, RGPR(rt), RGPR(rs))); }
 					return(true);
 					break;
@@ -259,6 +266,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					DEP(rt);
 					RES(rd);
 					do_lds(func);
+					INSNLOG(SRLV);
 					if((rd) != (0x0)) { WGPR(rd, jit_insn_ushr(func, RGPR(rt), RGPR(rs))); }
 					return(true);
 					break;
@@ -273,6 +281,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					DEP(rt);
 					RES(rd);
 					do_lds(func);
+					INSNLOG(SRAV);
 					if((rd) != (0x0)) { WGPR(rd, jit_insn_sshr(func, RGPR(rt), RGPR(rs))); }
 					return(true);
 					break;
@@ -283,6 +292,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					DEP(rs);
 					do_lds(func);
+					INSNLOG(JR);
 					call_branch(func, RGPR(rs));
 					branched = true;
 					return(true);
@@ -296,6 +306,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					DEP(rs);
 					RES(rd);
 					do_lds(func);
+					INSNLOG(JALR);
 					if((rd) != (0x0)) { WGPR(rd, jit_insn_add(func, jit_insn_add(func, make_uint(pc), make_uint(0x4)), make_uint(0x4))); }
 					call_branch(func, RGPR(rs));
 					branched = true;
@@ -307,6 +318,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t code = ((inst) >> (0x6)) & (0xfffff);
 					do_lds(func);
+					INSNLOG(SYSCALL);
 					call_syscall(func, code);
 					return(true);
 					break;
@@ -316,6 +328,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					WPC(make_uint(pc));
 					uint32_t code = ((inst) >> (0x6)) & (0xfffff);
 					do_lds(func);
+					INSNLOG(BREAK);
 					call_break(func, code);
 					return(true);
 					break;
@@ -326,6 +339,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					RES(rd);
 					do_lds(func);
+					INSNLOG(MFHI);
 					if((rd) != (0x0)) { WGPR(rd, RHI()); }
 					return(true);
 					break;
@@ -336,6 +350,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					DEP(rd);
 					do_lds(func);
+					INSNLOG(MTHI);
 					WHI(RGPR(rd))
 					return(true);
 					break;
@@ -346,6 +361,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					RES(rd);
 					do_lds(func);
+					INSNLOG(MFLO);
 					if((rd) != (0x0)) { WGPR(rd, RLO()); }
 					return(true);
 					break;
@@ -356,6 +372,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					DEP(rd);
 					do_lds(func);
+					INSNLOG(MTLO);
 					WLO(RGPR(rd))
 					return(true);
 					break;
@@ -368,6 +385,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					DEP(rs);
 					DEP(rt);
 					do_lds(func);
+					INSNLOG(MULT);
 					/* Unhandled list */
 					return(true);
 					break;
@@ -380,6 +398,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					DEP(rs);
 					DEP(rt);
 					do_lds(func);
+					INSNLOG(MULTU);
 					/* Unhandled list */
 					return(true);
 					break;
@@ -392,6 +411,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					DEP(rs);
 					DEP(rt);
 					do_lds(func);
+					INSNLOG(DIV);
 					WLO(jit_insn_div(func, RGPR(rs), RGPR(rt)))
 					WHI(jit_insn_rem(func, RGPR(rs), RGPR(rt)))
 					return(true);
@@ -405,6 +425,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					DEP(rs);
 					DEP(rt);
 					do_lds(func);
+					INSNLOG(DIVU);
 					WLO(jit_insn_div(func, RGPR(rs), RGPR(rt)))
 					WHI(jit_insn_rem(func, RGPR(rs), RGPR(rt)))
 					return(true);
@@ -420,6 +441,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					DEP(rt);
 					RES(rd);
 					do_lds(func);
+					INSNLOG(ADD);
 					call_overflow(func, RGPR(rs), RGPR(rt), 1);
 					if((rd) != (0x0)) { WGPR(rd, jit_insn_add(func, RGPR(rs), RGPR(rt))); }
 					return(true);
@@ -435,6 +457,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					DEP(rt);
 					RES(rd);
 					do_lds(func);
+					INSNLOG(ADDU);
 					if((rd) != (0x0)) { WGPR(rd, jit_insn_add(func, RGPR(rs), RGPR(rt))); }
 					return(true);
 					break;
@@ -449,6 +472,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					DEP(rt);
 					RES(rd);
 					do_lds(func);
+					INSNLOG(SUB);
 					call_overflow(func, RGPR(rs), RGPR(rt), -1);
 					if((rd) != (0x0)) { WGPR(rd, jit_insn_sub(func, RGPR(rs), RGPR(rt))); }
 					return(true);
@@ -464,6 +488,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					DEP(rt);
 					RES(rd);
 					do_lds(func);
+					INSNLOG(SUBU);
 					if((rd) != (0x0)) { WGPR(rd, jit_insn_sub(func, RGPR(rs), RGPR(rt))); }
 					return(true);
 					break;
@@ -478,6 +503,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					DEP(rt);
 					RES(rd);
 					do_lds(func);
+					INSNLOG(AND);
 					if((rd) != (0x0)) { WGPR(rd, jit_insn_and(func, RGPR(rs), RGPR(rt))); }
 					return(true);
 					break;
@@ -492,6 +518,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					DEP(rt);
 					RES(rd);
 					do_lds(func);
+					INSNLOG(OR);
 					if((rd) != (0x0)) { WGPR(rd, jit_insn_or(func, RGPR(rs), RGPR(rt))); }
 					return(true);
 					break;
@@ -506,6 +533,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					DEP(rt);
 					RES(rd);
 					do_lds(func);
+					INSNLOG(XOR);
 					if((rd) != (0x0)) { WGPR(rd, jit_insn_xor(func, RGPR(rs), RGPR(rt))); }
 					return(true);
 					break;
@@ -520,6 +548,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					DEP(rt);
 					RES(rd);
 					do_lds(func);
+					INSNLOG(NOR);
 					if((rd) != (0x0)) { WGPR(rd, jit_insn_not(func, jit_insn_or(func, RGPR(rs), RGPR(rt)))); }
 					return(true);
 					break;
@@ -534,6 +563,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					DEP(rt);
 					RES(rd);
 					do_lds(func);
+					INSNLOG(SLT);
 					jit_label_t temp_1 = jit_label_undefined, temp_2 = jit_label_undefined;
 					jit_insn_branch_if(func, jit_insn_lt(func, RGPR(rs), RGPR(rt)), &temp_1);
 					jit_label_t temp_3 = jit_label_undefined;
@@ -560,6 +590,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					DEP(rt);
 					RES(rd);
 					do_lds(func);
+					INSNLOG(SLTU);
 					jit_label_t temp_5 = jit_label_undefined, temp_6 = jit_label_undefined;
 					jit_insn_branch_if(func, jit_insn_lt(func, RGPR(rs), RGPR(rt)), &temp_5);
 					jit_label_t temp_7 = jit_label_undefined;
@@ -588,6 +619,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
 					do_lds(func);
+					INSNLOG(BLTZ);
 					uint32_t target = ((pc) + (0x4)) + (signext(0x12, (imm) << (0x2)));
 					jit_label_t temp_9 = jit_label_undefined;
 					jit_insn_branch_if_not(func, jit_insn_lt(func, RGPR(rs), make_uint(0x0)), &temp_9);
@@ -604,6 +636,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
 					do_lds(func);
+					INSNLOG(BGEZ);
 					uint32_t target = ((pc) + (0x4)) + (signext(0x12, (imm) << (0x2)));
 					jit_label_t temp_10 = jit_label_undefined;
 					jit_insn_branch_if_not(func, jit_insn_ge(func, RGPR(rs), make_uint(0x0)), &temp_10);
@@ -621,6 +654,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					DEP(rs);
 					RES(0x1f);
 					do_lds(func);
+					INSNLOG(BLTZAL);
 					if((0x1f) != (0x0)) { WGPR(0x1f, jit_insn_add(func, make_uint(pc), make_uint(0x4))); }
 					uint32_t target = ((pc) + (0x4)) + (signext(0x12, (imm) << (0x2)));
 					jit_label_t temp_11 = jit_label_undefined;
@@ -639,6 +673,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					DEP(rs);
 					RES(0x1f);
 					do_lds(func);
+					INSNLOG(BGEZAL);
 					if((0x1f) != (0x0)) { WGPR(0x1f, jit_insn_add(func, make_uint(pc), make_uint(0x4))); }
 					uint32_t target = ((pc) + (0x4)) + (signext(0x12, (imm) << (0x2)));
 					jit_label_t temp_12 = jit_label_undefined;
@@ -657,6 +692,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 			WPC(make_uint(pc));
 			uint32_t imm = (inst) & (0x3ffffff);
 			do_lds(func);
+			INSNLOG(J);
 			uint32_t target = (((pc) + (0x4)) & (0xf0000000)) + ((imm) << (0x2));
 			call_branch(func, make_uint(target));
 			branched = true;
@@ -669,6 +705,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 			uint32_t imm = (inst) & (0x3ffffff);
 			RES(0x1f);
 			do_lds(func);
+			INSNLOG(JAL);
 			if((0x1f) != (0x0)) { WGPR(0x1f, jit_insn_add(func, jit_insn_add(func, make_uint(pc), make_uint(0x4)), make_uint(0x4))); }
 			uint32_t target = (((pc) + (0x4)) & (0xf0000000)) + ((imm) << (0x2));
 			call_branch(func, make_uint(target));
@@ -685,6 +722,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 			DEP(rs);
 			DEP(rt);
 			do_lds(func);
+			INSNLOG(BEQ);
 			uint32_t target = ((pc) + (0x4)) + (signext(0x12, (imm) << (0x2)));
 			jit_label_t temp_13 = jit_label_undefined;
 			jit_insn_branch_if_not(func, jit_insn_eq(func, RGPR(rs), RGPR(rt)), &temp_13);
@@ -703,6 +741,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 			DEP(rs);
 			DEP(rt);
 			do_lds(func);
+			INSNLOG(BNE);
 			uint32_t target = ((pc) + (0x4)) + (signext(0x12, (imm) << (0x2)));
 			jit_label_t temp_14 = jit_label_undefined;
 			jit_insn_branch_if_not(func, jit_insn_ne(func, RGPR(rs), RGPR(rt)), &temp_14);
@@ -721,6 +760,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
 					do_lds(func);
+					INSNLOG(BLEZ);
 					uint32_t target = ((pc) + (0x4)) + (signext(0x12, (imm) << (0x2)));
 					jit_label_t temp_15 = jit_label_undefined;
 					jit_insn_branch_if_not(func, jit_insn_le(func, RGPR(rs), make_uint(0x0)), &temp_15);
@@ -742,6 +782,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
 					do_lds(func);
+					INSNLOG(BGTZ);
 					uint32_t target = ((pc) + (0x4)) + (signext(0x12, (imm) << (0x2)));
 					jit_label_t temp_16 = jit_label_undefined;
 					jit_insn_branch_if_not(func, jit_insn_gt(func, RGPR(rs), make_uint(0x0)), &temp_16);
@@ -763,6 +804,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 			DEP(rs);
 			RES(rt);
 			do_lds(func);
+			INSNLOG(ADDI);
 			uint32_t eimm = signext(0x10, imm);
 			call_overflow(func, RGPR(rs), make_uint(eimm), 1);
 			if((rt) != (0x0)) { WGPR(rt, jit_insn_add(func, RGPR(rs), make_uint(eimm))); }
@@ -778,6 +820,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 			DEP(rs);
 			RES(rt);
 			do_lds(func);
+			INSNLOG(ADDIU);
 			uint32_t eimm = signext(0x10, imm);
 			if((rt) != (0x0)) { WGPR(rt, jit_insn_add(func, RGPR(rs), make_uint(eimm))); }
 			return(true);
@@ -792,6 +835,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 			DEP(rs);
 			RES(rt);
 			do_lds(func);
+			INSNLOG(SLTI);
 			uint32_t eimm = signext(0x10, imm);
 			jit_label_t temp_17 = jit_label_undefined, temp_18 = jit_label_undefined;
 			jit_insn_branch_if(func, jit_insn_lt(func, RGPR(rs), make_uint(eimm)), &temp_17);
@@ -818,6 +862,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 			DEP(rs);
 			RES(rt);
 			do_lds(func);
+			INSNLOG(SLTIU);
 			uint32_t eimm = signext(0x10, imm);
 			jit_label_t temp_21 = jit_label_undefined, temp_22 = jit_label_undefined;
 			jit_insn_branch_if(func, jit_insn_lt(func, RGPR(rs), make_uint(eimm)), &temp_21);
@@ -844,6 +889,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 			DEP(rs);
 			RES(rt);
 			do_lds(func);
+			INSNLOG(ANDI);
 			uint32_t eimm = imm;
 			if((rt) != (0x0)) { WGPR(rt, jit_insn_and(func, RGPR(rs), make_uint(eimm))); }
 			return(true);
@@ -858,6 +904,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 			DEP(rs);
 			RES(rt);
 			do_lds(func);
+			INSNLOG(ORI);
 			uint32_t eimm = imm;
 			if((rt) != (0x0)) { WGPR(rt, jit_insn_or(func, RGPR(rs), make_uint(eimm))); }
 			return(true);
@@ -872,6 +919,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 			DEP(rs);
 			RES(rt);
 			do_lds(func);
+			INSNLOG(XORI);
 			uint32_t eimm = imm;
 			if((rt) != (0x0)) { WGPR(rt, jit_insn_xor(func, RGPR(rs), make_uint(eimm))); }
 			return(true);
@@ -884,6 +932,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 			uint32_t imm = (inst) & (0xffff);
 			RES(rt);
 			do_lds(func);
+			INSNLOG(LUI);
 			if((rt) != (0x0)) { WGPR(rt, jit_insn_shl(func, make_uint(imm), make_uint(0x10))); }
 			return(true);
 			break;
@@ -898,6 +947,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					RES(rt);
 					do_lds(func);
+					INSNLOG(MFCzanonymous_0);
 					if((rt) != (0x0)) { WGPR(rt, call_read_copreg(func, cop, rd)); }
 					return(true);
 					break;
@@ -910,6 +960,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					RES(rt);
 					do_lds(func);
+					INSNLOG(CFCzanonymous_0);
 					if((rt) != (0x0)) { WGPR(rt, call_read_copcreg(func, cop, rd)); }
 					return(true);
 					break;
@@ -922,6 +973,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					DEP(rt);
 					do_lds(func);
+					INSNLOG(MTCzanonymous_0);
 					call_write_copreg(func, cop, rd, RGPR(rt));
 					return(true);
 					break;
@@ -934,6 +986,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					DEP(rt);
 					do_lds(func);
+					INSNLOG(CTCzanonymous_0);
 					call_write_copcreg(func, cop, rd, RGPR(rt));
 					return(true);
 					break;
@@ -944,6 +997,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_4anonymous_0);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -954,6 +1008,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_5anonymous_0);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -964,6 +1019,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_6anonymous_0);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -974,6 +1030,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_7anonymous_0);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -984,6 +1041,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_8anonymous_0);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -994,6 +1052,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_9anonymous_0);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -1004,6 +1063,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_10anonymous_0);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -1014,6 +1074,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_11anonymous_0);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -1024,6 +1085,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_12anonymous_0);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -1034,6 +1096,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_13anonymous_0);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -1044,6 +1107,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_14anonymous_0);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -1054,6 +1118,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_15anonymous_0);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -1064,6 +1129,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_16anonymous_0);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -1074,6 +1140,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_17anonymous_0);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -1084,6 +1151,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_18anonymous_0);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -1094,6 +1162,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_19anonymous_0);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -1111,6 +1180,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					RES(rt);
 					do_lds(func);
+					INSNLOG(MFCzanonymous_1);
 					if((rt) != (0x0)) { WGPR(rt, call_read_copreg(func, cop, rd)); }
 					return(true);
 					break;
@@ -1123,6 +1193,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					RES(rt);
 					do_lds(func);
+					INSNLOG(CFCzanonymous_1);
 					if((rt) != (0x0)) { WGPR(rt, call_read_copcreg(func, cop, rd)); }
 					return(true);
 					break;
@@ -1135,6 +1206,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					DEP(rt);
 					do_lds(func);
+					INSNLOG(MTCzanonymous_1);
 					call_write_copreg(func, cop, rd, RGPR(rt));
 					return(true);
 					break;
@@ -1147,6 +1219,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					DEP(rt);
 					do_lds(func);
+					INSNLOG(CTCzanonymous_1);
 					call_write_copcreg(func, cop, rd, RGPR(rt));
 					return(true);
 					break;
@@ -1157,6 +1230,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_4anonymous_1);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -1167,6 +1241,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_5anonymous_1);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -1177,6 +1252,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_6anonymous_1);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -1187,6 +1263,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_7anonymous_1);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -1197,6 +1274,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_8anonymous_1);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -1207,6 +1285,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_9anonymous_1);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -1217,6 +1296,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_10anonymous_1);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -1227,6 +1307,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_11anonymous_1);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -1237,6 +1318,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_12anonymous_1);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -1247,6 +1329,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_13anonymous_1);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -1257,6 +1340,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_14anonymous_1);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -1267,6 +1351,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_15anonymous_1);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -1277,6 +1362,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_16anonymous_1);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -1287,6 +1373,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_17anonymous_1);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -1297,6 +1384,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_18anonymous_1);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -1307,6 +1395,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_19anonymous_1);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -1324,6 +1413,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					RES(rt);
 					do_lds(func);
+					INSNLOG(MFCzanonymous_2);
 					if((rt) != (0x0)) { WGPR(rt, call_read_copreg(func, cop, rd)); }
 					return(true);
 					break;
@@ -1336,6 +1426,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					RES(rt);
 					do_lds(func);
+					INSNLOG(CFCzanonymous_2);
 					if((rt) != (0x0)) { WGPR(rt, call_read_copcreg(func, cop, rd)); }
 					return(true);
 					break;
@@ -1348,6 +1439,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					DEP(rt);
 					do_lds(func);
+					INSNLOG(MTCzanonymous_2);
 					call_write_copreg(func, cop, rd, RGPR(rt));
 					return(true);
 					break;
@@ -1360,6 +1452,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					DEP(rt);
 					do_lds(func);
+					INSNLOG(CTCzanonymous_2);
 					call_write_copcreg(func, cop, rd, RGPR(rt));
 					return(true);
 					break;
@@ -1370,6 +1463,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_4anonymous_2);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -1380,6 +1474,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_5anonymous_2);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -1390,6 +1485,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_6anonymous_2);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -1400,6 +1496,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_7anonymous_2);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -1410,6 +1507,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_8anonymous_2);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -1420,6 +1518,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_9anonymous_2);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -1430,6 +1529,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_10anonymous_2);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -1440,6 +1540,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_11anonymous_2);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -1450,6 +1551,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_12anonymous_2);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -1460,6 +1562,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_13anonymous_2);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -1470,6 +1573,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_14anonymous_2);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -1480,6 +1584,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_15anonymous_2);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -1490,6 +1595,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_16anonymous_2);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -1500,6 +1606,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_17anonymous_2);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -1510,6 +1617,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_18anonymous_2);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -1520,6 +1628,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_19anonymous_2);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -1537,6 +1646,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					RES(rt);
 					do_lds(func);
+					INSNLOG(MFCzanonymous_3);
 					if((rt) != (0x0)) { WGPR(rt, call_read_copreg(func, cop, rd)); }
 					return(true);
 					break;
@@ -1549,6 +1659,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					RES(rt);
 					do_lds(func);
+					INSNLOG(CFCzanonymous_3);
 					if((rt) != (0x0)) { WGPR(rt, call_read_copcreg(func, cop, rd)); }
 					return(true);
 					break;
@@ -1561,6 +1672,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					DEP(rt);
 					do_lds(func);
+					INSNLOG(MTCzanonymous_3);
 					call_write_copreg(func, cop, rd, RGPR(rt));
 					return(true);
 					break;
@@ -1573,6 +1685,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					DEP(rt);
 					do_lds(func);
+					INSNLOG(CTCzanonymous_3);
 					call_write_copcreg(func, cop, rd, RGPR(rt));
 					return(true);
 					break;
@@ -1583,6 +1696,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_4anonymous_3);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -1593,6 +1707,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_5anonymous_3);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -1603,6 +1718,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_6anonymous_3);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -1613,6 +1729,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_7anonymous_3);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -1623,6 +1740,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_8anonymous_3);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -1633,6 +1751,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_9anonymous_3);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -1643,6 +1762,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_10anonymous_3);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -1653,6 +1773,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_11anonymous_3);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -1663,6 +1784,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_12anonymous_3);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -1673,6 +1795,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_13anonymous_3);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -1683,6 +1806,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_14anonymous_3);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -1693,6 +1817,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_15anonymous_3);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -1703,6 +1828,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_16anonymous_3);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -1713,6 +1839,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_17anonymous_3);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -1723,6 +1850,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_18anonymous_3);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -1733,6 +1861,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					do_lds(func);
+					INSNLOG(COPzanonymous_19anonymous_3);
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -1749,6 +1878,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 			DEP(rs);
 			DEP(rt);
 			do_lds(func);
+			INSNLOG(LB);
 			uint32_t offset = signext(0x10, imm);
 			if((rt) != (0x0)) { defer_set(func, rt, call_signext(func, 8, call_load_memory(func, 8, jit_insn_add(func, RGPR(rs), make_uint(offset))))); }
 			return(true);
@@ -1763,6 +1893,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 			DEP(rs);
 			DEP(rt);
 			do_lds(func);
+			INSNLOG(LH);
 			uint32_t offset = signext(0x10, imm);
 			if((rt) != (0x0)) { defer_set(func, rt, call_signext(func, 16, call_load_memory(func, 16, jit_insn_add(func, RGPR(rs), make_uint(offset))))); }
 			return(true);
@@ -1777,6 +1908,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 			DEP(rs);
 			RES(rt);
 			do_lds(func);
+			INSNLOG(LW);
 			uint32_t offset = signext(0x10, imm);
 			if((rt) != (0x0)) { WGPR(rt, call_load_memory(func, 32, jit_insn_add(func, RGPR(rs), make_uint(offset)))); }
 			return(true);
@@ -1791,6 +1923,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 			DEP(rs);
 			DEP(rt);
 			do_lds(func);
+			INSNLOG(LBU);
 			uint32_t offset = signext(0x10, imm);
 			if((rt) != (0x0)) { defer_set(func, rt, call_load_memory(func, 8, jit_insn_add(func, RGPR(rs), make_uint(offset)))); }
 			return(true);
@@ -1805,6 +1938,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 			DEP(rs);
 			DEP(rt);
 			do_lds(func);
+			INSNLOG(LHU);
 			uint32_t offset = signext(0x10, imm);
 			if((rt) != (0x0)) { defer_set(func, rt, call_load_memory(func, 16, jit_insn_add(func, RGPR(rs), make_uint(offset)))); }
 			return(true);
@@ -1819,6 +1953,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 			DEP(rs);
 			DEP(rt);
 			do_lds(func);
+			INSNLOG(SB);
 			uint32_t offset = signext(0x10, imm);
 			call_store_memory(func, 8, jit_insn_add(func, RGPR(rs), make_uint(offset)), RGPR(rt));
 			return(true);
@@ -1833,6 +1968,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 			DEP(rs);
 			DEP(rt);
 			do_lds(func);
+			INSNLOG(SH);
 			uint32_t offset = signext(0x10, imm);
 			call_store_memory(func, 16, jit_insn_add(func, RGPR(rs), make_uint(offset)), RGPR(rt));
 			return(true);
@@ -1847,6 +1983,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched) 
 			DEP(rs);
 			DEP(rt);
 			do_lds(func);
+			INSNLOG(SW);
 			uint32_t offset = signext(0x10, imm);
 			call_store_memory(func, 32, jit_insn_add(func, RGPR(rs), make_uint(offset)), RGPR(rt));
 			return(true);

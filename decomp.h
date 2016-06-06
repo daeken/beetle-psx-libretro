@@ -5,9 +5,15 @@
 #include <jit/jit-dump.h>
 #include <stdint.h>
 
+typedef void (*block_t)(
+	uint32_t *state, 
+	uint8_t *ReadAbsorb, uint8_t *ReadAbsorbWhich, uint8_t *ReadFudge, 
+	uint32_t *LDWhich, uint32_t *LDValue, uint32_t *LDAbsorb
+);
+
 void init_decompiler();
 jit_function_t create_function();
-void compile_function(jit_function_t func);
+block_t compile_function(jit_function_t func);
 bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched);
 
 void call_timestamp_inc(jit_function_t func, uint32_t amount);

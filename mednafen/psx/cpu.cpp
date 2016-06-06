@@ -586,152 +586,161 @@ int32_t PS_CPU::RunReal(int32_t timestamp_in)
 
    BACKING_TO_ACTIVE;
 
-   uint32_t initPC = PC;
-   jit_function_t func;
-
-   if(BlockCache.find(PC) == BlockCache.end()) {
-      bool branched = false;
-      bool did_delay = false;
-      func = create_function();
-      printf("recompiling %08x\n", PC);
-      while(!did_delay) {
-            uint32_t instr;
-            uint32_t opf;
-            gtimestamp = 0;
-
-            instr = ICache[(PC & 0xFFC) >> 2].Data;
-
-            if(ICache[(PC & 0xFFC) >> 2].TV != PC)
-            {
-               ReadAbsorb[ReadAbsorbWhich] = 0;
-               ReadAbsorbWhich = 0;
-
-               // FIXME: Handle executing out of scratchpad.
-               if(PC >= 0xA0000000 || !(BIU & 0x800))
-               {
-                  instr = LoadU32_LE((uint32_t *)&FastMap[PC >> FAST_MAP_SHIFT][PC]);
-
-                  if (!psx_cpu_overclock)
-                  {
-                     // Approximate best-case cache-disabled time, per PS1 tests
-                     // (executing out of 0xA0000000+); it can be 5 in 
-                     // *some* sequences of code(like a lot of sequential "nop"s, 
-                     // probably other simple instructions too).
-                     gtimestamp += 4;	
-                  }
-               }
-               else
-               {
-                  __ICache *ICI = &ICache[((PC & 0xFF0) >> 2)];
-                  const uint32_t *FMP = (uint32_t *)&FastMap[(PC &~ 0xF) >> FAST_MAP_SHIFT][PC &~ 0xF];
-
-                  // | 0x2 to simulate (in)validity bits.
-                  ICI[0x00].TV = (PC &~ 0xF) | 0x00 | 0x2;
-                  ICI[0x01].TV = (PC &~ 0xF) | 0x04 | 0x2;
-                  ICI[0x02].TV = (PC &~ 0xF) | 0x08 | 0x2;
-                  ICI[0x03].TV = (PC &~ 0xF) | 0x0C | 0x2;
-
-                  // When overclock is enabled, remove code cache fetch latency
-                  if (!psx_cpu_overclock)
-                     gtimestamp += 3;
-
-                  switch(PC & 0xC)
-                  {
-                     case 0x0:
-                        if (!psx_cpu_overclock)
-                           gtimestamp++;
-                        ICI[0x00].TV &= ~0x2;
-                        ICI[0x00].Data = LoadU32_LE(&FMP[0]);
-                     case 0x4:
-                        if (!psx_cpu_overclock)
-                           gtimestamp++;
-                        ICI[0x01].TV &= ~0x2;
-                        ICI[0x01].Data = LoadU32_LE(&FMP[1]);
-                     case 0x8:
-                        if (!psx_cpu_overclock)
-                           gtimestamp++;
-                        ICI[0x02].TV &= ~0x2;
-                        ICI[0x02].Data = LoadU32_LE(&FMP[2]);
-                     case 0xC:
-                        if (!psx_cpu_overclock)
-                           gtimestamp++;
-                        ICI[0x03].TV &= ~0x2;
-                        ICI[0x03].Data = LoadU32_LE(&FMP[3]);
-                        break;
-                  }
-                  instr = ICache[(PC & 0xFFC) >> 2].Data;
-               }
-            }
-
-            if(ReadAbsorb[ReadAbsorbWhich])
-               ReadAbsorb[ReadAbsorbWhich]--;
-            else
-               gtimestamp++;
-
-            call_timestamp_inc(func, gtimestamp);
-
-            if(branched) {
-               did_delay = true;
-               branched = false;
-            }
-
-            if(!decompile(func, PC, instr, branched)) {
-               printf("[CPU] Unknown instruction @%08x = %08x, op=%02x, funct=%02x", PC, instr, instr >> 26, (instr & 0x3F));
-               exit(0); // XXX: Handle this properly...
-            }
-
-            assert(!branched || (!did_delay && branched)); // No branch in branch delay slot...
-
-            PC += 4;
-      }
-
-      printf("ended at %08x\n", PC);
-
-      compile_function(func);
-      BlockCache[initPC] = func;
-   } else
-      func = BlockCache[initPC];
-
    gtimestamp = timestamp_in;
+   printf("running ...\n");
+   block_t lastblock;
+   uint32_t lastblock_PC = -1;
 
-   branch_to = -1;
+   do {
+      while(MDFN_LIKELY(gtimestamp < next_event_ts)) {
+         uint32_t initPC = PC;
+         if(PC != 0xBFC00250)
+            printf("block %08x\n", PC);
+         block_t block;
+         if(PC != lastblock_PC && BlockCache.find(PC) == BlockCache.end()) {
+            bool branched = false;
+            bool did_delay = false;
+            jit_function_t func = create_function();
+            printf("recompiling %08x\n", PC);
+            while(!did_delay) {
+                  uint32_t instr;
+                  uint32_t opf;
+                  uint32_t startstamp = gtimestamp;
 
-   uint32_t state[36];
-   memcpy(state, GPR, 4*32);
-   state[32] = initPC;
-   state[33] = HI;
-   state[34] = LO;
-   state[35] = GPR[32]; // Fake for loads
-   uint32_t *stateptr = state;
+                  instr = ICache[(PC & 0xFFC) >> 2].Data;
 
-   void *raptr = &ReadAbsorb, *rawptr = &ReadAbsorbWhich, *rfptr = &ReadFudge, 
-      *ldwptr = &LDWhich, *ldvptr = &LDValue, *ldaptr = &LDAbsorb;
+                  if(ICache[(PC & 0xFFC) >> 2].TV != PC)
+                  {
+                     ReadAbsorb[ReadAbsorbWhich] = 0;
+                     ReadAbsorbWhich = 0;
 
-   void *args[7];
-   args[0] = &stateptr;
-   args[1] = &raptr;
-   args[2] = &rawptr;
-   args[3] = &rfptr;
-   args[4] = &ldwptr;
-   args[5] = &ldvptr;
-   args[6] = &ldaptr;
-   jit_function_apply(func, args, NULL);
+                     // FIXME: Handle executing out of scratchpad.
+                     if(PC >= 0xA0000000 || !(BIU & 0x800))
+                     {
+                        instr = LoadU32_LE((uint32_t *)&FastMap[PC >> FAST_MAP_SHIFT][PC]);
 
-   assert(state[0] == 0); // Sanity check R0 == 0
-   memcpy(GPR, state, 4*32);
-   PC = state[32] + 4; // We don't set PC after instructions
-   HI = state[33];
-   LO = state[34];
-   GPR[32] = state[35];
+                        if (!psx_cpu_overclock)
+                        {
+                           // Approximate best-case cache-disabled time, per PS1 tests
+                           // (executing out of 0xA0000000+); it can be 5 in 
+                           // *some* sequences of code(like a lot of sequential "nop"s, 
+                           // probably other simple instructions too).
+                           gtimestamp += 4;	
+                        }
+                     }
+                     else
+                     {
+                        __ICache *ICI = &ICache[((PC & 0xFF0) >> 2)];
+                        const uint32_t *FMP = (uint32_t *)&FastMap[(PC &~ 0xF) >> FAST_MAP_SHIFT][PC &~ 0xF];
 
-   /*for(int i = 0; i < 35; ++i) {
-      printf("r%i = %08x\n", i, state[i]);
-   }*/
+                        // | 0x2 to simulate (in)validity bits.
+                        ICI[0x00].TV = (PC &~ 0xF) | 0x00 | 0x2;
+                        ICI[0x01].TV = (PC &~ 0xF) | 0x04 | 0x2;
+                        ICI[0x02].TV = (PC &~ 0xF) | 0x08 | 0x2;
+                        ICI[0x03].TV = (PC &~ 0xF) | 0x0C | 0x2;
 
-   if(branch_to != -1) {
-      printf("branching to %08x\n", branch_to);
-      PC = branch_to;
-   }
+                        // When overclock is enabled, remove code cache fetch latency
+                        if (!psx_cpu_overclock)
+                           gtimestamp += 3;
+
+                        switch(PC & 0xC)
+                        {
+                           case 0x0:
+                              if (!psx_cpu_overclock)
+                                 gtimestamp++;
+                              ICI[0x00].TV &= ~0x2;
+                              ICI[0x00].Data = LoadU32_LE(&FMP[0]);
+                           case 0x4:
+                              if (!psx_cpu_overclock)
+                                 gtimestamp++;
+                              ICI[0x01].TV &= ~0x2;
+                              ICI[0x01].Data = LoadU32_LE(&FMP[1]);
+                           case 0x8:
+                              if (!psx_cpu_overclock)
+                                 gtimestamp++;
+                              ICI[0x02].TV &= ~0x2;
+                              ICI[0x02].Data = LoadU32_LE(&FMP[2]);
+                           case 0xC:
+                              if (!psx_cpu_overclock)
+                                 gtimestamp++;
+                              ICI[0x03].TV &= ~0x2;
+                              ICI[0x03].Data = LoadU32_LE(&FMP[3]);
+                              break;
+                        }
+                        instr = ICache[(PC & 0xFFC) >> 2].Data;
+                     }
+                  }
+
+                  if(ReadAbsorb[ReadAbsorbWhich])
+                     ReadAbsorb[ReadAbsorbWhich]--;
+                  else
+                     gtimestamp++;
+
+                  call_timestamp_inc(func, gtimestamp - startstamp);
+                  gtimestamp = startstamp;
+
+                  if(branched) {
+                     did_delay = true;
+                     branched = false;
+                  }
+
+                  if(!decompile(func, PC, instr, branched)) {
+                     printf("[CPU] Unknown instruction @%08x = %08x, op=%02x, funct=%02x", PC, instr, instr >> 26, (instr & 0x3F));
+                     exit(0); // XXX: Handle this properly...
+                  }
+
+                  assert(!branched || (!did_delay && branched)); // No branch in branch delay slot...
+
+                  PC += 4;
+            }
+
+            printf("ended at %08x\n", PC);
+
+            block = compile_function(func);
+            BlockCache[initPC] = block;
+         } else if(lastblock_PC == initPC)
+            block = lastblock;
+         else
+            block = BlockCache[initPC];
+
+         lastblock = block;
+         lastblock_PC = initPC;
+
+         gtimestamp = timestamp_in;
+
+         branch_to = -1;
+
+         //if(initPC == 0xBFC00250)
+         //   printf("%08x %08x\n", GPR[10], GPR[11]);
+
+         uint32_t state[36];
+         memcpy(state, GPR, 4*32);
+         printf("BEFORE %08x %08x\n", GPR[10], state[10]);
+         state[32] = initPC;
+         state[33] = HI;
+         state[34] = LO;
+         state[35] = GPR[32]; // Fake for loads
+         
+         block(
+            state, ReadAbsorb, &ReadAbsorbWhich, &ReadFudge, 
+            &LDWhich, &LDValue, &LDAbsorb
+         );
+
+         assert(state[0] == 0); // Sanity check R0 == 0
+         memcpy(GPR, state, 4*32);
+         printf("AFTER %08x %08x\n", GPR[10], state[10]);
+         PC = state[32] + 4; // We don't set PC after instructions
+         HI = state[33];
+         LO = state[34];
+         GPR[32] = state[35];
+
+         if(branch_to != -1) {
+            PC = branch_to;
+         }
+      }
+   } while(MDFN_LIKELY(PSX_EventHandler(gtimestamp)));
+
+   printf("returning...\n");
 
    if(gte_ts_done > 0)
       gte_ts_done -= gtimestamp;

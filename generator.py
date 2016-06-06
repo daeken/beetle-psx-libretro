@@ -358,6 +358,7 @@ def genDecomp((name, type, dasm, dag)):
 		code += depres
 
 	code += [('do_lds', 'func')]
+	code += [('INSNLOG', name)]
 
 	def subgen(dag):
 		if isinstance(dag, str) or isinstance(dag, unicode):

@@ -46,7 +46,7 @@ void do_lds(jit_function_t func) {
 	WRA(ldw, jit_insn_load(func, LDAbsorb));
 	STORE(ReadFudge, CAST(ldw, jit_type_ubyte));
 	STORE(ReadAbsorbWhich, CAST(jit_insn_or(func, LOAD(ReadAbsorbWhich, jit_type_ubyte), jit_insn_and(func, ldw, make_uint(0x1F))), jit_type_ubyte));
-	STORE(LDWhich, make_uint(34));
+	STORE(LDWhich, make_uint(35));
 }
 
 void defer_set(jit_function_t func, int reg, jit_value_t val) {
@@ -167,9 +167,9 @@ void init_decompiler() {
 	params[1] = jit_type_create_pointer(jit_type_ubyte, 0); // ReadAbsorb
 	params[2] = jit_type_create_pointer(jit_type_ubyte, 0); // ReadAbsorbWhich
 	params[3] = jit_type_create_pointer(jit_type_ubyte, 0); // ReadFudge
-	params[4] = jit_type_create_pointer(jit_type_ubyte, 0); // LDWhich
+	params[4] = jit_type_create_pointer(jit_type_uint, 0); // LDWhich
 	params[5] = jit_type_create_pointer(jit_type_uint, 0); // LDValue
-	params[6] = jit_type_create_pointer(jit_type_ubyte, 0); // LDAbsorb
+	params[6] = jit_type_create_pointer(jit_type_uint, 0); // LDAbsorb
 	block_sig = jit_type_create_signature(jit_abi_cdecl, jit_type_void, params, 7, 1);
 }
 
@@ -185,8 +185,11 @@ jit_function_t create_function() {
 	return func;
 }
 
-void compile_function(jit_function_t func) {
+block_t compile_function(jit_function_t func) {
 	jit_function_compile(func);
 	jit_context_build_end(context);
-	//jit_dump_function(stdout, func, "block");
+	jit_dump_function(stdout, func, "block");
+	return (block_t) jit_function_to_closure(func);
 }
+
+#define INSNLOG(name) printf(#name "\n")
