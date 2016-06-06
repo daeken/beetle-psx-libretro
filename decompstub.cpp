@@ -83,10 +83,15 @@ jit_value_t call_copfun(jit_function_t func, int cop, int cofun) {
 
 int32_t signext(int size, uint32_t imm) {
 	if(size == 8)
-		return (int32_t) ((int8_t) ((uint8_t) imm));
+		return (int8_t) ((uint8_t) imm);
 	else if(size == 16)
-		return (int32_t) ((int16_t) ((uint16_t) imm));
-	return (int32_t) imm;
+		return (int16_t) ((uint16_t) imm);
+	else if(size == 32)
+		return (int32_t) imm;
+	else if(imm & (1 << (size - 1)))
+		return (int32_t) imm - (1 << size);
+	else
+		return (int32_t) imm;
 }
 
 jit_value_t call_signext(jit_function_t func, int size, jit_value_t val) {
@@ -168,5 +173,5 @@ jit_function_t create_function() {
 void compile_function(jit_function_t func) {
 	jit_function_compile(func);
 	jit_context_build_end(context);
-	//jit_dump_function(stdout, func, "block");
+	jit_dump_function(stdout, func, "block");
 }

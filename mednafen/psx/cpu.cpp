@@ -620,7 +620,7 @@ int32_t PS_CPU::RunReal(int32_t timestamp_in)
    jit_function_apply(func, args, NULL);
    assert(state[0] == 0); // Sanity check R0 == 0
    memcpy(GPR, state, 4*32);
-   PC = state[32];
+   PC = state[32] + 4; // We don't set PC after instructions
    HI = state[33];
    LO = state[34];
 
