@@ -786,6 +786,10 @@ int32_t PS_CPU::RunReal(int32_t timestamp_in)
 
          if(branch_to != -1)
             PC = branch_to;
+
+         if(IPCache != 0 && (CP0.SR & 1) != 0) {
+            PC = Exception(EXCEPTION_INT, PC, PC, 0xFF, 0);
+         }
       }
    } while(MDFN_LIKELY(PSX_EventHandler(gtimestamp)));
 
