@@ -302,16 +302,32 @@ def LW : IType<0b100011, "lw %$rt, $offset(%$rs)",
 		(defer_set (gpr $rt), (load 32, (unsigned (add (gpr $rs), $offset)))))
 >;
 
-/* STUBS
 def LWL : IType<0b100010, "lwl %$rt, $offset(%$rs)", 
-	(let $offset, (signext 16, $imm), 
-		(set (gpr $rt), 0))
+	(let $simm, (signext 16, $imm), 
+		(rlet $offset, (add (gpr $rs), $simm), 
+			(rlet $bottom, (and $offset, 0x3), 
+				(rlet $moffset, (and $offset, 0xFFFFFFFC), 
+					(if (eq $bottom, 0), 
+						(defer_set (gpr $rt), (or (and (gpr $rt), 0x00FFFFFF), (shl (load 8, $moffset), 24))), 
+						(if (eq $bottom, 1), 
+							(defer_set (gpr $rt), (or (and (gpr $rt), 0x0000FFFF), (shl (load 16, $moffset), 16))), 
+							(if (eq $bottom, 2), 
+								(defer_set (gpr $rt), (or (and (gpr $rt), 0x000000FF), (shl (load 24, $moffset), 8))), 
+								(defer_set (gpr $rt), (load 32, $moffset)))))))))
 >;
 def LWR : IType<0b100110, "lwr %$rt, $offset(%$rs)", 
-	(let $offset, (signext 16, $imm), 
-		(set (gpr $rt), 0))
+	(let $simm, (signext 16, $imm), 
+		(rlet $offset, (add (gpr $rs), $simm), 
+			(rlet $bottom, (and $offset, 0x3), 
+				(if (eq $bottom, 0), 
+					(defer_set (gpr $rt), (load 32, $offset)), 
+					(if (eq $bottom, 1), 
+						(defer_set (gpr $rt), (or (and (gpr $rt), 0xFF000000), (load 24, $offset))), 
+						(if (eq $bottom, 2), 
+							(defer_set (gpr $rt), (or (and (gpr $rt), 0xFFFF0000), (load 16, $offset))), 
+							(defer_set (gpr $rt), (or (and (gpr $rt), 0xFFFFFF00), (load 8, $offset)))))))))
 >;
-*/
+
 defm MFCz : CFDef<0b010000, 0b00000, "mfc$cop %$rt, $rd", 
 	(defer_set (gpr $rt), (copreg $cop, $rd))
 >;
@@ -429,8 +445,32 @@ def SW : IType<0b101011, "sw %$rt, $offset(%$rs)",
 >;
 
 // XXX: SWCz instruction
-// XXX: SWL instruction
-// XXX: SWR instruction
+
+def SWL : IType<0b101010, "swl %$rt, $offset(%$rs)", 
+	(let $simm, (signext 16, $imm), 
+		(rlet $offset, (add (gpr $rs), $simm), 
+			(rlet $bottom, (and $offset, 0x3), 
+				(rlet $moffset, (and $offset, 0xFFFFFFFC), 
+					(if (eq $bottom, 0), 
+						(store 8, $moffset, (shrl (gpr $rt), 24)), 
+						(if (eq $bottom, 1), 
+							(store 16, $moffset, (shrl (gpr $rt), 16)), 
+							(if (eq $bottom, 2), 
+								(store 24, $moffset, (shrl (gpr $rt), 8)), 
+								(store 32, $moffset, (gpr $rt)))))))))
+>;
+def SWR : IType<0b101110, "swr %$rt, $offset(%$rs)", 
+	(let $simm, (signext 16, $imm), 
+		(rlet $offset, (add (gpr $rs), $simm), 
+			(rlet $bottom, (and $offset, 0x3), 
+				(if (eq $bottom, 0), 
+					(store 32, $offset, (gpr $rt)), 
+					(if (eq $bottom, 1), 
+						(store 24, $offset, (gpr $rt)), 
+						(if (eq $bottom, 2), 
+							(store 16, $offset, (gpr $rt)), 
+							(store 8, $offset, (gpr $rt))))))))
+>;
 
 def SYSCALL : SType<0b001100, "syscall $code", 
 	(syscall $code, $pc, $inst)

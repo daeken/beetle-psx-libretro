@@ -98,7 +98,7 @@ def output(expr, top=True):
 	elif op == 'index':
 		return '(%s)[%s]' % (output(expr[1], top=False), output(expr[2], top=False))
 	elif op == 'emit':
-		return '\n'.join(flatten(emitter(expr[1])))
+		return '\n'.join(flatten(_emitter(expr[1])))
 	elif op in gops:
 		return output(gops[op](*expr[1:]))
 	elif op == 'zeroext':
@@ -223,17 +223,29 @@ def tempname():
 	temp_i += 1
 	return 'temp_%i' % temp_i
 
-def to_val(val):
-	if val.startswith('jit_') or val.startswith('call_') or val.split('(')[0] in ('RGPR', 'WGPR', 'RPC', 'WPC', 'RHI', 'WHI', 'RLO', 'WLO'):
-		return val
-	return 'make_uint(%s)' % val
+def _emitter(sexp, storing=False, locals=None):
+	def emitter(sexp, _storing=False, _locals=None):
+		return _emitter(sexp, storing=storing or _storing, locals=locals if _locals is None else _locals)
+	def to_val(val):
+		if val.startswith('jit_') or val.startswith('call_') or val.split('(')[0] in ('RGPR', 'WGPR', 'RPC', 'WPC', 'RHI', 'WHI', 'RLO', 'WLO'):
+			return val
+		elif val in locals:
+			return val
+		return 'make_uint(%s)' % val
 
-def emitter(sexp, storing=False):
+	locals = [] if locals is None else locals
 	if isinstance(sexp, list):
 		if len(sexp) == 1:
 			sexp = sexp[0]
 		else:
-			return '/* Unhandled list */'
+			_, lvalue, rvalue = sexp[0]
+			lvalue = emitter(lvalue)
+			vdef = ['jit_value_t %s = %s;' % (lvalue, emitter(rvalue))]
+			sub = emitter(sexp[1], _locals=locals + [lvalue])
+			if isinstance(sub, list):
+				return vdef + sub
+			else:
+				return vdef + [sub]
 
 	if isinstance(sexp, str) or isinstance(sexp, unicode):
 		return sexp.replace('$', '')
@@ -285,7 +297,7 @@ def emitter(sexp, storing=False):
 	elif op == 'copfun':
 		return 'call_copfun(func, %s, %s, %s);' % (emitter(sexp[1]), emitter(sexp[2]), emitter(sexp[3]))
 	elif op == 'emit':
-		return emitter(sexp[1], storing=storing)
+		return emitter(sexp[1], _storing=storing)
 	elif op == 'store':
 		return 'call_store_memory(func, %i, %s, %s);' % (sexp[1], to_val(emitter(sexp[2])), to_val(emitter(sexp[3])))
 	elif op == 'load':
@@ -316,13 +328,13 @@ def emitter(sexp, storing=False):
 		else:
 			return 'call_overflow(func, %s, %s, -1);' % (to_val(emitter(sexp[1][1])), to_val(emitter(sexp[1][2])))
 	elif op == 'zeroext':
-		return emitter(sexp[2], storing=storing)
+		return emitter(sexp[2])
 	elif op == 'signext':
-		return 'call_signext(func, %i, %s)' % (sexp[1], emitter(sexp[2], storing=storing))
+		return 'call_signext(func, %i, %s)' % (sexp[1], emitter(sexp[2]))
 	elif op in eops:
-		return emitter(eops[op](*sexp[1:]), storing=storing)
+		return emitter(eops[op](*sexp[1:]))
 	elif op.startswith('jit_'):
-		return '%s(func, %s)' % (op, ', '.join([to_val(emitter(x, storing=storing)) for x in sexp[1:]]))
+		return '%s(func, %s)' % (op, ', '.join([to_val(emitter(x)) for x in sexp[1:]]))
 	else:
 		print 'Unknown', sexp
 	return ''

@@ -379,7 +379,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					DEP(rs);
 					DEP(rt);
 					do_lds(func);
-					/* Unhandled list */
+					jit_value_t _t = jit_insn_mul(func, RGPR(rs), RGPR(rt));
+					WLO(jit_insn_and(func, _t, make_uint(0xffffffff)))
 					return(true);
 					break;
 				}
@@ -391,7 +392,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					DEP(rs);
 					DEP(rt);
 					do_lds(func);
-					/* Unhandled list */
+					jit_value_t _t = jit_insn_mul(func, RGPR(rs), RGPR(rt));
+					WLO(jit_insn_and(func, _t, make_uint(0xffffffff)))
 					return(true);
 					break;
 				}
@@ -1731,6 +1733,53 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 			return(true);
 			break;
 		}
+		case 0x22: {
+			/* LWL */
+			WPC(make_uint(pc));
+			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
+			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
+			uint32_t imm = (inst) & (0xffff);
+			DEP(rs);
+			DEP(rt);
+			do_lds(func);
+			uint32_t simm = signext(0x10, imm);
+			jit_value_t offset = jit_insn_add(func, RGPR(rs), make_uint(simm));
+			jit_value_t bottom = jit_insn_and(func, offset, make_uint(0x3));
+			jit_value_t moffset = jit_insn_and(func, offset, make_uint(0xfffffffc));
+			jit_label_t temp_9 = jit_label_undefined, temp_10 = jit_label_undefined;
+			jit_insn_branch_if(func, jit_insn_eq(func, bottom, make_uint(0x0)), &temp_9);
+			jit_label_t temp_11 = jit_label_undefined;
+			jit_insn_branch_if_not(func, jit_insn_ne(func, make_uint(rt), make_uint(0x0)), &temp_11);
+			defer_set(func, rt, jit_insn_or(func, jit_insn_and(func, RGPR(rt), make_uint(0xffffff)), jit_insn_shl(func, call_load_memory(func, 8, moffset), make_uint(0x18))));
+			jit_insn_label(func, &temp_11);
+			jit_insn_branch(func, &temp_10);
+			jit_insn_label(func, &temp_9);
+			jit_label_t temp_12 = jit_label_undefined, temp_13 = jit_label_undefined;
+			jit_insn_branch_if(func, jit_insn_eq(func, bottom, make_uint(0x1)), &temp_12);
+			jit_label_t temp_14 = jit_label_undefined;
+			jit_insn_branch_if_not(func, jit_insn_ne(func, make_uint(rt), make_uint(0x0)), &temp_14);
+			defer_set(func, rt, jit_insn_or(func, jit_insn_and(func, RGPR(rt), make_uint(0xffff)), jit_insn_shl(func, call_load_memory(func, 16, moffset), make_uint(0x10))));
+			jit_insn_label(func, &temp_14);
+			jit_insn_branch(func, &temp_13);
+			jit_insn_label(func, &temp_12);
+			jit_label_t temp_15 = jit_label_undefined, temp_16 = jit_label_undefined;
+			jit_insn_branch_if(func, jit_insn_eq(func, bottom, make_uint(0x2)), &temp_15);
+			jit_label_t temp_17 = jit_label_undefined;
+			jit_insn_branch_if_not(func, jit_insn_ne(func, make_uint(rt), make_uint(0x0)), &temp_17);
+			defer_set(func, rt, jit_insn_or(func, jit_insn_and(func, RGPR(rt), make_uint(0xff)), jit_insn_shl(func, call_load_memory(func, 24, moffset), make_uint(0x8))));
+			jit_insn_label(func, &temp_17);
+			jit_insn_branch(func, &temp_16);
+			jit_insn_label(func, &temp_15);
+			jit_label_t temp_18 = jit_label_undefined;
+			jit_insn_branch_if_not(func, jit_insn_ne(func, make_uint(rt), make_uint(0x0)), &temp_18);
+			defer_set(func, rt, call_load_memory(func, 32, moffset));
+			jit_insn_label(func, &temp_18);
+			jit_insn_label(func, &temp_16);
+			jit_insn_label(func, &temp_13);
+			jit_insn_label(func, &temp_10);
+			return(true);
+			break;
+		}
 		case 0x23: {
 			/* LW */
 			WPC(make_uint(pc));
@@ -1773,6 +1822,52 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 			return(true);
 			break;
 		}
+		case 0x26: {
+			/* LWR */
+			WPC(make_uint(pc));
+			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
+			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
+			uint32_t imm = (inst) & (0xffff);
+			DEP(rs);
+			DEP(rt);
+			do_lds(func);
+			uint32_t simm = signext(0x10, imm);
+			jit_value_t offset = jit_insn_add(func, RGPR(rs), make_uint(simm));
+			jit_value_t bottom = jit_insn_and(func, offset, make_uint(0x3));
+			jit_label_t temp_19 = jit_label_undefined, temp_20 = jit_label_undefined;
+			jit_insn_branch_if(func, jit_insn_eq(func, bottom, make_uint(0x0)), &temp_19);
+			jit_label_t temp_21 = jit_label_undefined;
+			jit_insn_branch_if_not(func, jit_insn_ne(func, make_uint(rt), make_uint(0x0)), &temp_21);
+			defer_set(func, rt, call_load_memory(func, 32, offset));
+			jit_insn_label(func, &temp_21);
+			jit_insn_branch(func, &temp_20);
+			jit_insn_label(func, &temp_19);
+			jit_label_t temp_22 = jit_label_undefined, temp_23 = jit_label_undefined;
+			jit_insn_branch_if(func, jit_insn_eq(func, bottom, make_uint(0x1)), &temp_22);
+			jit_label_t temp_24 = jit_label_undefined;
+			jit_insn_branch_if_not(func, jit_insn_ne(func, make_uint(rt), make_uint(0x0)), &temp_24);
+			defer_set(func, rt, jit_insn_or(func, jit_insn_and(func, RGPR(rt), make_uint(0xff000000)), call_load_memory(func, 24, offset)));
+			jit_insn_label(func, &temp_24);
+			jit_insn_branch(func, &temp_23);
+			jit_insn_label(func, &temp_22);
+			jit_label_t temp_25 = jit_label_undefined, temp_26 = jit_label_undefined;
+			jit_insn_branch_if(func, jit_insn_eq(func, bottom, make_uint(0x2)), &temp_25);
+			jit_label_t temp_27 = jit_label_undefined;
+			jit_insn_branch_if_not(func, jit_insn_ne(func, make_uint(rt), make_uint(0x0)), &temp_27);
+			defer_set(func, rt, jit_insn_or(func, jit_insn_and(func, RGPR(rt), make_uint(0xffff0000)), call_load_memory(func, 16, offset)));
+			jit_insn_label(func, &temp_27);
+			jit_insn_branch(func, &temp_26);
+			jit_insn_label(func, &temp_25);
+			jit_label_t temp_28 = jit_label_undefined;
+			jit_insn_branch_if_not(func, jit_insn_ne(func, make_uint(rt), make_uint(0x0)), &temp_28);
+			defer_set(func, rt, jit_insn_or(func, jit_insn_and(func, RGPR(rt), make_uint(0xffffff00)), call_load_memory(func, 8, offset)));
+			jit_insn_label(func, &temp_28);
+			jit_insn_label(func, &temp_26);
+			jit_insn_label(func, &temp_23);
+			jit_insn_label(func, &temp_20);
+			return(true);
+			break;
+		}
 		case 0x28: {
 			/* SB */
 			WPC(make_uint(pc));
@@ -1801,6 +1896,41 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 			return(true);
 			break;
 		}
+		case 0x2a: {
+			/* SWL */
+			WPC(make_uint(pc));
+			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
+			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
+			uint32_t imm = (inst) & (0xffff);
+			DEP(rs);
+			DEP(rt);
+			do_lds(func);
+			uint32_t simm = signext(0x10, imm);
+			jit_value_t offset = jit_insn_add(func, RGPR(rs), make_uint(simm));
+			jit_value_t bottom = jit_insn_and(func, offset, make_uint(0x3));
+			jit_value_t moffset = jit_insn_and(func, offset, make_uint(0xfffffffc));
+			jit_label_t temp_29 = jit_label_undefined, temp_30 = jit_label_undefined;
+			jit_insn_branch_if(func, jit_insn_eq(func, bottom, make_uint(0x0)), &temp_29);
+			call_store_memory(func, 8, moffset, jit_insn_ushr(func, RGPR(rt), make_uint(0x18)));
+			jit_insn_branch(func, &temp_30);
+			jit_insn_label(func, &temp_29);
+			jit_label_t temp_31 = jit_label_undefined, temp_32 = jit_label_undefined;
+			jit_insn_branch_if(func, jit_insn_eq(func, bottom, make_uint(0x1)), &temp_31);
+			call_store_memory(func, 16, moffset, jit_insn_ushr(func, RGPR(rt), make_uint(0x10)));
+			jit_insn_branch(func, &temp_32);
+			jit_insn_label(func, &temp_31);
+			jit_label_t temp_33 = jit_label_undefined, temp_34 = jit_label_undefined;
+			jit_insn_branch_if(func, jit_insn_eq(func, bottom, make_uint(0x2)), &temp_33);
+			call_store_memory(func, 24, moffset, jit_insn_ushr(func, RGPR(rt), make_uint(0x8)));
+			jit_insn_branch(func, &temp_34);
+			jit_insn_label(func, &temp_33);
+			call_store_memory(func, 32, moffset, RGPR(rt));
+			jit_insn_label(func, &temp_34);
+			jit_insn_label(func, &temp_32);
+			jit_insn_label(func, &temp_30);
+			return(true);
+			break;
+		}
 		case 0x2b: {
 			/* SW */
 			WPC(make_uint(pc));
@@ -1812,6 +1942,40 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 			do_lds(func);
 			uint32_t offset = signext(0x10, imm);
 			call_store_memory(func, 32, jit_insn_add(func, RGPR(rs), make_uint(offset)), RGPR(rt));
+			return(true);
+			break;
+		}
+		case 0x2e: {
+			/* SWR */
+			WPC(make_uint(pc));
+			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
+			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
+			uint32_t imm = (inst) & (0xffff);
+			DEP(rs);
+			DEP(rt);
+			do_lds(func);
+			uint32_t simm = signext(0x10, imm);
+			jit_value_t offset = jit_insn_add(func, RGPR(rs), make_uint(simm));
+			jit_value_t bottom = jit_insn_and(func, offset, make_uint(0x3));
+			jit_label_t temp_35 = jit_label_undefined, temp_36 = jit_label_undefined;
+			jit_insn_branch_if(func, jit_insn_eq(func, bottom, make_uint(0x0)), &temp_35);
+			call_store_memory(func, 32, offset, RGPR(rt));
+			jit_insn_branch(func, &temp_36);
+			jit_insn_label(func, &temp_35);
+			jit_label_t temp_37 = jit_label_undefined, temp_38 = jit_label_undefined;
+			jit_insn_branch_if(func, jit_insn_eq(func, bottom, make_uint(0x1)), &temp_37);
+			call_store_memory(func, 24, offset, RGPR(rt));
+			jit_insn_branch(func, &temp_38);
+			jit_insn_label(func, &temp_37);
+			jit_label_t temp_39 = jit_label_undefined, temp_40 = jit_label_undefined;
+			jit_insn_branch_if(func, jit_insn_eq(func, bottom, make_uint(0x2)), &temp_39);
+			call_store_memory(func, 16, offset, RGPR(rt));
+			jit_insn_branch(func, &temp_40);
+			jit_insn_label(func, &temp_39);
+			call_store_memory(func, 8, offset, RGPR(rt));
+			jit_insn_label(func, &temp_40);
+			jit_insn_label(func, &temp_38);
+			jit_insn_label(func, &temp_36);
 			return(true);
 			break;
 		}

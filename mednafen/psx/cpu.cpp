@@ -291,11 +291,13 @@ uint32_t load_memory(int size, uint32_t ptr) {
          val = (uint32_t) cpu->ReadMemory<uint8_t>(ptr);
       case 16:
          val = (uint32_t) cpu->ReadMemory<uint16_t>(ptr);
+      case 24:
+         val = (uint32_t) cpu->ReadMemory<uint32_t>(ptr, true);
       default:
          val = cpu->ReadMemory<uint32_t>(ptr);
    }
-   if(ptr == 0x1f801814)
-      printf("Reading %i bits at %08x <-- %08x\n", size, ptr, val);
+   //if(ptr == 0x1f801814)
+   //   printf("Reading %i bits at %08x <-- %08x\n", size, ptr, val);
    return val;
 }
 
@@ -348,9 +350,9 @@ INLINE T PS_CPU::ReadMemory(uint32_t address, bool DS24, bool LWC_timing)
 }
 
 void store_memory(int size, uint32_t ptr, uint32_t val) {
-   if(ptr >= 0x1f801800 && ptr <= 0x1f801900) {
+   /*if(ptr >= 0x1f801800 && ptr <= 0x1f801900) {
       printf("Storing %i bits at %08x --> %08x\n", size, ptr, val);
-   }
+   }*/
    switch(size) {
       case 8:
          cpu->WriteMemory<uint8_t>(ptr, val);
@@ -358,6 +360,8 @@ void store_memory(int size, uint32_t ptr, uint32_t val) {
       case 16:
          cpu->WriteMemory<uint16_t>(ptr, val);
          break;
+      case 24:
+         cpu->WriteMemory<uint32_t>(ptr, val, true);
       case 32:
          cpu->WriteMemory<uint32_t>(ptr, val);
          break;
@@ -710,7 +714,7 @@ int32_t PS_CPU::RunReal(int32_t timestamp_in)
                      exit(0); // XXX: Handle this properly...
                   }
 
-                  call_step(func, PC);
+                  //call_step(func, PC);
 
                   assert(!branched || (!did_delay && branched)); // No branch in branch delay slot...
 
