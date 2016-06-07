@@ -1055,7 +1055,6 @@ void PS_GPU::Write(const int32_t timestamp, uint32_t A, uint32_t V)
          case 0x08:
             //printf("\n\nDISPLAYMODE SET: 0x%02x, %u *************************\n\n\n", V & 0xFF, scanline);
             DisplayMode = V & 0xFF;
-            DisplayMode &= ~(1 << 4);
             UpdateDisplayMode();
             break;
 
