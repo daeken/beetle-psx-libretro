@@ -295,8 +295,8 @@ uint32_t load_memory(int size, uint32_t ptr) {
       default:
          val = cpu->ReadMemory<uint32_t>(ptr);
    }
-   //if(ptr == 0x800ea915)
-   //   printf("Reading %i bits at %08x <-- %08x\n", size, ptr, val);
+   if(ptr >= 0x1F801800 && ptr <= 0x1F801804)
+      printf("Reading %i bits at %08x <-- %08x\n", size, ptr, val);
    return val;
 }
 
@@ -349,9 +349,9 @@ INLINE T PS_CPU::ReadMemory(uint32_t address, bool DS24, bool LWC_timing)
 }
 
 void store_memory(int size, uint32_t ptr, uint32_t val, uint32_t pc) {
-   /*if(ptr == 0x800ea915) {
+   if(ptr >= 0x1F801800 && ptr <= 0x1F801804) {
       printf("Writing %i bits to %08x -> %08x @ %08x\n", size, ptr, val, pc);
-   }*/
+   }
    switch(size) {
       case 8:
          cpu->WriteMemory<uint8_t>(ptr, val);
@@ -505,10 +505,9 @@ void copfun0(int cofun, uint32_t inst) {
 }
 
 void copfun2(int cofun, uint32_t inst) {
-   uint32_t sub_op = (inst >> 21) & 0x1F;
-   assert(sub_op >= 0x10);
    if(gtimestamp < cpu->gte_ts_done)
       gtimestamp = cpu->gte_ts_done;
+   printf("Copfun2 %08x\n", cofun);
    cpu->gte_ts_done = gtimestamp + GTE_Instruction(inst);
 }
 
@@ -569,6 +568,7 @@ void write_copreg2(int reg, uint32_t val) {
    if(gtimestamp < cpu->gte_ts_done)
       gtimestamp = cpu->gte_ts_done;
 
+   printf("Copreg2 write 0x%x -> %08x\n", reg, val);
    GTE_WriteDR(reg, val);
 }
 
@@ -594,7 +594,9 @@ uint32_t read_copreg2(int reg) {
    } else
       cpu->LDAbsorb = 0;
 
-   return GTE_ReadDR(reg);
+   uint32_t val = GTE_ReadDR(reg);
+   printf("Copreg2 read 0x%x -> %08x\n", reg, val);
+   return val;
 }
 
 uint32_t read_copreg(int cop, int reg) {
@@ -655,7 +657,8 @@ int32_t PS_CPU::RunReal(int32_t timestamp_in)
          block_t block;
          //if(initPC != LastblockPC)
          //   printf("block %08x\n", initPC);
-         if(PC != LastblockPC && BlockCache.find(PC) == BlockCache.end()) {
+         map<uint32_t, block_t>::iterator iter;
+         if(PC != LastblockPC && (iter = BlockCache.find(PC)) == BlockCache.end()) {
             bool branched = false;
             bool no_delay = false;
             bool did_delay = false;
@@ -765,7 +768,7 @@ int32_t PS_CPU::RunReal(int32_t timestamp_in)
          } else if(LastblockPC == initPC)
             block = Lastblock;
          else
-            block = BlockCache[initPC];
+            block = iter->second;
 
          Lastblock = block;
          LastblockPC = initPC;
