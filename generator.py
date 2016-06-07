@@ -120,6 +120,8 @@ gops = {
 	'nor' : lambda a, b: ('~', ('|', a, b)), 
 	'xor' : lambda a, b: ('^', a, b), 
 	'mul' : lambda a, b: ('*', a, b),
+	'mul64' : lambda a, b: ('*', a, b),
+	'umul64' : lambda a, b: ('*', a, b),
 	'div' : lambda a, b: ('/', a, b), 
 	'mod' : lambda a, b: ('%', a, b), 
 	'shl' : lambda a, b: ('<<', a, b), 
@@ -142,6 +144,8 @@ eops = {
 	'nor' : lambda a, b: ('jit_insn_not', ('jit_insn_or', a, b)), 
 	'xor' : lambda a, b: ('jit_insn_xor', a, b), 
 	'mul' : lambda a, b: ('jit_insn_mul', a, b), # XXX: This needs to be a 64-bit mul!
+	'mul64' : lambda a, b: ('jit_insn_mul', ('cast-signed', 64, a), ('cast-signed', 64, b)),
+	'umul64' : lambda a, b: ('jit_insn_mul', ('cast', 64, a), ('cast', 64, b)),
 	'div' : lambda a, b: ('jit_insn_div', a, b), 
 	'mod' : lambda a, b: ('jit_insn_rem', a, b), 
 	'shl' : lambda a, b: ('jit_insn_shl', a, b), 
@@ -304,6 +308,18 @@ def _emitter(sexp, storing=False, locals=None):
 		return 'call_load_memory(func, %i, %s)' % (sexp[1], to_val(emitter(sexp[2])))
 	elif op == 'signed':
 		return 'jit_insn_convert(func, %s, jit_type_int, 0)' % (to_val(emitter(sexp[1])))
+	elif op == 'cast':
+		if sexp[1] == 32:
+			type = 'jit_type_uint'
+		elif sexp[1] == 64:
+			type = 'jit_type_ulong'
+		return 'jit_insn_convert(func, %s, %s, 0)' % (to_val(emitter(sexp[2])), type)
+	elif op == 'cast-signed':
+		if sexp[1] == 32:
+			type = 'jit_type_int'
+		elif sexp[1] == 64:
+			type = 'jit_type_long'
+		return 'jit_insn_convert(func, %s, %s, 0)' % (to_val(emitter(sexp[2])), type)
 	elif op == 'if':
 		temp = tempname()
 		end = tempname()
@@ -450,6 +466,8 @@ def genDecomp((name, type, dasm, dag)):
 			return [('emit', ('store', dag[1], subgen(dag[2]), subgen(dag[3])))]
 		elif op == 'copfun':
 			return [('emit', ('copfun', subgen(dag[1]), subgen(dag[2]), subgen(dag[3])))]
+		elif op == 'cast':
+			return [('cast', dag[1], subgen(dag[2]))]
 		else:
 			print 'Unknown op:', op
 			return []

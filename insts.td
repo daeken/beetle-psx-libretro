@@ -6,7 +6,9 @@ def and : DagOp;
 def or : DagOp;
 def nor : DagOp;
 def xor : DagOp;
-def mul : DagOp; // word * word -> dword
+def mul : DagOp; // word * word -> word
+def mul64 : DagOp; // word * word -> dword
+def umul64 : DagOp; // word * word -> dword
 def div : DagOp; // word / word -> word
 def mod : DagOp; // word % word -> word
 def shl : DagOp;
@@ -14,6 +16,7 @@ def shra : DagOp;
 def shrl : DagOp;
 def signext : DagOp;
 def zeroext : DagOp;
+def cast : DagOp;
 
 def eq : DagOp;
 def ge : DagOp;
@@ -353,15 +356,15 @@ def MTLO : RType<0b010011, "mtlo %$rd",
 >;
 
 def MULT : RType<0b011000, "mult %$rs, %$rt", 
-	(rlet $_t, (mul (gpr $rs), (gpr $rt)), 
-		(set (lo), (and $_t, 0xFFFFFFFF)), 
-		(set (hi), (shrl $_t, 32)))
+	(rlet $_t, (mul64 (gpr $rs), (gpr $rt)), 
+		(set (lo), (cast 32, $_t)), 
+		(set (hi), (cast 32, (shrl $_t, 32))))
 >;
 
 def MULTU : RType<0b011001, "multu %$rs, %$rt", 
-	(rlet $_t, (mul (unsigned (gpr $rs)), (unsigned (gpr $rt))), 
-		(set (lo), (and $_t, 0xFFFFFFFF)), 
-		(set (hi), (shrl $_t, 32)))
+	(rlet $_t, (umul64 (unsigned (gpr $rs)), (unsigned (gpr $rt))), 
+		(set (lo), (cast 32, $_t)), 
+		(set (hi), (cast 32, (shrl $_t, 32))))
 >;
 
 def NOR : RType<0b100111, "nor %$rd, %$rs, %$rt", 

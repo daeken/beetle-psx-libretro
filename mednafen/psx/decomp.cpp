@@ -379,8 +379,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					DEP(rs);
 					DEP(rt);
 					do_lds(func);
-					jit_value_t _t = jit_insn_mul(func, RGPR(rs), RGPR(rt));
-					WLO(jit_insn_and(func, _t, make_uint(0xffffffff)))
+					jit_value_t _t = jit_insn_mul(func, jit_insn_convert(func, RGPR(rs), jit_type_long, 0), jit_insn_convert(func, RGPR(rt), jit_type_long, 0));
+					WLO(jit_insn_convert(func, _t, jit_type_uint, 0))
 					return(true);
 					break;
 				}
@@ -392,8 +392,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					DEP(rs);
 					DEP(rt);
 					do_lds(func);
-					jit_value_t _t = jit_insn_mul(func, RGPR(rs), RGPR(rt));
-					WLO(jit_insn_and(func, _t, make_uint(0xffffffff)))
+					jit_value_t _t = jit_insn_mul(func, jit_insn_convert(func, RGPR(rs), jit_type_ulong, 0), jit_insn_convert(func, RGPR(rt), jit_type_ulong, 0));
+					WLO(jit_insn_convert(func, _t, jit_type_uint, 0))
 					return(true);
 					break;
 				}
