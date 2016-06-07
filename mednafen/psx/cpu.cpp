@@ -489,11 +489,14 @@ void branch(uint32_t target) {
 }
 
 void syscall(int code, uint32_t pc, uint32_t instr) {
+   printf("syscall at %08x\n", pc);
    branch(cpu->Exception(EXCEPTION_SYSCALL, pc, pc + 4, 0xFF, instr));
 }
 
 void copfun0(int cofun, uint32_t inst) {
    assert(cofun == 0x10);
+
+   printf("rfe\n");
 
    cpu->CP0.SR = (cpu->CP0.SR & ~0x0F) | ((cpu->CP0.SR >> 2) & 0x0F);
    cpu->RecalcIPCache();
@@ -660,6 +663,10 @@ int32_t PS_CPU::RunReal(int32_t timestamp_in)
 
    do {
       while(MDFN_LIKELY(gtimestamp < next_event_ts)) {
+         if(Halted) {
+            gtimestamp = next_event_ts;
+            break;
+         }
          uint32_t initPC = PC;
          block_t block;
          //if(initPC != LastblockPC)
@@ -795,6 +802,7 @@ int32_t PS_CPU::RunReal(int32_t timestamp_in)
             PC = branch_to;
 
          if(IPCache != 0 && (CP0.SR & 1) != 0) {
+            printf("irq at %08x\n", PC);
             PC = Exception(EXCEPTION_INT, PC, PC, 0xFF, 0);
          }
 
