@@ -303,7 +303,7 @@ def _emitter(sexp, storing=False, locals=None):
 	elif op == 'emit':
 		return emitter(sexp[1], _storing=storing)
 	elif op == 'store':
-		return 'call_store_memory(func, %i, %s, %s);' % (sexp[1], to_val(emitter(sexp[2])), to_val(emitter(sexp[3])))
+		return 'call_store_memory(func, %i, %s, %s, pc);' % (sexp[1], to_val(emitter(sexp[2])), to_val(emitter(sexp[3])))
 	elif op == 'load':
 		return 'call_load_memory(func, %i, %s)' % (sexp[1], to_val(emitter(sexp[2])))
 	elif op == 'signed':

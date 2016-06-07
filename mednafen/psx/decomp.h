@@ -23,7 +23,7 @@ void call_timestamp_inc(jit_function_t func, uint32_t amount);
 void timestamp_inc(int amt);
 
 uint32_t load_memory(int size, uint32_t ptr);
-void store_memory(int size, uint32_t ptr, uint32_t val);
+void store_memory(int size, uint32_t ptr, uint32_t val, uint32_t pc);
 
 void branch(uint32_t target);
 

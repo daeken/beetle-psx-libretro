@@ -289,14 +289,17 @@ uint32_t load_memory(int size, uint32_t ptr) {
    switch(size) {
       case 8:
          val = (uint32_t) cpu->ReadMemory<uint8_t>(ptr);
+         break;
       case 16:
          val = (uint32_t) cpu->ReadMemory<uint16_t>(ptr);
+         break;
       case 24:
-         val = (uint32_t) cpu->ReadMemory<uint32_t>(ptr, true);
+         val = cpu->ReadMemory<uint32_t>(ptr, true);
+         break;
       default:
          val = cpu->ReadMemory<uint32_t>(ptr);
    }
-   //if(ptr == 0x1f801814)
+   //if(ptr == 0x800ea915)
    //   printf("Reading %i bits at %08x <-- %08x\n", size, ptr, val);
    return val;
 }
@@ -349,9 +352,9 @@ INLINE T PS_CPU::ReadMemory(uint32_t address, bool DS24, bool LWC_timing)
    return(ret);
 }
 
-void store_memory(int size, uint32_t ptr, uint32_t val) {
-   /*if(ptr >= 0x1f801800 && ptr <= 0x1f801900) {
-      printf("Storing %i bits at %08x --> %08x\n", size, ptr, val);
+void store_memory(int size, uint32_t ptr, uint32_t val, uint32_t pc) {
+   /*if(ptr == 0x800ea915) {
+      printf("Writing %i bits to %08x -> %08x @ %08x\n", size, ptr, val, pc);
    }*/
    switch(size) {
       case 8:

@@ -404,16 +404,16 @@ def SLT : RType<0b101010, "slt %$rd, %$rs, %$rt",
 
 def SLTI : IType<0b001010, "slti %$rt, %$rs, $eimm", 
 	(let $eimm, (signext 16, $imm), 
-		(set (gpr $rt), (lt (unsigned (gpr $rs)), $eimm)))
+		(set (gpr $rt), (lt (signed (gpr $rs)), $eimm)))
 >;
 
 def SLTIU : IType<0b001011, "sltiu %$rt, %$rs, $eimm", 
-	(let $eimm, (unsigned (signext 16, $imm)), 
-		(set (gpr $rt), (lt (unsigned (gpr $rs)), $eimm)))
+	(let $eimm, (zeroext 16, $imm), 
+		(set (gpr $rt), (lt (gpr $rs), $eimm)))
 >;
 
 def SLTU : RType<0b101011, "sltu %$rd, %$rs, %$rt", 
-	(set (gpr $rd), (lt (unsigned (gpr $rs)), (unsigned (gpr $rt))))
+	(set (gpr $rd), (lt (gpr $rs), (gpr $rt)))
 >;
 
 def SRA : RType<0b000011, "sra %$rd, %$rt, $shamt", 

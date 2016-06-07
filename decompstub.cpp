@@ -35,7 +35,7 @@ jit_value_t _make_ubyte(jit_function_t func, uint32_t val) {
 #define DEP(gpr) do { if(gpr != 0) WRA(make_ubyte(gpr), make_ubyte(0)); } while(0)
 #define RES(gpr) do { if(gpr != 0) WRA(make_ubyte(gpr), make_ubyte(0)); } while(0)
 
-jit_type_t sig_1, sig_2, sig_3;
+jit_type_t sig_1, sig_2, sig_3, sig_4;
 jit_value_t state, ReadAbsorb, ReadAbsorbWhich, ReadFudge, LDWhich, LDValue, LDAbsorb;
 
 #define WRA(idx, val) jit_insn_store_relative(func, jit_insn_add(func, ReadAbsorb, idx), 0, (val))
@@ -54,9 +54,9 @@ void defer_set(jit_function_t func, int reg, jit_value_t val) {
 	STORE(LDValue, val);
 }
 
-void call_store_memory(jit_function_t func, int size, jit_value_t ptr, jit_value_t val) {
-	jit_value_t args[] = {make_uint(size), ptr, val};
-	jit_insn_call_native(func, 0, (void *) store_memory, sig_3, args, 3, 0);
+void call_store_memory(jit_function_t func, int size, jit_value_t ptr, jit_value_t val, uint32_t pc) {
+	jit_value_t args[] = {make_uint(size), ptr, val, make_uint(pc)};
+	jit_insn_call_native(func, 0, (void *) store_memory, sig_4, args, 4, 0);
 }
 
 jit_value_t call_load_memory(jit_function_t func, int size, jit_value_t ptr) {
@@ -152,6 +152,13 @@ void init_decompiler() {
 	context = jit_context_create();
 	jit_context_build_start(context);
 
+	jit_type_t s4params[4];
+	s4params[0] = jit_type_uint;
+	s4params[1] = jit_type_uint;
+	s4params[2] = jit_type_uint;
+	s4params[3] = jit_type_uint;
+	sig_4 = jit_type_create_signature(jit_abi_cdecl, jit_type_uint, s4params, 4, 1);
+	
 	jit_type_t s3params[3];
 	s3params[0] = jit_type_uint;
 	s3params[1] = jit_type_uint;
