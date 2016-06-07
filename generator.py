@@ -302,6 +302,8 @@ def _emitter(sexp, storing=False, locals=None):
 		return 'call_store_memory(func, %i, %s, %s);' % (sexp[1], to_val(emitter(sexp[2])), to_val(emitter(sexp[3])))
 	elif op == 'load':
 		return 'call_load_memory(func, %i, %s)' % (sexp[1], to_val(emitter(sexp[2])))
+	elif op == 'signed':
+		return 'jit_insn_convert(func, %s, jit_type_int, 0)' % (to_val(emitter(sexp[1])))
 	elif op == 'if':
 		temp = tempname()
 		end = tempname()
@@ -428,7 +430,7 @@ def genDecomp((name, type, dasm, dag)):
 		elif op == 'unsigned':
 			return subgen(dag[1])
 		elif op == 'signed':
-			return subgen(dag[1])
+			return ('signed', subgen(dag[1]))
 		elif op == 'check_overflow':
 			return [('emit', ('overflow', subgen(dag[1])))]
 		elif op == 'raise':

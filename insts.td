@@ -240,8 +240,8 @@ defm CTCz : CFDef<0b010000, 0b00110, "ctc$cop %$rt, $rd",
 
 def DIV : RType<0b011010, "div %$rs, %$rt", 
 	(block
-		(set (lo), (div (gpr $rs), (gpr $rt))), 
-		(set (hi), (mod (gpr $rs), (gpr $rt))))
+		(set (lo), (div (signed (gpr $rs)), (signed (gpr $rt)))), 
+		(set (hi), (mod (signed (gpr $rs)), (signed (gpr $rt)))))
 >;
 
 def DIVU : RType<0b011011, "divu %$rs, %$rt", 
