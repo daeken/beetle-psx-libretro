@@ -587,8 +587,7 @@ uint32_t read_copreg2(int reg) {
    } else
       cpu->LDAbsorb = 0;
 
-   uint32_t val = GTE_ReadDR(reg);
-   return val;
+   return GTE_ReadDR(reg);
 }
 
 uint32_t read_copreg(int cop, int reg) {
@@ -611,14 +610,30 @@ void write_copcreg2(int reg, uint32_t val) {
 void write_copcreg(int cop, int reg, uint32_t val) {
    switch(cop) {
       case 2:
-         return write_copcreg2(reg, val);
+         write_copcreg2(reg, val);
+         break;
       default:
          printf("Invalid copcreg write to cop %i\n", cop);
    }
 }
 
+uint32_t read_copcreg2(int reg) {
+   if(gtimestamp < cpu->gte_ts_done) {
+      cpu->LDAbsorb = cpu->gte_ts_done - gtimestamp;
+      gtimestamp = cpu->gte_ts_done;
+   } else
+      cpu->LDAbsorb = 0;
+
+   return GTE_ReadCR(reg);
+}
+
 uint32_t read_copcreg(int cop, int reg) {
-   printf("COPCreg %i, %i\n", cop, reg);
+   switch(cop) {
+      case 2:
+         return read_copcreg2(reg);
+      default:
+         printf("Invalid copcreg read from cop %i\n", cop);
+   }
    return 0;
 }
 
