@@ -331,6 +331,11 @@ def LWR : IType<0b100110, "lwr %$rt, $offset(%$rs)",
 							(defer_set (gpr $rt), (or (and (gpr $rt), 0xFFFFFF00), (load 8, $offset)))))))))
 >;
 
+def LWC2: IType<0b110010, "lwc2 %$rt, $offset(%$rs)", 
+	(let $offset, (signext 16, $imm), 
+		(set (copreg 2, $rt), (load 32, (unsigned (add (gpr $rs), $offset)))))
+>;
+
 defm MFCz : CFDef<0b010000, 0b00000, "mfc$cop %$rt, $rd", 
 	(defer_set (gpr $rt), (copreg $cop, $rd))
 >;
@@ -447,7 +452,10 @@ def SW : IType<0b101011, "sw %$rt, $offset(%$rs)",
 		(store 32, (unsigned (add (gpr $rs), $offset)), (gpr $rt)))
 >;
 
-// XXX: SWCz instruction
+def SWC2: IType<0b111010, "swc2 %$rt, $offset(%$rs)", 
+	(let $offset, (signext 16, $imm), 
+		(store 32, (unsigned (add (gpr $rs), $offset)), (copreg 2, $rt)))
+>;
 
 def SWL : IType<0b101010, "swl %$rt, $offset(%$rs)", 
 	(let $simm, (signext 16, $imm), 

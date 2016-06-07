@@ -1986,6 +1986,32 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 			return(true);
 			break;
 		}
+		case 0x32: {
+			/* LWC2 */
+			WPC(make_uint(pc));
+			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
+			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
+			uint32_t imm = (inst) & (0xffff);
+			DEP(rs);
+			do_lds(func);
+			uint32_t offset = signext(0x10, imm);
+			call_write_copreg(func, 0x2, rt, call_load_memory(func, 32, jit_insn_add(func, RGPR(rs), make_uint(offset))));
+			return(true);
+			break;
+		}
+		case 0x3a: {
+			/* SWC2 */
+			WPC(make_uint(pc));
+			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
+			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
+			uint32_t imm = (inst) & (0xffff);
+			DEP(rs);
+			do_lds(func);
+			uint32_t offset = signext(0x10, imm);
+			call_store_memory(func, 32, jit_insn_add(func, RGPR(rs), make_uint(offset)), call_read_copreg(func, 0x2, rt), pc);
+			return(true);
+			break;
+		}
 	}
 	return false;
 }
