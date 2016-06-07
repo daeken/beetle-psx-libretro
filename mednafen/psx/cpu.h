@@ -76,9 +76,7 @@ class PS_CPU
 
       int StateAction(StateMem *sm, int load, int data_only);
 
-      uint32_t GPR[32 + 1];	// GPR[32] Used as dummy in load delay simulation(indexing past the end of real GPR)
-      uint32_t LO;
-      uint32_t HI;
+      uint32_t GPR[36];	// GPR[35] Used as dummy in load delay simulation(indexing past the end of real GPR)
 
 
       uint32_t BACKED_PC;

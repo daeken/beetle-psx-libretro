@@ -119,8 +119,6 @@ void PS_CPU::Power(void)
 
    memset(GPR, 0, sizeof(GPR));
    memset(&CP0, 0, sizeof(CP0));
-   LO = 0;
-   HI = 0;
 
    gte_ts_done = 0;
    muldiv_ts_done = 0;
@@ -162,9 +160,7 @@ int PS_CPU::StateAction(StateMem *sm, int load, int data_only)
 {
    SFORMAT StateRegs[] =
    {
-      SFARRAY32(GPR, 32),
-      SFVAR(LO),
-      SFVAR(HI),
+      SFARRAY32(GPR, 36),
       SFVAR(BACKED_PC),
       SFVAR(BACKED_new_PC),
       SFVAR(BACKED_new_PC_mask),
@@ -492,11 +488,6 @@ uint32_t PS_CPU::Exception(uint32_t code, uint32_t PC, const uint32 NP, const ui
 	BACKED_LDWhich = LDWhich;		\
 	BACKED_LDValue = LDValue;
 
-#define GPR_DEPRES_BEGIN { uint8_t back = ReadAbsorb[0];
-#define GPR_DEP(n) { unsigned tn = (n); ReadAbsorb[tn] = 0; }
-#define GPR_RES(n) { unsigned tn = (n); ReadAbsorb[tn] = 0; }
-#define GPR_DEPRES_END ReadAbsorb[0] = back; }
-
 volatile uint32_t branch_to;
 void branch(uint32_t target) {
    branch_to = target;
@@ -781,36 +772,17 @@ int32_t PS_CPU::RunReal(int32_t timestamp_in)
 
          branch_to = -1;
 
-         uint32_t state[36];
-         memcpy(state, GPR, 4*32);
-         state[32] = initPC;
-         state[33] = HI;
-         state[34] = LO;
-         state[35] = GPR[32]; // Fake for loads
-
+         GPR[32] = initPC;
+         
          block(
-            state, ReadAbsorb, &ReadAbsorbWhich, &ReadFudge, 
+            GPR, ReadAbsorb, &ReadAbsorbWhich, &ReadFudge, 
             &LDWhich, &LDValue, &LDAbsorb
          );
 
-         state[0] = 0;
-         memcpy(GPR, state, 4*32);
-         PC = state[32] + 4; // We don't set PC after instructions
-         HI = state[33];
-         LO = state[34];
-         GPR[32] = state[35];
-
-         /*if(initPC == 0x80059d84) {
-            printf("...\n");
-            for(int i = 0; i < 32; ++i) {
-               printf("$%i == %08x\n", i, state[i]);
-            }
-            exit(0);
-         }*/
+         PC = GPR[32] + 4; // We don't set PC after instructions
 
          if(branch_to != -1)
             PC = branch_to;
-         fflush(stdout);
       }
    } while(MDFN_LIKELY(PSX_EventHandler(gtimestamp)));
 
@@ -853,9 +825,9 @@ uint32_t PS_CPU::GetRegister(unsigned int which, char *special, const uint32_t s
       case GSREG_IN_BD_SLOT:
          return !(BACKED_new_PC_mask & 3);
       case GSREG_LO:
-         return LO;
+         return GPR[34];
       case GSREG_HI:
-         return HI;
+         return GPR[33];
       case GSREG_SR:
          return CP0.SR;
       case GSREG_CAUSE:
@@ -881,11 +853,11 @@ void PS_CPU::SetRegister(unsigned int which, uint32_t value)
          break;
 
       case GSREG_LO:
-         LO = value;
+         GPR[34] = value;
          break;
 
       case GSREG_HI:
-         HI = value;
+         GPR[33] = value;
          break;
 
       case GSREG_SR:
