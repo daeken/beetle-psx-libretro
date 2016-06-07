@@ -1055,6 +1055,7 @@ void PS_GPU::Write(const int32_t timestamp, uint32_t A, uint32_t V)
          case 0x08:
             //printf("\n\nDISPLAYMODE SET: 0x%02x, %u *************************\n\n\n", V & 0xFF, scanline);
             DisplayMode = V & 0xFF;
+            DisplayMode &= ~(1 << 4);
             UpdateDisplayMode();
             break;
 
@@ -1167,6 +1168,7 @@ uint32_t PS_GPU::Read(const int32_t timestamp, uint32_t A)
       ret |= DMAControl << 29;
 
       ret |= (DisplayFB_CurLineYReadout & 1) << 31;
+      //printf("curY %i\n", DisplayFB_CurLineYReadout);
 
       ret |= (!field) << 13;
 
@@ -1504,6 +1506,11 @@ int32_t PS_GPU::Update(const int32_t sys_timestamp)
                displayfb_yoffset = (DisplayFB_CurYOffset << 1) + (InVBlank ? 0 : field_ram_readout);
 
             DisplayFB_CurLineYReadout = (DisplayFB_YStart + displayfb_yoffset) & 0x1FF;
+            /*printf("updating curY: %i\n", DisplayFB_CurLineYReadout);
+            if(InVBlank)
+               printf("IN VBLANK\n");
+            else
+               printf("NOT IN VBLANK\n");*/
 
             unsigned dmw_width = 0;
             unsigned pix_clock_offset = 0;

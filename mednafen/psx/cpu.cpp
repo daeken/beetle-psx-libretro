@@ -503,8 +503,30 @@ void syscall(int code, uint32_t pc, uint32_t instr) {
    branch(cpu->Exception(EXCEPTION_SYSCALL, pc, pc + 4, 0xFF, instr));
 }
 
+void copfun0(int cofun, uint32_t inst) {
+   assert(cofun == 0x10);
+
+   cpu->CP0.SR = (cpu->CP0.SR & ~0x0F) | ((cpu->CP0.SR >> 2) & 0x0F);
+   cpu->RecalcIPCache();
+}
+
+void copfun2(int cofun, uint32_t inst) {
+   uint32_t sub_op = (inst >> 21) & 0x1F;
+   assert(sub_op >= 0x10);
+   if(gtimestamp < cpu->gte_ts_done)
+      gtimestamp = cpu->gte_ts_done;
+   cpu->gte_ts_done = gtimestamp + GTE_Instruction(inst);
+}
+
 void copfun(int cop, int cofun, uint32_t inst) {
-   printf("COPfun %i, %i, %08x\n", cop, cofun, inst);
+   switch(cop) {
+      case 0:
+         copfun0(cofun, inst);
+         break;
+      case 2:
+         copfun2(cofun, inst);
+         break;
+   }
 }
 
 void write_copreg0(int reg, uint32_t val) {
@@ -549,13 +571,20 @@ void write_copreg0(int reg, uint32_t val) {
    }
 }
 
+void write_copreg2(int reg, uint32_t val) {
+   if(gtimestamp < cpu->gte_ts_done)
+      gtimestamp = cpu->gte_ts_done;
+
+   GTE_WriteDR(reg, val);
+}
+
 void write_copreg(int cop, int reg, uint32_t val) {
-   printf("COPreg %i, %i, %08x\n", cop, reg, val);
    switch(cop) {
       case 0:
          write_copreg0(reg, val);
          break;
-      case 1:
+      case 2:
+         write_copreg2(reg, val);
          break;
    }
 }
@@ -575,7 +604,6 @@ uint32_t read_copreg2(int reg) {
 }
 
 uint32_t read_copreg(int cop, int reg) {
-   printf("COPreg %i, %i\n", cop, reg);
    switch(cop) {
       case 0:
          return read_copreg0(reg);
@@ -585,8 +613,20 @@ uint32_t read_copreg(int cop, int reg) {
    return 0;
 }
 
+void write_copcreg2(int reg, uint32_t val) {
+   if(gtimestamp < cpu->gte_ts_done)
+      gtimestamp = cpu->gte_ts_done;
+
+   GTE_WriteCR(reg, val);
+}
+
 void write_copcreg(int cop, int reg, uint32_t val) {
-   printf("COPCreg %i, %i, %08x\n", cop, reg, val);
+   switch(cop) {
+      case 2:
+         return write_copcreg2(reg, val);
+      default:
+         printf("Invalid copcreg write to cop %i\n", cop);
+   }
 }
 
 uint32_t read_copcreg(int cop, int reg) {
@@ -626,7 +666,7 @@ int32_t PS_CPU::RunReal(int32_t timestamp_in)
             bool no_delay = false;
             bool did_delay = false;
             jit_function_t func = create_function();
-            printf("recompiling %08x\n", PC);
+            //printf("recompiling %08x\n", PC);
             while(!did_delay) {
                   uint32_t instr;
                   uint32_t opf;
@@ -724,7 +764,7 @@ int32_t PS_CPU::RunReal(int32_t timestamp_in)
                   PC += 4;
             }
 
-            printf("ended at %08x\n", PC);
+            //printf("ended at %08x\n", PC);
 
             block = compile_function(func);
             BlockCache[initPC] = block;
