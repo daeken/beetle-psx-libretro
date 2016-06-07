@@ -1323,7 +1323,7 @@ void PS_CDC::Write(const int32_t timestamp, uint32 A, uint8 V)
          case 0x00:
             if(PendingCommandCounter > 0)
             {
-               PSX_WARNING("[CDC] WARNING: Interrupting command 0x%02x, phase=%d, timeleft=%d with command=0x%02x", PendingCommand, PendingCommandPhase,
+               printf("[CDC] WARNING: Interrupting command 0x%02x, phase=%d, timeleft=%d with command=0x%02x\n", PendingCommand, PendingCommandPhase,
                      PendingCommandCounter, V);
             }
 
@@ -2256,6 +2256,7 @@ int32 PS_CDC::Command_ID(const int arg_count, const uint8 *args)
 
 int32 PS_CDC::Command_ID_Part2(void)
 {
+   printf("Part 2\n");
    if(IsPSXDisc)
    {
       WriteResult(MakeStatus());
