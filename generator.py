@@ -233,7 +233,7 @@ def _emitter(sexp, storing=False, locals=None):
 	def to_val(val):
 		if val.startswith('jit_') or val.startswith('call_') or val.split('(')[0] in ('RGPR', 'WGPR', 'RPC', 'WPC', 'RHI', 'WHI', 'RLO', 'WLO'):
 			return val
-		elif val in locals:
+		elif '(' in val or val in locals:
 			return val
 		return 'make_uint(%s)' % val
 
@@ -354,6 +354,21 @@ def _emitter(sexp, storing=False, locals=None):
 		return emitter(sexp[2])
 	elif op == 'signext':
 		return 'call_signext(func, %i, %s)' % (sexp[1], emitter(sexp[2]))
+	elif op == 'muldiv_delay':
+		return 'call_muldiv_delay(func, %s, %s);' % (to_val(emitter(sexp[1])), to_val(emitter(sexp[2])))
+	elif op == 'read_absorb':
+		_else, _end = tempname(), tempname()
+		return [
+			'jit_label_t %s = jit_label_undefined, %s = jit_label_undefined;' % (_else, _end), 
+			'jit_insn_branch_if(func, %s, &%s);' % (emitter(('eq', 'LOAD(_ReadAbsorbWhich, jit_type_ubyte)', 0)), _else), 
+			'STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));', 
+			'jit_insn_branch(func, &%s);' % _end, 
+			'jit_insn_label(func, &%s);' % _else, 
+			'call_timestamp_inc(func, 1);', 
+			'jit_insn_label(func, &%s);' % _end
+		]
+	elif op == 'check_irq':
+		return 'call_check_irq(func, pc);'
 	elif op in eops:
 		return emitter(eops[op](*sexp[1:]))
 	elif op.startswith('jit_'):
@@ -382,7 +397,10 @@ def findDepres(dag):
 	return dep, res
 
 def genDecomp((name, type, dasm, dag)):
-	code = [('comment', name), ('emit', ('=', ('pc', ), '$pc'))]
+	code = [('comment', name)]
+	#code += [('emit', ('=', ('pc', ), '$pc'))]
+	#code += [('emit', ('check_irq', ))] # per-instruction irq checking
+	code += [('emit', ('read_absorb', ))]
 	vars = []
 	decoder(code, vars, type, dag)
 	has_branch = [False]
@@ -476,6 +494,10 @@ def genDecomp((name, type, dasm, dag)):
 			return [('emit', ('copfun', subgen(dag[1]), subgen(dag[2]), subgen(dag[3])))]
 		elif op == 'cast':
 			return [('cast', dag[1], subgen(dag[2]))]
+		elif op == 'muldiv_delay':
+			return [('emit', ('muldiv_delay', subgen(dag[1]), subgen(dag[2])))]
+		elif op == 'absorb_muldiv_delay':
+			return [('call_absorb_muldiv_delay', 'func')]
 		else:
 			print 'Unknown op:', op
 			return []

@@ -53,6 +53,9 @@ def break : DagOp;
 def syscall : DagOp;
 def copfun : DagOp;
 
+def muldiv_delay : DagOp;
+def absorb_muldiv_delay : DagOp;
+
 class Exception;
 def ArithmeticOverflow : Exception;
 
@@ -253,13 +256,15 @@ defm CTCz : CFDef<0b010000, 0b00110, "ctc$cop %$rt, $rd",
 def DIV : RType<0b011010, "div %$rs, %$rt", 
 	(block
 		(set (lo), (div (signed (gpr $rs)), (signed (gpr $rt)))), 
-		(set (hi), (mod (signed (gpr $rs)), (signed (gpr $rt)))))
+		(set (hi), (mod (signed (gpr $rs)), (signed (gpr $rt)))), 
+		(muldiv_delay 0, 0))
 >;
 
 def DIVU : RType<0b011011, "divu %$rs, %$rt", 
 	(block
 		(set (lo), (div (unsigned (gpr $rs)), (unsigned (gpr $rt)))), 
-		(set (hi), (mod (unsigned (gpr $rs)), (unsigned (gpr $rt)))))
+		(set (hi), (mod (unsigned (gpr $rs)), (unsigned (gpr $rt)))), 
+		(muldiv_delay 0, 0))
 >;
 
 
@@ -350,11 +355,15 @@ defm MFCz : CFDef<0b010000, 0b00000, "mfc$cop %$rt, $rd",
 >;
 
 def MFHI : RType<0b010000, "mfhi %$rd", 
-	(set (gpr $rd), (hi))
+	(block
+		(set (gpr $rd), (hi)), 
+		(absorb_muldiv_delay))
 >;
 
 def MFLO : RType<0b010010, "mflo %$rd", 
-	(set (gpr $rd), (lo))
+	(block
+		(set (gpr $rd), (lo)), 
+		(absorb_muldiv_delay))
 >;
 
 defm MTCz : CFDef<0b010000, 0b00100, "mtc$cop %$rt, $rd", 
@@ -372,13 +381,15 @@ def MTLO : RType<0b010011, "mtlo %$rd",
 def MULT : RType<0b011000, "mult %$rs, %$rt", 
 	(rlet $_t, (mul64 (gpr $rs), (gpr $rt)), 
 		(set (lo), (cast 32, $_t)), 
-		(set (hi), (cast 32, (shrl $_t, 32))))
+		(set (hi), (cast 32, (shrl $_t, 32))), 
+		(muldiv_delay (gpr $rs), (gpr $rt)))
 >;
 
 def MULTU : RType<0b011001, "multu %$rs, %$rt", 
 	(rlet $_t, (umul64 (unsigned (gpr $rs)), (unsigned (gpr $rt))), 
 		(set (lo), (cast 32, $_t)), 
-		(set (hi), (cast 32, (shrl $_t, 32))))
+		(set (hi), (cast 32, (shrl $_t, 32))), 
+		(muldiv_delay (gpr $rs), (gpr $rt)))
 >;
 
 def NOR : RType<0b100111, "nor %$rd, %$rs, %$rt", 

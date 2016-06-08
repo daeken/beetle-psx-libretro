@@ -87,6 +87,8 @@ class PS_CPU
 
       uint32_t BACKED_LDWhich;
       uint32_t BACKED_LDValue;
+      uint32_t LDWhich;
+      uint32_t LDValue;
       uint32_t LDAbsorb;
 
       int32_t next_event_ts;

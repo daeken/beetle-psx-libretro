@@ -17,7 +17,7 @@
 
 #include "psx.h"
 #include "cpu.h"
-
+#include <setjmp.h>
 
 extern bool psx_cpu_overclock;
 
@@ -36,9 +36,31 @@ extern bool psx_cpu_overclock;
 
 						// Does lock mode prevent the actual data payload from being modified, while allowing tags to be modified/updated???
 
+bool gdebug = false;
+
 volatile int32_t gtimestamp;
 void timestamp_inc(int amt) {
    gtimestamp += amt;
+}
+
+void muldiv_delay(uint32_t a, uint32_t b) {
+   if(a == 0 && b == 0)
+      cpu->muldiv_ts_done = gtimestamp + 37;
+   else
+      cpu->muldiv_ts_done = gtimestamp + cpu->MULT_Tab24[MDFN_lzcount32((a ^ ((int32_t) b >> 31)) | 0x400)];
+}
+
+void absorb_muldiv_delay() {
+   if(gtimestamp < cpu->muldiv_ts_done) {
+      if(gtimestamp == cpu->muldiv_ts_done - 1)
+         cpu->muldiv_ts_done--;
+      else
+         do {
+            if(cpu->ReadAbsorb[cpu->ReadAbsorbWhich])
+               cpu->ReadAbsorb[cpu->ReadAbsorbWhich]--;
+            gtimestamp++;
+         } while(gtimestamp < cpu->muldiv_ts_done);
+   }
 }
 
 PS_CPU *cpu;
@@ -296,6 +318,10 @@ uint32_t load_memory(int size, uint32_t ptr) {
       default:
          val = cpu->ReadMemory<uint32_t>(ptr);
    }
+
+   if(gdebug)
+      printf("Loading %i bits of memory from %08x <-- %08x\n", size, ptr, val);
+
    return val;
 }
 
@@ -348,6 +374,9 @@ INLINE T PS_CPU::ReadMemory(uint32_t address, bool DS24, bool LWC_timing)
 }
 
 void store_memory(int size, uint32_t ptr, uint32_t val, uint32_t pc) {
+   if(gdebug)
+      printf("Storing %i bits of memory to %08x <-- %08x @ %08x\n", size, ptr, val, pc);
+
    switch(size) {
       case 8:
          cpu->WriteMemory<uint8_t>(ptr, val);
@@ -646,6 +675,18 @@ uint32_t read_copcreg(int cop, int reg) {
    return 0;
 }
 
+jmp_buf irqjmpenv;
+void check_irq(uint32_t pc) {
+   if(cpu->IPCache != 0 && (cpu->CP0.SR & 1) != 0) {
+      cpu->GPR[cpu->LDWhich] = cpu->LDValue;
+      cpu->ReadAbsorb[cpu->LDWhich] = cpu->LDAbsorb;
+      cpu->ReadFudge = cpu->LDWhich;
+      cpu->ReadAbsorbWhich |= cpu->LDWhich & 0x1F;
+      cpu->LDWhich = 35;
+      longjmp(irqjmpenv, cpu->Exception(EXCEPTION_INT, pc, pc, 0xFF, 0));
+   }
+}
+
 void step(uint32_t arg) {
    // Called for every instruction
    //printf("step... %08x\n", arg);
@@ -706,8 +747,6 @@ int32_t PS_CPU::RunReal(int32_t timestamp_in)
    uint32_t PC;
    uint32_t new_PC;
    uint32_t new_PC_mask;
-   uint32_t LDWhich;
-   uint32_t LDValue;
 
    gte_ts_done += timestamp_in;
    muldiv_ts_done += timestamp_in;
@@ -716,15 +755,27 @@ int32_t PS_CPU::RunReal(int32_t timestamp_in)
 
    gtimestamp = timestamp_in;
 
+   // Used for per-instruction irq checking
+   uint32_t temp = setjmp(irqjmpenv);
+   if(temp != 0)
+      PC = temp;
+
    do {
       while(MDFN_LIKELY(gtimestamp < next_event_ts)) {
          if(Halted) {
             gtimestamp = next_event_ts;
             break;
          }
+
+         if(IPCache != 0 && (CP0.SR & 1) != 0) {
+            PC = Exception(EXCEPTION_INT, PC, PC, 0xFF, 0);
+         }
+
          uint32_t initPC = PC;
          block_t *block;
-         //if(initPC != LastBlockPC)
+         //if(initPC == 0x8001c188) // sotn start 0x80010dfc
+         //   gdebug = true;
+         //if(LastBlock == NULL || initPC != LastBlock->pc)
          //   printf("block %08x\n", initPC);
          map<uint32_t, block_t *>::iterator iter;
          if((LastBlock == NULL || PC != LastBlock->pc || LastBlock->block == NULL) && ((iter = BlockCache.find(PC)) == BlockCache.end() || *iter->second->block == NULL)) {
@@ -800,12 +851,7 @@ int32_t PS_CPU::RunReal(int32_t timestamp_in)
                      }
                   }
 
-                  if(ReadAbsorb[ReadAbsorbWhich])
-                     ReadAbsorb[ReadAbsorbWhich]--;
-                  else
-                     gtimestamp++;
-
-                  call_timestamp_inc(func, gtimestamp - startstamp);
+                  //call_timestamp_inc(func, gtimestamp - startstamp);
                   gtimestamp = startstamp;
 
                   if(branched) {
@@ -852,7 +898,10 @@ int32_t PS_CPU::RunReal(int32_t timestamp_in)
          branch_to_block = NULL;
 
          GPR[32] = initPC;
-         
+
+         if(gdebug)
+            printf("Running %08x\n", initPC);
+
          block->block(
             GPR, ReadAbsorb, &ReadAbsorbWhich, &ReadFudge, 
             &LDWhich, &LDValue, &LDAbsorb
@@ -868,11 +917,17 @@ int32_t PS_CPU::RunReal(int32_t timestamp_in)
             LastBlock = (block_t *) branch_to_block;
          }
 
-         if(IPCache != 0 && (CP0.SR & 1) != 0) {
-            PC = Exception(EXCEPTION_INT, PC, PC, 0xFF, 0);
+         if(PC == 0x80016124) {
+            char fmt[4096];
+            char *at = fmt;
+            uint32_t addr = GPR[4];
+            while((*(at++) = PeekMem8(addr++)) != 0) {
+            }
+            printf("Game log [at %08x]: %s", initPC, fmt);
          }
-
-         //fflush(stdout);
+         
+         if(gdebug)
+            fflush(stdout);
       }
    } while(MDFN_LIKELY(PSX_EventHandler(gtimestamp)));
 

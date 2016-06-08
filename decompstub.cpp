@@ -39,17 +39,17 @@ jit_value_t _make_ubyte(jit_function_t func, uint32_t val) {
 #define DEP(gpr) do { if(gpr != 0) WRA(make_ubyte(gpr), make_ubyte(0)); } while(0)
 #define RES(gpr) do { if(gpr != 0) WRA(make_ubyte(gpr), make_ubyte(0)); } while(0)
 
-jit_type_t sig_1, sig_1_ptr, sig_2, sig_3, sig_4;
-jit_value_t state, ReadAbsorb, ReadAbsorbWhich, ReadFudge, LDWhich, LDValue, LDAbsorb;
+jit_type_t sig_0, sig_1, sig_1_ptr, sig_2, sig_3, sig_4;
+jit_value_t state, _ReadAbsorb, _ReadAbsorbWhich, _ReadFudge, LDWhich, LDValue, LDAbsorb;
 
-#define WRA(idx, val) jit_insn_store_relative(func, jit_insn_add(func, ReadAbsorb, idx), 0, (val))
+#define WRA(idx, val) jit_insn_store_relative(func, jit_insn_add(func, _ReadAbsorb, idx), 0, (val))
 
 void do_lds(jit_function_t func) {
 	jit_value_t ldw = LOAD(LDWhich, jit_type_uint);
 	WGPR_VAL(ldw, LOAD(LDValue, jit_type_uint));
 	WRA(ldw, jit_insn_load(func, LDAbsorb));
-	STORE(ReadFudge, CAST(ldw, jit_type_ubyte));
-	STORE(ReadAbsorbWhich, CAST(jit_insn_or(func, LOAD(ReadAbsorbWhich, jit_type_ubyte), jit_insn_and(func, ldw, make_uint(0x1F))), jit_type_ubyte));
+	STORE(_ReadFudge, CAST(ldw, jit_type_ubyte));
+	STORE(_ReadAbsorbWhich, CAST(jit_insn_or(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), jit_insn_and(func, ldw, make_uint(0x1F))), jit_type_ubyte));
 	STORE(LDWhich, make_uint(35));
 }
 
@@ -153,6 +153,20 @@ void call_timestamp_inc(jit_function_t func, uint32_t amount) {
 	jit_insn_call_native(func, 0, (void *) timestamp_inc, sig_1, args, 1, 0);
 }
 
+void call_muldiv_delay(jit_function_t func, jit_value_t a, jit_value_t b) {
+	jit_value_t args[] = {a, b};
+	jit_insn_call_native(func, 0, (void *) muldiv_delay, sig_2, args, 2, 0);
+}
+
+void call_absorb_muldiv_delay(jit_function_t func) {
+	jit_insn_call_native(func, 0, (void *) absorb_muldiv_delay, sig_0, NULL, 0, 0);
+}
+
+void call_check_irq(jit_function_t func, uint32_t pc) {
+	jit_value_t args[] = {make_uint(pc)};
+	jit_insn_call_native(func, 0, (void *) check_irq, sig_1, args, 1, 0);
+}
+
 jit_context_t context;
 
 jit_type_t block_sig;
@@ -187,6 +201,8 @@ void init_decompiler() {
 	pparams[0] = jit_type_void_ptr;
 	sig_1_ptr = jit_type_create_signature(jit_abi_cdecl, jit_type_void, pparams, 1, 1);
 
+	sig_0 = jit_type_create_signature(jit_abi_cdecl, jit_type_void, NULL, 0, 1);
+
 	jit_type_t params[7];
 	params[0] = jit_type_create_pointer(jit_type_uint, 0); // State
 	params[1] = jit_type_create_pointer(jit_type_ubyte, 0); // ReadAbsorb
@@ -201,9 +217,9 @@ void init_decompiler() {
 jit_function_t create_function() {
 	jit_function_t func = jit_function_create(context, block_sig);
 	state = jit_value_get_param(func, 0);
-	ReadAbsorb = jit_value_get_param(func, 1);
-	ReadAbsorbWhich = jit_value_get_param(func, 2);
-	ReadFudge = jit_value_get_param(func, 3);
+	_ReadAbsorb = jit_value_get_param(func, 1);
+	_ReadAbsorbWhich = jit_value_get_param(func, 2);
+	_ReadFudge = jit_value_get_param(func, 3);
 	LDWhich = jit_value_get_param(func, 4);
 	LDValue = jit_value_get_param(func, 5);
 	LDAbsorb = jit_value_get_param(func, 6);
