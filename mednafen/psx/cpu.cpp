@@ -62,7 +62,7 @@ PS_CPU::PS_CPU()
 
    init_decompiler();
    cpu = this;
-   Lastblock = NULL;
+   LastBlock = NULL;
    memset(BlockPages, 0, sizeof(BlockPages));
 
    for(i = 0; i < 24; i++)
@@ -486,11 +486,18 @@ uint32_t PS_CPU::Exception(uint32_t code, uint32_t PC, const uint32 NP, const ui
 	BACKED_LDValue = LDValue;
 
 volatile uint32_t branch_to;
+volatile block_t *branch_to_block;
 void branch(uint32_t target) {
+   //printf("branching to (pc) %08x\n", target);
    branch_to = target;
 }
 
-void syscall(int code, uint32_t pc, uint32_t instr) {
+void branch_block(block_t *block) {
+   //printf("branching to (bl) %08x\n", block->pc);
+   branch_to_block = block;
+}
+
+void ps_syscall(int code, uint32_t pc, uint32_t instr) {
    branch(cpu->Exception(EXCEPTION_SYSCALL, pc, pc + 4, 0xFF, instr));
 }
 
@@ -644,10 +651,31 @@ void step(uint32_t arg) {
    //printf("step... %08x\n", arg);
 }
 
+block_t *PS_CPU::GetBlockReference(uint32_t pc) {
+   map<uint32_t, block_t *>::iterator iter = BlockCache.find(pc);
+
+   if(iter != BlockCache.end())
+      return iter->second;
+
+   block_t *block = new block_t;
+   block->pc = pc;
+   block->end = pc;
+   block->jit_func = NULL;
+   block->block = NULL;
+   block->cache_iter = BlockCache.end();
+   StashBlock(pc, block);
+   return block;
+}
+
 void PS_CPU::StashBlock(uint32_t pc, block_t *block) {
-   BlockCache[pc] = block;
-   // XXX: We need to not do this lookup twice! This is expensive.
-   block->cache_iter = BlockCache.find(pc);
+   if(block->cache_iter == BlockCache.end()) {
+      BlockCache[pc] = block;
+      // XXX: We need to not do this lookup twice! This is expensive.
+      block->cache_iter = BlockCache.find(pc);
+   }
+
+   if(pc == block->end)
+      return;
 
    for(uint32_t start = pc >> 12, end = block->end >> 12; start <= end; ++start) {
       if(BlockPages[start] == NULL)
@@ -664,8 +692,9 @@ void PS_CPU::InvalidateBlocks(uint32_t addr) {
    for(list<block_t *>::iterator iter = BlockPages[page]->begin(); iter != BlockPages[page]->end(); ++iter) {
       block_t *block = *iter;
       // XXX: This should delete the jit_function_t and closure
-      BlockCache.erase(block->cache_iter);
-      delete block;
+      block->end = block->pc;
+      block->jit_func = NULL;
+      block->block = NULL;
    }
 
    BlockPages[page]->clear();
@@ -695,13 +724,11 @@ int32_t PS_CPU::RunReal(int32_t timestamp_in)
          }
          uint32_t initPC = PC;
          block_t *block;
-         //if(initPC != LastblockPC)
+         //if(initPC != LastBlockPC)
          //   printf("block %08x\n", initPC);
          map<uint32_t, block_t *>::iterator iter;
-         if((Lastblock == NULL || PC != Lastblock->pc) && (iter = BlockCache.find(PC)) == BlockCache.end()) {
-            bool branched = false;
-            bool no_delay = false;
-            bool did_delay = false;
+         if((LastBlock == NULL || PC != LastBlock->pc || LastBlock->block == NULL) && ((iter = BlockCache.find(PC)) == BlockCache.end() || *iter->second->block == NULL)) {
+            bool branched = false, no_delay = false, uncond = false, did_delay = false;
             jit_function_t func = create_function();
             //printf("recompiling %08x\n", PC);
             while(!did_delay) {
@@ -803,20 +830,26 @@ int32_t PS_CPU::RunReal(int32_t timestamp_in)
 
             //printf("ended at %08x\n", PC);
 
-            block = new block_t;
-            block->pc = initPC;
+            if(iter == BlockCache.end())
+               block = GetBlockReference(initPC);
+            else
+               block = iter->second;
             block->end = PC;
             block->jit_func = func;
             block->block = compile_function(func);
             StashBlock(initPC, block);
-         } else if(Lastblock->pc == initPC)
-            block = Lastblock;
+         } else if(LastBlock->pc == initPC && LastBlock->block != NULL)
+            block = LastBlock;
          else
             block = iter->second;
 
-         Lastblock = block;
+         assert(block->block != NULL);
+         assert(block->end != block->pc);
+
+         LastBlock = block;
 
          branch_to = -1;
+         branch_to_block = NULL;
 
          GPR[32] = initPC;
          
@@ -827,14 +860,19 @@ int32_t PS_CPU::RunReal(int32_t timestamp_in)
 
          PC = GPR[32] + 4; // We don't set PC after instructions
 
-         if(branch_to != -1)
+         if(branch_to != -1) {
+            assert(branch_to_block == NULL);
             PC = branch_to;
+         } else if(branch_to_block != NULL) {
+            PC = branch_to_block->pc;
+            LastBlock = (block_t *) branch_to_block;
+         }
 
          if(IPCache != 0 && (CP0.SR & 1) != 0) {
             PC = Exception(EXCEPTION_INT, PC, PC, 0xFF, 0);
          }
 
-         fflush(stdout);
+         //fflush(stdout);
       }
    } while(MDFN_LIKELY(PSX_EventHandler(gtimestamp)));
 

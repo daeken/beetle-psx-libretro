@@ -293,7 +293,12 @@ def _emitter(sexp, storing=False, locals=None):
 	elif op == 'copcreg':
 		return 'call_read_copcreg(func, %s, %s)' % (emitter(sexp[1]), emitter(sexp[2]))
 	elif op == 'branch':
-		return 'call_branch(func, %s);' % (to_val(emitter(sexp[1])))
+		if isinstance(sexp[1], str) or isinstance(sexp[1], unicode):
+			return 'call_branch_block(func, cpu->GetBlockReference(%s));' % emitter(sexp[1])
+		else:
+			return 'call_branch(func, %s);' % (to_val(emitter(sexp[1])))
+	elif op == 'branch_default':
+		return 'call_branch_block(func, cpu->GetBlockReference(pc + 8));'
 	elif op == 'syscall':
 		return 'call_syscall(func, %s, %s, %s);' % (emitter(sexp[1]), emitter(sexp[2]), emitter(sexp[3]))
 	elif op == 'break_':
@@ -326,10 +331,10 @@ def _emitter(sexp, storing=False, locals=None):
 		return [
 			'jit_label_t %s = jit_label_undefined, %s = jit_label_undefined;' % (temp, end), 
 			'jit_insn_branch_if(func, %s, &%s);' % (to_val(emitter(sexp[1])), temp), 
-			emitter(sexp[2]), 
+			emitter(sexp[3]), 
 			'jit_insn_branch(func, &%s);' % end, 
 			'jit_insn_label(func, &%s);' % temp, 
-			emitter(sexp[3]), 
+			emitter(sexp[2]), 
 			'jit_insn_label(func, &%s);' % end, 
 		]
 	elif op == 'when':
@@ -460,6 +465,9 @@ def genDecomp((name, type, dasm, dag)):
 		elif op == 'branch':
 			has_branch[0] = True
 			return [('emit', ('branch', subgen(dag[1]), 'true'))]
+		elif op == 'branch_default':
+			has_branch[0] = True
+			return [('emit', ('branch_default', ))]
 		elif op == 'load':
 			return [('load', dag[1], subgen(dag[2]))]
 		elif op == 'store':

@@ -8,6 +8,10 @@ typedef struct state_s {
 	uint32_t fake; // Used for load delay stuff
 } state_t;
 
+jit_value_t _make_ptr(jit_function_t func, void *val) {
+	return jit_value_create_nint_constant(func, jit_type_void_ptr, (jit_nint) val);
+}
+#define make_ptr(val) _make_ptr(func, (val))
 jit_value_t _make_uint(jit_function_t func, uint32_t val) {
 	return jit_value_create_nint_constant(func, jit_type_uint, val);
 }
@@ -35,7 +39,7 @@ jit_value_t _make_ubyte(jit_function_t func, uint32_t val) {
 #define DEP(gpr) do { if(gpr != 0) WRA(make_ubyte(gpr), make_ubyte(0)); } while(0)
 #define RES(gpr) do { if(gpr != 0) WRA(make_ubyte(gpr), make_ubyte(0)); } while(0)
 
-jit_type_t sig_1, sig_2, sig_3, sig_4;
+jit_type_t sig_1, sig_1_ptr, sig_2, sig_3, sig_4;
 jit_value_t state, ReadAbsorb, ReadAbsorbWhich, ReadFudge, LDWhich, LDValue, LDAbsorb;
 
 #define WRA(idx, val) jit_insn_store_relative(func, jit_insn_add(func, ReadAbsorb, idx), 0, (val))
@@ -114,7 +118,7 @@ jit_value_t call_signext(jit_function_t func, int size, jit_value_t val) {
 
 void call_syscall(jit_function_t func, uint32_t code, uint32_t pc, uint32_t inst) {
 	jit_value_t args[] = {make_uint(code), make_uint(pc), make_uint(inst)};
-	jit_insn_call_native(func, 0, (void *) syscall, sig_3, args, 3, 0);
+	jit_insn_call_native(func, 0, (void *) ps_syscall, sig_3, args, 3, 0);
 }
 
 void break_(int code) {
@@ -128,6 +132,11 @@ void call_break(jit_function_t func, uint32_t code) {
 void call_branch(jit_function_t func, jit_value_t val) {
 	jit_value_t args[] = {val};
 	jit_insn_call_native(func, 0, (void *) branch, sig_1, args, 1, 0);
+}
+
+void call_branch_block(jit_function_t func, block_t *block) {
+	jit_value_t args[] = {make_ptr(block)};
+	jit_insn_call_native(func, 0, (void *) branch_block, sig_1_ptr, args, 1, 0);
 }
 
 void overflow(uint32_t a, uint32_t b, int dir) {
@@ -170,9 +179,13 @@ void init_decompiler() {
 	sparams[1] = jit_type_uint;
 	sig_2 = jit_type_create_signature(jit_abi_cdecl, jit_type_uint, sparams, 2, 1);
 	
-	jit_type_t lparams[2];
+	jit_type_t lparams[1];
 	lparams[0] = jit_type_uint;
 	sig_1 = jit_type_create_signature(jit_abi_cdecl, jit_type_uint, lparams, 1, 1);
+
+	jit_type_t pparams[1];
+	pparams[0] = jit_type_void_ptr;
+	sig_1_ptr = jit_type_create_signature(jit_abi_cdecl, jit_type_void, pparams, 1, 1);
 
 	jit_type_t params[7];
 	params[0] = jit_type_create_pointer(jit_type_uint, 0); // State
