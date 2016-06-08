@@ -3,6 +3,7 @@
 
 #include "gte.h"
 #include "decomp.h"
+#include <list>
 #include <map>
 using namespace std;
 
@@ -46,6 +47,13 @@ using namespace std;
 #define GSREG_SR             37
 #define GSREG_CAUSE          38
 #define GSREG_EPC            39
+
+typedef struct block_s {
+   uint32_t pc, end;
+   jit_function_t jit_func;
+   block_func_t block;
+   map<uint32_t, struct block_s *>::iterator cache_iter;
+} block_t;
 
 class PS_CPU
 {
@@ -178,9 +186,11 @@ class PS_CPU
       void (*CPUHook)(const int32_t timestamp, uint32_t pc);
       void (*ADDBT)(uint32_t from, uint32_t to, bool exception);
 
-      map<uint32_t, block_t> BlockCache;
-      block_t Lastblock;
-      uint32_t LastblockPC;
+      map<uint32_t, block_t *> BlockCache;
+      list<block_t *> *BlockPages[0x100000]; // A list for every page
+      block_t *Lastblock;
+      void StashBlock(uint32_t pc, block_t *block);
+      void InvalidateBlocks(uint32_t addr);
 };
 
 #endif

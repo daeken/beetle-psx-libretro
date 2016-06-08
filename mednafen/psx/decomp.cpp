@@ -198,12 +198,12 @@ jit_function_t create_function() {
 	return func;
 }
 
-block_t compile_function(jit_function_t func) {
+block_func_t compile_function(jit_function_t func) {
 	//jit_dump_function(stdout, func, "block");
 	jit_function_compile(func);
 	jit_context_build_end(context);
 	//jit_dump_function(stdout, func, "block");
-	return (block_t) jit_function_to_closure(func);
+	return (block_func_t) jit_function_to_closure(func);
 }
 
 #define INSNLOG(name) printf(#name "\n")

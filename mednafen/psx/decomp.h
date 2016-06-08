@@ -5,7 +5,7 @@
 #include <jit/jit-dump.h>
 #include <stdint.h>
 
-typedef void (*block_t)(
+typedef void (*block_func_t)(
 	volatile uint32_t *state, 
 	uint8_t *ReadAbsorb, uint8_t *ReadAbsorbWhich, uint8_t *ReadFudge, 
 	uint32_t *LDWhich, uint32_t *LDValue, uint32_t *LDAbsorb
@@ -13,7 +13,7 @@ typedef void (*block_t)(
 
 void init_decompiler();
 jit_function_t create_function();
-block_t compile_function(jit_function_t func);
+block_func_t compile_function(jit_function_t func);
 bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, bool &no_delay);
 
 void step(uint32_t arg);

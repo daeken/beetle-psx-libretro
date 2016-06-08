@@ -62,7 +62,8 @@ PS_CPU::PS_CPU()
 
    init_decompiler();
    cpu = this;
-   LastblockPC = -1;
+   Lastblock = NULL;
+   memset(BlockPages, 0, sizeof(BlockPages));
 
    for(i = 0; i < 24; i++)
    {
@@ -365,6 +366,7 @@ void store_memory(int size, uint32_t ptr, uint32_t val, uint32_t pc) {
 template<typename T>
 INLINE void PS_CPU::WriteMemory(uint32_t address, uint32_t value, bool DS24)
 {
+   InvalidateBlocks(address);
    if(MDFN_LIKELY(!(CP0.SR & 0x10000)))
    {
       address &= addr_mask[address >> 29];
@@ -489,14 +491,11 @@ void branch(uint32_t target) {
 }
 
 void syscall(int code, uint32_t pc, uint32_t instr) {
-   printf("syscall at %08x\n", pc);
    branch(cpu->Exception(EXCEPTION_SYSCALL, pc, pc + 4, 0xFF, instr));
 }
 
 void copfun0(int cofun, uint32_t inst) {
    assert(cofun == 0x10);
-
-   printf("rfe\n");
 
    cpu->CP0.SR = (cpu->CP0.SR & ~0x0F) | ((cpu->CP0.SR >> 2) & 0x0F);
    cpu->RecalcIPCache();
@@ -645,6 +644,33 @@ void step(uint32_t arg) {
    //printf("step... %08x\n", arg);
 }
 
+void PS_CPU::StashBlock(uint32_t pc, block_t *block) {
+   BlockCache[pc] = block;
+   // XXX: We need to not do this lookup twice! This is expensive.
+   block->cache_iter = BlockCache.find(pc);
+
+   for(uint32_t start = pc >> 12, end = block->end >> 12; start <= end; ++start) {
+      if(BlockPages[start] == NULL)
+         BlockPages[start] = new list<block_t *>();
+      BlockPages[start]->push_back(block);
+   }
+}
+
+void PS_CPU::InvalidateBlocks(uint32_t addr) {
+   uint32_t page = addr >> 12;
+   if(BlockPages[page] == NULL || BlockPages[page]->empty())
+      return;
+
+   for(list<block_t *>::iterator iter = BlockPages[page]->begin(); iter != BlockPages[page]->end(); ++iter) {
+      block_t *block = *iter;
+      // XXX: This should delete the jit_function_t and closure
+      BlockCache.erase(block->cache_iter);
+      delete block;
+   }
+
+   BlockPages[page]->clear();
+}
+
 template<bool DebugMode>
 int32_t PS_CPU::RunReal(int32_t timestamp_in)
 {
@@ -668,11 +694,11 @@ int32_t PS_CPU::RunReal(int32_t timestamp_in)
             break;
          }
          uint32_t initPC = PC;
-         block_t block;
+         block_t *block;
          //if(initPC != LastblockPC)
          //   printf("block %08x\n", initPC);
-         map<uint32_t, block_t>::iterator iter;
-         if(PC != LastblockPC && (iter = BlockCache.find(PC)) == BlockCache.end()) {
+         map<uint32_t, block_t *>::iterator iter;
+         if((Lastblock == NULL || PC != Lastblock->pc) && (iter = BlockCache.find(PC)) == BlockCache.end()) {
             bool branched = false;
             bool no_delay = false;
             bool did_delay = false;
@@ -777,21 +803,24 @@ int32_t PS_CPU::RunReal(int32_t timestamp_in)
 
             //printf("ended at %08x\n", PC);
 
-            block = compile_function(func);
-            BlockCache[initPC] = block;
-         } else if(LastblockPC == initPC)
+            block = new block_t;
+            block->pc = initPC;
+            block->end = PC;
+            block->jit_func = func;
+            block->block = compile_function(func);
+            StashBlock(initPC, block);
+         } else if(Lastblock->pc == initPC)
             block = Lastblock;
          else
             block = iter->second;
 
          Lastblock = block;
-         LastblockPC = initPC;
 
          branch_to = -1;
 
          GPR[32] = initPC;
          
-         block(
+         block->block(
             GPR, ReadAbsorb, &ReadAbsorbWhich, &ReadFudge, 
             &LDWhich, &LDValue, &LDAbsorb
          );
@@ -802,7 +831,6 @@ int32_t PS_CPU::RunReal(int32_t timestamp_in)
             PC = branch_to;
 
          if(IPCache != 0 && (CP0.SR & 1) != 0) {
-            printf("irq at %08x\n", PC);
             PC = Exception(EXCEPTION_INT, PC, PC, 0xFF, 0);
          }
 
