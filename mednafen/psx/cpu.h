@@ -207,6 +207,8 @@ class PS_CPU
       void (*ADDBT)(uint32_t from, uint32_t to, bool exception);
 };
 
+int32_t signext(int size, uint32_t imm);
+
 extern PS_CPU *cpu;
 
 #endif

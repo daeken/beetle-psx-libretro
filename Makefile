@@ -287,7 +287,7 @@ OBJECTS := $(SOURCES_CXX:.cpp=.o) $(SOURCES_C:.c=.o)
 
 all: mednafen/psx/decomp.cpp $(TARGET)
 
-mednafen/psx/decomp.cpp: generator.py insts.td decompstub.cpp
+mednafen/psx/decomp.cpp: generator.py insts.td decompstub.cpp interpstub.cpp
 	python generator.py
 
 ifeq ($(DEBUG),0)

@@ -551,3 +551,16 @@ void PS_CPU::PokeMem32(uint32 A, uint32 V)
 {
  PokeMemory<uint32>(A, V);
 }
+
+int32_t signext(int size, uint32_t imm) {
+   if(size == 8)
+      return (int8_t) ((uint8_t) imm);
+   else if(size == 16)
+      return (int16_t) ((uint16_t) imm);
+   else if(size == 32)
+      return (int32_t) imm;
+   else if(imm & (1 << (size - 1)))
+      return (int32_t) imm - (1 << size);
+   else
+      return (int32_t) imm;
+}
