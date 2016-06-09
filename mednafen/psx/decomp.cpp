@@ -40,7 +40,7 @@ jit_value_t _make_ubyte(jit_function_t func, uint32_t val) {
 #define DEP(gpr) do { if(gpr != 0) WRA(make_ubyte(gpr), make_ubyte(0)); } while(0)
 #define RES(gpr) do { if(gpr != 0) WRA(make_ubyte(gpr), make_ubyte(0)); } while(0)
 
-jit_type_t sig_0, sig_1, sig_1_ptr, sig_2, sig_3, sig_4;
+jit_type_t sig_0, sig_1, sig_1_ptr, sig_2, sig_3, sig_4, sig_5;
 jit_value_t state, _ReadAbsorb, _ReadAbsorbWhich, _ReadFudge, LDWhich, LDValue, LDAbsorb;
 
 #define WRA(idx, val) jit_insn_store_relative(func, jit_insn_add(func, _ReadAbsorb, idx), 0, (val))
@@ -137,13 +137,9 @@ void call_branch_block(jit_function_t func, block_t *block) {
 	jit_insn_call_native(func, 0, (void *) branch_block, sig_1_ptr, args, 1, 0);
 }
 
-void overflow(uint32_t a, uint32_t b, int dir) {
-	// XXX: Implement overflow checks.
-}
-
-void call_overflow(jit_function_t func, jit_value_t a, jit_value_t b, int dir) {
-	jit_value_t args[] = {a, b, make_uint(dir)};
-	jit_insn_call_native(func, 0, (void *) overflow, sig_3, args, 3, 0);
+void call_overflow(jit_function_t func, jit_value_t a, jit_value_t b, int dir, uint32_t pc, uint32_t inst) {
+	jit_value_t args[] = {a, b, make_uint(dir), make_uint(pc), make_uint(inst)};
+	jit_insn_call_native(func, 0, (void *) overflow, sig_5, args, 5, 0);
 }
 
 void call_timestamp_inc(jit_function_t func, uint32_t amount) {
@@ -173,6 +169,14 @@ void init_decompiler() {
 	context = jit_context_create();
 	jit_context_build_start(context);
 
+	jit_type_t s5params[5];
+	s5params[0] = jit_type_uint;
+	s5params[1] = jit_type_uint;
+	s5params[2] = jit_type_uint;
+	s5params[3] = jit_type_uint;
+	s5params[4] = jit_type_uint;
+	sig_5 = jit_type_create_signature(jit_abi_cdecl, jit_type_uint, s5params, 5, 1);
+	
 	jit_type_t s4params[4];
 	s4params[0] = jit_type_uint;
 	s4params[1] = jit_type_uint;
@@ -613,7 +617,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					DEP(rt);
 					RES(rd);
 					do_lds(func);
-					call_overflow(func, RGPR(rs), RGPR(rt), 1);
+					call_overflow(func, RGPR(rs), RGPR(rt), 1, pc, inst);
 					WGPR(rd, jit_insn_add(func, RGPR(rs), RGPR(rt)));
 					return(true);
 					break;
@@ -654,7 +658,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					DEP(rt);
 					RES(rd);
 					do_lds(func);
-					call_overflow(func, RGPR(rs), RGPR(rt), -1);
+					call_overflow(func, RGPR(rs), RGPR(rt), -1, pc, inst);
 					WGPR(rd, jit_insn_sub(func, RGPR(rs), RGPR(rt)));
 					return(true);
 					break;
@@ -1805,7 +1809,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 			RES(rt);
 			do_lds(func);
 			uint32_t eimm = signext(0x10, imm);
-			call_overflow(func, RGPR(rs), make_uint(eimm), 1);
+			call_overflow(func, RGPR(rs), make_uint(eimm), 1, pc, inst);
 			WGPR(rt, jit_insn_add(func, RGPR(rs), make_uint(eimm)));
 			return(true);
 			break;

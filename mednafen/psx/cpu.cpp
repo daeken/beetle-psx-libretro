@@ -528,12 +528,26 @@ void branch_block(block_t *block) {
    branch_to_block = block;
 }
 
+jmp_buf excjmpenv;
+
 void ps_syscall(int code, uint32_t pc, uint32_t instr) {
    branch(cpu->Exception(EXCEPTION_SYSCALL, pc, pc + 4, 0xFF, instr));
 }
 
 void break_(int code, uint32_t pc, uint32_t instr) {
    branch(cpu->Exception(EXCEPTION_BP, pc, pc + 4, 0xFF, instr));
+}
+
+void overflow(uint32_t a, uint32_t b, int dir, uint32_t pc, uint32_t instr) {
+   if(dir) {
+      uint32_t r = a + b;
+      if(((~(a ^ b)) & (a ^ r)) & 0x80000000)
+         longjmp(excjmpenv, cpu->Exception(EXCEPTION_OV, pc, pc, 0xFF, instr));
+   } else {
+      uint32_t r = a - b;
+      if((((a ^ b)) & (a ^ r)) & 0x80000000)
+         longjmp(excjmpenv, cpu->Exception(EXCEPTION_OV, pc, pc, 0xFF, instr));
+   }
 }
 
 void copfun0(int cofun, uint32_t inst) {
@@ -681,7 +695,6 @@ uint32_t read_copcreg(int cop, int reg) {
    return 0;
 }
 
-jmp_buf irqjmpenv;
 void check_irq(uint32_t pc) {
    if(cpu->IPCache != 0 && (cpu->CP0.SR & 1) != 0) {
       cpu->GPR[cpu->LDWhich] = cpu->LDValue;
@@ -689,7 +702,7 @@ void check_irq(uint32_t pc) {
       cpu->ReadFudge = cpu->LDWhich;
       cpu->ReadAbsorbWhich |= cpu->LDWhich & 0x1F;
       cpu->LDWhich = 35;
-      longjmp(irqjmpenv, cpu->Exception(EXCEPTION_INT, pc, pc, 0xFF, 0));
+      longjmp(excjmpenv, cpu->Exception(EXCEPTION_INT, pc, pc, 0xFF, 0));
    }
 }
 
@@ -818,7 +831,7 @@ int32_t PS_CPU::RunReal(int32_t timestamp_in)
    gtimestamp = timestamp_in;
 
    // Used for per-instruction irq checking
-   uint32_t temp = setjmp(irqjmpenv);
+   uint32_t temp = setjmp(excjmpenv);
    if(temp != 0)
       PC = temp;
 

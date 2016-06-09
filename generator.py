@@ -349,9 +349,9 @@ def _emitter(sexp, storing=False, locals=None):
 		]
 	elif op == 'overflow':
 		if sexp[1][0] == 'add':
-			return 'call_overflow(func, %s, %s, 1);' % (to_val(emitter(sexp[1][1])), to_val(emitter(sexp[1][2])))
+			return 'call_overflow(func, %s, %s, 1, pc, inst);' % (to_val(emitter(sexp[1][1])), to_val(emitter(sexp[1][2])))
 		else:
-			return 'call_overflow(func, %s, %s, -1);' % (to_val(emitter(sexp[1][1])), to_val(emitter(sexp[1][2])))
+			return 'call_overflow(func, %s, %s, -1, pc, inst);' % (to_val(emitter(sexp[1][1])), to_val(emitter(sexp[1][2])))
 	elif op == 'zeroext':
 		return emitter(sexp[2])
 	elif op == 'signext':
