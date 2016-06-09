@@ -1866,7 +1866,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 			DEP(rs);
 			RES(rt);
 			do_lds(func);
-			uint32_t eimm = imm;
+			uint32_t eimm = signext(0x10, imm);
 			WGPR(rt, jit_insn_lt(func, RGPR(rs), make_uint(eimm)));
 			return(true);
 			break;

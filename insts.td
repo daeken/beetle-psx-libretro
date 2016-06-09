@@ -460,7 +460,7 @@ def SLTI : IType<0b001010, "slti %$rt, %$rs, $eimm",
 >;
 
 def SLTIU : IType<0b001011, "sltiu %$rt, %$rs, $eimm", 
-	(let $eimm, (zeroext 16, $imm), 
+	(let $eimm, (signext 16, $imm), 
 		(set (gpr $rt), (lt (gpr $rs), $eimm)))
 >;
 
