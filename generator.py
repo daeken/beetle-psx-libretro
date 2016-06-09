@@ -304,7 +304,7 @@ def _emitter(sexp, storing=False, locals=None):
 	elif op == 'syscall':
 		return 'call_syscall(func, %s, %s, %s);' % (emitter(sexp[1]), emitter(sexp[2]), emitter(sexp[3]))
 	elif op == 'break_':
-		return 'call_break(func, %s);' % (emitter(sexp[1]))
+		return 'call_break(func, %s, %s, %s);' % (emitter(sexp[1]), emitter(sexp[2]), emitter(sexp[3]))
 	elif op == 'copfun':
 		return 'call_copfun(func, %s, %s, %s);' % (emitter(sexp[1]), emitter(sexp[2]), emitter(sexp[3]))
 	elif op == 'emit':
@@ -477,7 +477,9 @@ def genDecomp((name, type, dasm, dag)):
 		elif op == 'raise':
 			return [('emit', ('raise', dag[1]))]
 		elif op == 'break':
-			return [('emit', ('break_', dag[1]))]
+			has_branch[0] = True
+			no_delay[0] = True
+			return [('emit', ('break_', dag[1], subgen(dag[2]), subgen(dag[3])))]
 		elif op == 'syscall':
 			has_branch[0] = True
 			no_delay[0] = True

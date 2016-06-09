@@ -122,12 +122,9 @@ void call_syscall(jit_function_t func, uint32_t code, uint32_t pc, uint32_t inst
 	jit_insn_call_native(func, 0, (void *) ps_syscall, sig_3, args, 3, 0);
 }
 
-void break_(int code) {
-}
-
-void call_break(jit_function_t func, uint32_t code) {
-	jit_value_t args[] = {make_uint(code)};
-	jit_insn_call_native(func, 0, (void *) break_, sig_1, args, 1, 0);
+void call_break(jit_function_t func, uint32_t code, uint32_t pc, uint32_t inst) {
+	jit_value_t args[] = {make_uint(code), make_uint(pc), make_uint(inst)};
+	jit_insn_call_native(func, 0, (void *) break_, sig_3, args, 3, 0);
 }
 
 void call_branch(jit_function_t func, jit_value_t val) {
@@ -423,7 +420,9 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					jit_insn_label(func, &temp_20);
 					uint32_t code = ((inst) >> (0x6)) & (0xfffff);
 					do_lds(func);
-					call_break(func, code);
+					call_break(func, code, pc, inst);
+					branched = true;
+					no_delay = true;
 					return(true);
 					break;
 				}

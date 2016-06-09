@@ -529,6 +529,10 @@ void ps_syscall(int code, uint32_t pc, uint32_t instr) {
    branch(cpu->Exception(EXCEPTION_SYSCALL, pc, pc + 4, 0xFF, instr));
 }
 
+void break_(int code, uint32_t pc, uint32_t instr) {
+   branch(cpu->Exception(EXCEPTION_BP, pc, pc + 4, 0xFF, instr));
+}
+
 void copfun0(int cofun, uint32_t inst) {
    assert(cofun == 0x10);
 

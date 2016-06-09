@@ -47,6 +47,7 @@ void branch_block(block_t *target);
 void call_branch_block(jit_function_t func, block_t *block);
 
 void ps_syscall(int code, uint32_t pc, uint32_t instr);
+void break_(int code, uint32_t pc, uint32_t instr);
 
 void copfun(int cop, int cofun, uint32_t inst);
 uint32_t read_copreg(int cop, int reg);

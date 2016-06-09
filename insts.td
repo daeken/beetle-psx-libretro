@@ -231,7 +231,7 @@ def BNE : IType<0b000101, "bne %$rs, %$rt, $target",
 >;
 
 def BREAK : SType<0b001101, "break $code", 
-	(break $code)
+	(break $code, $pc, $inst)
 >;
 
 defm CFCz : CFDef<0b010000, 0b00010, "cfc$cop %$rt, $rd", 
