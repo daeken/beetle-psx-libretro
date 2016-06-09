@@ -182,7 +182,7 @@ defm BGEZ : BHack<0b000001, 0b00001, "bgez %$rs, $target",
 			(branch_default)))
 >;
 
-def BGEZAL : RIType<0b000001, 0b10001, "bgezal %$rs, $target", 
+defm BGEZAL : BHack<0b000001, 0b10001, "bgezal %$rs, $target", 
 	(block
 		(set (gpr 31), (pcd)), 
 		(let $target, (add (pcd), (shl (signext 16, $imm), 2)), 
@@ -214,7 +214,7 @@ defm BLTZ : BHack<0b000001, 0b00000, "bltz %$rs, $target",
 			(branch_default)))
 >;
 
-def BLTZAL : RIType<0b000001, 0b10000, "bltzal %$rs, $target", 
+defm BLTZAL : BHack<0b000001, 0b10000, "bltzal %$rs, $target", 
 	(block
 		(set (gpr 31), (pcd)), 
 		(let $target, (add (pcd), (shl (signext 16, $imm), 2)), 
