@@ -304,6 +304,9 @@ void PS_CPU::PokeMemory(uint32 address, T value)
 }
 
 uint32_t load_memory(int size, uint32_t ptr) {
+   // Enable full debugging in SOTN
+   if(ptr == 0x80032AB0)
+      return 1;
    uint32_t val;
    switch(size) {
       case 8:
@@ -750,6 +753,56 @@ void PS_CPU::InvalidateBlocks(uint32_t addr) {
    BlockPages[page]->clear();
 }
 
+void game_printf(char *fmt, uint32_t *GPR) {
+   int reg = 5;
+   while(*fmt != 0) {
+      if(*fmt == '%') {
+         fmt++;
+         int padding = 0;
+         if(*fmt == '0') {
+            fmt++;
+            while(*fmt >= '0' && *fmt <= '9')
+               padding = padding * 10 + (*(fmt++) - '0');
+         }
+         switch(*fmt) {
+            case 's': {
+               uint32_t addr = GPR[reg];
+               int len = 0;
+               while(cpu->PeekMem8(addr + len++) != 0)
+                  ;
+               char *buf = new char[len+1];
+               for(int i = 0; i < len; ++i)
+                  buf[i] = cpu->PeekMem8(addr + i);
+               buf[len] = 0;
+               printf("%s", buf);
+               ++reg;
+               break;
+            }
+            case 'c':
+               putc(GPR[reg++], stdout);
+               break;
+            case 'x': {
+               uint32_t val = GPR[reg++];
+               if(padding == 0)
+                  printf("%x", val);
+               else
+                  while(--padding >= 0)
+                     putc("0123456789abcdef"[(val >> (4 * padding)) & 0xF], stdout);
+               break;
+            }
+            case 'd': case 'i':
+               printf("%i", GPR[reg++]);
+               break;
+            default:
+               putc(*(fmt++), stdout);
+         }
+         fmt++;
+      } else
+         putc(*(fmt++), stdout);
+   }
+   fflush(stdout);
+}
+
 template<bool DebugMode>
 int32_t PS_CPU::RunReal(int32_t timestamp_in)
 {
@@ -939,7 +992,8 @@ int32_t PS_CPU::RunReal(int32_t timestamp_in)
             uint32_t addr = GPR[4];
             while((*(at++) = PeekMem8(addr++)) != 0) {
             }
-            printf("Game log [at %08x]: %s", initPC, fmt);
+            printf("Game log [at %08x]: ", initPC);
+            game_printf(fmt, GPR);
          }
          
          if(gdebug)
