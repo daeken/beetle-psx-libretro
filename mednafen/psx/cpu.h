@@ -2,7 +2,6 @@
 #define __MDFN_PSX_CPU_H
 
 #include "gte.h"
-#include "decomp.h"
 
 #define PS_CPU_EMULATE_ICACHE 1
 
@@ -45,12 +44,28 @@
 #define GSREG_CAUSE          38
 #define GSREG_EPC            39
 
+extern volatile int32_t gtimestamp;
+
+#define BACKING_TO_ACTIVE        \
+   PC = BACKED_PC;            \
+   new_PC = BACKED_new_PC;       \
+   new_PC_mask = BACKED_new_PC_mask;   \
+   LDWhich = BACKED_LDWhich;     \
+   LDValue = BACKED_LDValue;
+
+#define ACTIVE_TO_BACKING        \
+   BACKED_PC = PC;            \
+   BACKED_new_PC = new_PC;       \
+   BACKED_new_PC_mask = new_PC_mask;   \
+   BACKED_LDWhich = LDWhich;     \
+   BACKED_LDValue = LDValue;
+
 class PS_CPU
 {
    public:
 
       PS_CPU();
-      ~PS_CPU();
+      virtual ~PS_CPU();
 
       void SetFastMap(void *region_mem, uint32_t region_address, uint32_t region_size);
 
@@ -74,8 +89,11 @@ class PS_CPU
 
       int StateAction(StateMem *sm, int load, int data_only);
 
-      uint32_t GPR[36];	// GPR[35] Used as dummy in load delay simulation(indexing past the end of real GPR)
-
+      // GPR[0-31] are actual GPR
+      // GPR[32] is PC
+      // GPR[33 and 34] are HI and LO
+      // GPR[35] Used as dummy in load delay simulation(indexing past the end of real GPR)
+      uint32_t GPR[36];
 
       uint32_t BACKED_PC;
       uint32_t BACKED_new_PC;
@@ -152,17 +170,27 @@ class PS_CPU
 
       uint32_t Exception(uint32_t code, uint32_t PC, const uint32_t NP, const uint32_t NPM, const uint32_t instr) MDFN_WARN_UNUSED_RESULT;
 
-      template<bool DebugMode> int32_t RunReal(int32_t timestamp_in);
+      virtual int32_t RunReal(int32_t timestamp_in) = 0;
 
       template<typename T> T PeekMemory(uint32_t address) MDFN_COLD;
       template<typename T> void PokeMemory(uint32 address, T value) MDFN_COLD;
       template<typename T> T ReadMemory(uint32_t address, bool DS24 = false, bool LWC_timing = false);
       template<typename T> void WriteMemory(uint32_t address, uint32_t value, bool DS24 = false);
 
+      // Required to get around the template stuff.  Thanks C++
+      uint8_t ReadMemory8(uint32_t address);
+      uint16_t ReadMemory16(uint32_t address);
+      uint32_t ReadMemory24(uint32_t address);
+      uint32_t ReadMemory32(uint32_t address);
+      void WriteMemory8(uint32_t address, uint8_t val);
+      void WriteMemory16(uint32_t address, uint16_t val);
+      void WriteMemory24(uint32_t address, uint32_t val);
+      void WriteMemory32(uint32_t address, uint32_t val);
+
       // Mednafen debugger stuff follows:
    public:
       void SetCPUHook(void (*cpuh)(const int32_t timestamp, uint32_t pc), void (*addbt)(uint32_t from, uint32_t to, bool exception));
-      void CheckBreakpoints(void (*callback)(bool write, uint32_t address, unsigned int len), uint32_t instr);
+      virtual void CheckBreakpoints(void (*callback)(bool write, uint32_t address, unsigned int len), uint32_t instr) = 0;
 
 
       uint32_t GetRegister(unsigned int which, char *special, const uint32_t special_len);
@@ -174,19 +202,11 @@ class PS_CPU
       void PokeMem8(uint32 A, uint8 V);
       void PokeMem16(uint32 A, uint16 V);
       void PokeMem32(uint32 A, uint32 V);
-
-      block_t *GetBlockReference(uint32_t pc);
-      void StashBlock(uint32_t pc, block_t *block);
-      void InvalidateBlocks(uint32_t addr);
    private:
       void (*CPUHook)(const int32_t timestamp, uint32_t pc);
       void (*ADDBT)(uint32_t from, uint32_t to, bool exception);
-
-      map<uint32_t, block_t *> BlockCache;
-      list<block_t *> *BlockPages[0x100000]; // A list for every page
-      block_t *LastBlock;
 };
 
-extern PS_CPU *cpu; // XXX: Eliminate this.
+extern PS_CPU *cpu;
 
 #endif
