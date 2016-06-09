@@ -254,17 +254,31 @@ defm CTCz : CFDef<0b010000, 0b00110, "ctc$cop %$rt, $rd",
 >;
 
 def DIV : RType<0b011010, "div %$rs, %$rt", 
-	(block
-		(set (lo), (div (signed (gpr $rs)), (signed (gpr $rt)))), 
-		(set (hi), (mod (signed (gpr $rs)), (signed (gpr $rt)))), 
-		(muldiv_delay 0, 0))
+	(if (eq (gpr $rt), 0), 
+		(block
+			(if (neq (and (gpr $rs), 0x80000000), 0), 
+				(set (lo), 1), 
+				(set (lo), 0xFFFFFFFF)), 
+			(set (hi), (gpr $rs))), 
+		(if (and (eq (gpr $rs), 0x80000000), (eq (gpr $rt), 0xFFFFFFFF)), 
+			(block
+				(set (lo), 0x80000000), 
+				(set (hi), 0)), 
+			(block
+				(set (lo), (div (signed (gpr $rs)), (signed (gpr $rt)))), 
+				(set (hi), (mod (signed (gpr $rs)), (signed (gpr $rt)))), 
+				(muldiv_delay 0, 0))))
 >;
 
 def DIVU : RType<0b011011, "divu %$rs, %$rt", 
-	(block
-		(set (lo), (div (unsigned (gpr $rs)), (unsigned (gpr $rt)))), 
-		(set (hi), (mod (unsigned (gpr $rs)), (unsigned (gpr $rt)))), 
-		(muldiv_delay 0, 0))
+	(if (eq (gpr $rt), 0), 
+		(block
+			(set (lo), 0xFFFFFFFF),
+			(set (hi), (gpr $rs))), 
+		(block
+			(set (lo), (div (gpr $rs), (gpr $rt))), 
+			(set (hi), (mod (gpr $rs), (gpr $rt))), 
+			(muldiv_delay 0, 0)))
 >;
 
 

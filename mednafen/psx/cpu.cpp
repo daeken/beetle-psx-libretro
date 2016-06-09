@@ -395,7 +395,6 @@ void store_memory(int size, uint32_t ptr, uint32_t val, uint32_t pc) {
 template<typename T>
 INLINE void PS_CPU::WriteMemory(uint32_t address, uint32_t value, bool DS24)
 {
-   InvalidateBlocks(address);
    if(MDFN_LIKELY(!(CP0.SR & 0x10000)))
    {
       address &= addr_mask[address >> 29];
@@ -718,17 +717,25 @@ void PS_CPU::StashBlock(uint32_t pc, block_t *block) {
    if(pc == block->end)
       return;
 
-   for(uint32_t start = pc >> 12, end = block->end >> 12; start <= end; ++start) {
+   for(uint32_t start = (pc & 0x1FFFFFFF) >> 12, end = (block->end & 0x1FFFFFFF) >> 12; start <= end; ++start) {
       if(BlockPages[start] == NULL)
          BlockPages[start] = new list<block_t *>();
       BlockPages[start]->push_back(block);
    }
 }
 
+// Exported for low-level memory invalidation
+void invalidate(uint32_t address) {
+   cpu->InvalidateBlocks(address);
+}
+
 void PS_CPU::InvalidateBlocks(uint32_t addr) {
+   addr &= 0x1FFFFFFF;
    uint32_t page = addr >> 12;
    if(BlockPages[page] == NULL || BlockPages[page]->empty())
       return;
+
+   printf("Invalidating %08x\n", addr);
 
    for(list<block_t *>::iterator iter = BlockPages[page]->begin(); iter != BlockPages[page]->end(); ++iter) {
       block_t *block = *iter;

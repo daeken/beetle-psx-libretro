@@ -9,6 +9,8 @@
 #define MAS_NATIVE_IS_BIGENDIAN 0
 #endif
 
+void invalidate(uint32 address);
+
 static INLINE uint16 LoadU16_RBO(const uint16 *a)
 {
  #ifdef ARCH_POWERPC
@@ -152,11 +154,13 @@ struct MultiAccessSizeMem
 
  INLINE void WriteU8(uint32 address, uint8 value)
  {
+  invalidate(address);
   data8[address] = value;
  }
 
  INLINE void WriteU16(uint32 address, uint16 value)
  {
+  invalidate(address);
   if(MAS_NATIVE_IS_BIGENDIAN == big_endian)
    *(uint16*)(((uint8*)data16) + address) = value;
   else
@@ -165,6 +169,7 @@ struct MultiAccessSizeMem
 
  INLINE void WriteU32(uint32 address, uint32 value)
  {
+  invalidate(address);
   if(MAS_NATIVE_IS_BIGENDIAN == big_endian)
    *(uint32*)(((uint8*)data32) + address) = value;
   else
@@ -173,6 +178,7 @@ struct MultiAccessSizeMem
 
  INLINE void WriteU24(uint32 address, uint32 value)
  {
+  invalidate(address);
   if(!big_endian)
   {
    WriteU8(address + 0, value >> 0);

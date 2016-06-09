@@ -242,6 +242,8 @@ def _emitter(sexp, storing=False, locals=None):
 		if len(sexp) == 1:
 			sexp = sexp[0]
 		else:
+			if isinstance(sexp[0], list):
+				return list(map(emitter, sexp))
 			_, lvalue, rvalue = sexp[0]
 			lvalue = emitter(lvalue)
 			vdef = ['jit_value_t %s = %s;' % (lvalue, emitter(rvalue))]
