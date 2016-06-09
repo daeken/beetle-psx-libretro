@@ -296,11 +296,11 @@ def _emitter(sexp, storing=False, locals=None):
 		return 'call_read_copcreg(func, %s, %s)' % (emitter(sexp[1]), emitter(sexp[2]))
 	elif op == 'branch':
 		if (isinstance(sexp[1], str) or isinstance(sexp[1], unicode)) and not sexp[1].startswith('temp_'):
-			return 'call_branch_block(func, cpu->GetBlockReference(%s));' % emitter(sexp[1])
+			return 'call_branch_block(func, rcpu->GetBlockReference(%s));' % emitter(sexp[1])
 		else:
 			return 'call_branch(func, %s);' % (to_val(emitter(sexp[1])))
 	elif op == 'branch_default':
-		return 'call_branch_block(func, cpu->GetBlockReference(pc + 8));'
+		return 'call_branch_block(func, rcpu->GetBlockReference(pc + 8));'
 	elif op == 'syscall':
 		return 'call_syscall(func, %s, %s, %s);' % (emitter(sexp[1]), emitter(sexp[2]), emitter(sexp[3]))
 	elif op == 'break_':
@@ -399,15 +399,13 @@ def findDepres(dag):
 	dep.difference_update(res)
 	return dep, res
 
-def genDecomp((iname, type, dasm, dag)):
+def genCommon(iname, type, dag):
 	code = [('comment', iname)]
 	#code += [('emit', ('=', ('pc', ), '$pc'))]
 	#code += [('emit', ('check_irq', ))] # per-instruction irq checking
 	code += [('emit', ('read_absorb', ))]
 	vars = []
 	decoder(code, vars, type, dag)
-	has_branch = [False]
-	no_delay = [False]
 
 	dep, res = findDepres(dag)
 	if len(dep) != 0 or len(res) != 0:
@@ -422,6 +420,14 @@ def genDecomp((iname, type, dasm, dag)):
 
 	code += [('do_lds', 'func')]
 	#code += [('INSNLOG', iname)]
+
+	return code, vars, lregs
+
+def genDecomp((iname, type, dasm, dag)):
+	code, vars, lregs = genCommon(iname, type, dag)
+
+	has_branch = [False]
+	no_delay = [False]
 
 	def subgen(dag):
 		if isinstance(dag, str) or isinstance(dag, unicode):
