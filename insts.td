@@ -162,7 +162,20 @@ def BEQ : IType<0b000100, "beq %$rs, %$rt, $target",
 			(branch_default)))
 >;
 
-def BGEZ : RIType<0b000001, 0b00001, "bgez %$rs, $target", 
+// This is used to fill in the middle 3 bits of funct
+// Since the PSX cpu seems to ignore them
+multiclass BHack<bits<6> op, bits<5> funct, string disasm, dag eval> {
+	def : RIType<op, funct, disasm, eval>;
+	def : RIType<op, !add(funct, 0b00010), disasm, eval>;
+	def : RIType<op, !add(funct, 0b00100), disasm, eval>;
+	def : RIType<op, !add(funct, 0b00110), disasm, eval>;
+	def : RIType<op, !add(funct, 0b01000), disasm, eval>;
+	def : RIType<op, !add(funct, 0b01010), disasm, eval>;
+	def : RIType<op, !add(funct, 0b01100), disasm, eval>;
+	def : RIType<op, !add(funct, 0b01110), disasm, eval>;
+}
+
+defm BGEZ : BHack<0b000001, 0b00001, "bgez %$rs, $target", 
 	(let $target, (add (pcd), (shl (signext 16, $imm), 2)), 
 		(if (ge (signed (gpr $rs)), 0), 
 			(branch $target), 
@@ -194,7 +207,7 @@ def BLEZ : RIType<0b000110, 0b00000, "blez %$rs, $target",
 			(branch_default)))
 >;
 
-def BLTZ : RIType<0b000001, 0b00000, "bltz %$rs, $target", 
+defm BLTZ : BHack<0b000001, 0b00000, "bltz %$rs, $target", 
 	(let $target, (add (pcd), (shl (signext 16, $imm), 2)), 
 		(if (lt (signed (gpr $rs)), 0), 
 			(branch $target), 
