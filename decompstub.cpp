@@ -28,6 +28,7 @@ jit_value_t _make_ubyte(jit_function_t func, uint32_t val) {
 #define WGPR(gpr, val) do { if(gpr != 0) jit_insn_store_elem(func, state, make_uint(gpr), (val)); } while(0)
 #define WGPR_VAL(gpr, val) jit_insn_store_elem(func, state, gpr, (val))
 #define RGPR(gpr) ((gpr == 0) ? make_uint(0) : jit_insn_load_elem(func, state, make_uint(gpr), jit_type_uint))
+#define TGPR(name, gpr) jit_value_t name = RGPR(gpr)
 
 #define WPC(val) jit_insn_store_relative(func, state, 32*4, (val));
 #define RPC() jit_insn_load_relative(func, state, 32*4, jit_type_uint)
@@ -63,9 +64,9 @@ void call_store_memory(jit_function_t func, int size, jit_value_t ptr, jit_value
 	jit_insn_call_native(func, 0, (void *) store_memory, sig_4, args, 4, 0);
 }
 
-jit_value_t call_load_memory(jit_function_t func, int size, jit_value_t ptr) {
-	jit_value_t args[] = {make_uint(size), ptr};
-	return jit_insn_call_native(func, 0, (void *) load_memory, sig_2, args, 2, 0);
+jit_value_t call_load_memory(jit_function_t func, int size, jit_value_t ptr, uint32_t pc) {
+	jit_value_t args[] = {make_uint(size), ptr, make_uint(pc)};
+	return jit_insn_call_native(func, 0, (void *) load_memory, sig_3, args, 3, 0);
 }
 
 jit_value_t call_read_copreg(jit_function_t func, int cop, int reg) {

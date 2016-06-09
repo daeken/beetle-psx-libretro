@@ -39,7 +39,7 @@ void absorb_muldiv_delay();
 
 void check_irq(uint32_t pc);
 
-uint32_t load_memory(int size, uint32_t ptr);
+uint32_t load_memory(int size, uint32_t ptr, uint32_t pc);
 void store_memory(int size, uint32_t ptr, uint32_t val, uint32_t pc);
 
 void branch(uint32_t target);

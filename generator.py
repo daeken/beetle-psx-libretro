@@ -233,7 +233,7 @@ def _emitter(sexp, storing=False, locals=None):
 	def to_val(val):
 		if val.startswith('jit_') or val.startswith('call_') or val.split('(')[0] in ('RGPR', 'WGPR', 'RPC', 'WPC', 'RHI', 'WHI', 'RLO', 'WLO'):
 			return val
-		elif '(' in val or val in locals:
+		elif '(' in val or val.startswith('temp_') or val in locals:
 			return val
 		return 'make_uint(%s)' % val
 
@@ -295,7 +295,7 @@ def _emitter(sexp, storing=False, locals=None):
 	elif op == 'copcreg':
 		return 'call_read_copcreg(func, %s, %s)' % (emitter(sexp[1]), emitter(sexp[2]))
 	elif op == 'branch':
-		if isinstance(sexp[1], str) or isinstance(sexp[1], unicode):
+		if (isinstance(sexp[1], str) or isinstance(sexp[1], unicode)) and not sexp[1].startswith('temp_'):
 			return 'call_branch_block(func, cpu->GetBlockReference(%s));' % emitter(sexp[1])
 		else:
 			return 'call_branch(func, %s);' % (to_val(emitter(sexp[1])))
@@ -312,7 +312,7 @@ def _emitter(sexp, storing=False, locals=None):
 	elif op == 'store':
 		return 'call_store_memory(func, %i, %s, %s, pc);' % (sexp[1], to_val(emitter(sexp[2])), to_val(emitter(sexp[3])))
 	elif op == 'load':
-		return 'call_load_memory(func, %i, %s)' % (sexp[1], to_val(emitter(sexp[2])))
+		return 'call_load_memory(func, %i, %s, pc)' % (sexp[1], to_val(emitter(sexp[2])))
 	elif op == 'signed':
 		return 'jit_insn_convert(func, %s, jit_type_int, 0)' % (to_val(emitter(sexp[1])))
 	elif op == 'cast':
@@ -384,7 +384,7 @@ def findDepres(dag):
 	if not isinstance(dag, list):
 		return dep, res
 
-	if dag[0] == 'set':
+	if dag[0] == 'set' or dag[0] == 'defer_set':
 		if dag[1][0] == 'gpr':
 			res.add(dag[1][1])
 		sdep, sres = findDepres(dag[2])
@@ -396,10 +396,11 @@ def findDepres(dag):
 		for sdep, sres in map(findDepres, dag):
 			dep.update(sdep)
 			res.update(sres)
+	dep.difference_update(res)
 	return dep, res
 
-def genDecomp((name, type, dasm, dag)):
-	code = [('comment', name)]
+def genDecomp((iname, type, dasm, dag)):
+	code = [('comment', iname)]
 	#code += [('emit', ('=', ('pc', ), '$pc'))]
 	#code += [('emit', ('check_irq', ))] # per-instruction irq checking
 	code += [('emit', ('read_absorb', ))]
@@ -413,8 +414,14 @@ def genDecomp((name, type, dasm, dag)):
 		depres = [('DEP', x) for x in dep] + [('RES', x) for x in res]
 		code += depres
 
+	lregs = {}
+	for reg in dep:
+		name = tempname()
+		code += [('TGPR', name, reg)]
+		lregs[reg] = name
+
 	code += [('do_lds', 'func')]
-	#code += [('INSNLOG', name)]
+	#code += [('INSNLOG', iname)]
 
 	def subgen(dag):
 		if isinstance(dag, str) or isinstance(dag, unicode):
@@ -461,6 +468,9 @@ def genDecomp((name, type, dasm, dag)):
 		elif op == 'pcd':
 			return [('add', '$pc', 4)] # Return the delay slot position
 		elif op == 'gpr':
+			name = subgen(dag[1])
+			if name in lregs:
+				return lregs[name]
 			return ('reg', subgen(dag[1]))
 		elif op == 'copreg':
 			return ('copreg', subgen(dag[1]), subgen(dag[2]))

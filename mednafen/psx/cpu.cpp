@@ -37,6 +37,7 @@ extern bool psx_cpu_overclock;
 						// Does lock mode prevent the actual data payload from being modified, while allowing tags to be modified/updated???
 
 bool gdebug = false;
+jmp_buf excjmpenv;
 
 volatile int32_t gtimestamp;
 void timestamp_inc(int amt) {
@@ -303,7 +304,7 @@ void PS_CPU::PokeMemory(uint32 address, T value)
       PSX_MemPoke32(address, value);
 }
 
-uint32_t load_memory(int size, uint32_t ptr) {
+uint32_t load_memory(int size, uint32_t ptr, uint32_t pc) {
    // Enable full debugging in SOTN
    if(ptr == 0x80032AB0)
       return 1;
@@ -313,12 +314,18 @@ uint32_t load_memory(int size, uint32_t ptr) {
          val = (uint32_t) cpu->ReadMemory<uint8_t>(ptr);
          break;
       case 16:
+         //if((ptr & 0x1) != 0)
+         //   longjmp(excjmpenv, cpu->Exception(EXCEPTION_ADEL, pc, pc, 0xFF, 0));
          val = (uint32_t) cpu->ReadMemory<uint16_t>(ptr);
          break;
       case 24:
+         //if((ptr & 0x3) != 0)
+         //   longjmp(excjmpenv, cpu->Exception(EXCEPTION_ADEL, pc, pc, 0xFF, 0));
          val = cpu->ReadMemory<uint32_t>(ptr, true);
          break;
       default:
+         //if((ptr & 0x3) != 0)
+         //   longjmp(excjmpenv, cpu->Exception(EXCEPTION_ADEL, pc, pc, 0xFF, 0));
          val = cpu->ReadMemory<uint32_t>(ptr);
    }
 
@@ -528,8 +535,6 @@ void branch_block(block_t *block) {
    branch_to_block = block;
 }
 
-jmp_buf excjmpenv;
-
 void ps_syscall(int code, uint32_t pc, uint32_t instr) {
    branch(cpu->Exception(EXCEPTION_SYSCALL, pc, pc + 4, 0xFF, instr));
 }
@@ -539,7 +544,7 @@ void break_(int code, uint32_t pc, uint32_t instr) {
 }
 
 void overflow(uint32_t a, uint32_t b, int dir, uint32_t pc, uint32_t instr) {
-   if(dir) {
+   if(dir == 1) {
       uint32_t r = a + b;
       if(((~(a ^ b)) & (a ^ r)) & 0x80000000)
          longjmp(excjmpenv, cpu->Exception(EXCEPTION_OV, pc, pc, 0xFF, instr));
