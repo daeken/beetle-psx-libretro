@@ -54,6 +54,7 @@ void do_lds(jit_function_t func) {
 	STORE(_ReadAbsorbWhich, CAST(jit_insn_or(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), jit_insn_and(func, ldw, make_uint(0x1F))), jit_type_ubyte));
 	STORE(LDWhich, make_uint(35));
 }
+#define DO_LDS() do_lds(func)
 
 void defer_set(jit_function_t func, int reg, jit_value_t val) {
     STORE(LDWhich, make_uint(reg));
@@ -245,180 +246,180 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 			switch((inst) & (0x3f)) {
 				case 0x0: {
 					/* SLL */
-					jit_label_t temp_114 = jit_label_undefined, temp_115 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_114);
+					jit_label_t temp_227 = jit_label_undefined, temp_228 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_227);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_115);
-					jit_insn_label(func, &temp_114);
+					jit_insn_branch(func, &temp_228);
+					jit_insn_label(func, &temp_227);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_115);
+					jit_insn_label(func, &temp_228);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					uint32_t shamt = ((inst) >> (0x6)) & (0x1f);
 					DEP(rt);
 					RES(rd);
-					TGPR(temp_1, rt);
-					do_lds(func);
-					WGPR(rd, jit_insn_shl(func, temp_1, make_uint(shamt)));
+					TGPR(temp_114, rt);
+					DO_LDS();
+					WGPR(rd, jit_insn_shl(func, temp_114, make_uint(shamt)));
 					return(true);
 					break;
 				}
 				case 0x2: {
 					/* SRL */
-					jit_label_t temp_116 = jit_label_undefined, temp_117 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_116);
+					jit_label_t temp_229 = jit_label_undefined, temp_230 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_229);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_117);
-					jit_insn_label(func, &temp_116);
+					jit_insn_branch(func, &temp_230);
+					jit_insn_label(func, &temp_229);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_117);
+					jit_insn_label(func, &temp_230);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					uint32_t shamt = ((inst) >> (0x6)) & (0x1f);
 					DEP(rt);
 					RES(rd);
-					TGPR(temp_2, rt);
-					do_lds(func);
-					WGPR(rd, jit_insn_ushr(func, temp_2, make_uint(shamt)));
+					TGPR(temp_115, rt);
+					DO_LDS();
+					WGPR(rd, jit_insn_ushr(func, temp_115, make_uint(shamt)));
 					return(true);
 					break;
 				}
 				case 0x3: {
 					/* SRA */
-					jit_label_t temp_118 = jit_label_undefined, temp_119 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_118);
+					jit_label_t temp_231 = jit_label_undefined, temp_232 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_231);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_119);
-					jit_insn_label(func, &temp_118);
+					jit_insn_branch(func, &temp_232);
+					jit_insn_label(func, &temp_231);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_119);
+					jit_insn_label(func, &temp_232);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					uint32_t shamt = ((inst) >> (0x6)) & (0x1f);
 					DEP(rt);
 					RES(rd);
-					TGPR(temp_3, rt);
-					do_lds(func);
-					WGPR(rd, jit_insn_sshr(func, temp_3, make_uint(shamt)));
+					TGPR(temp_116, rt);
+					DO_LDS();
+					WGPR(rd, jit_insn_sshr(func, temp_116, make_uint(shamt)));
 					return(true);
 					break;
 				}
 				case 0x4: {
 					/* SLLV */
-					jit_label_t temp_120 = jit_label_undefined, temp_121 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_120);
+					jit_label_t temp_233 = jit_label_undefined, temp_234 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_233);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_121);
-					jit_insn_label(func, &temp_120);
+					jit_insn_branch(func, &temp_234);
+					jit_insn_label(func, &temp_233);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_121);
+					jit_insn_label(func, &temp_234);
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					DEP(rs);
 					DEP(rt);
 					RES(rd);
-					TGPR(temp_4, rs);
-					TGPR(temp_5, rt);
-					do_lds(func);
-					WGPR(rd, jit_insn_shl(func, temp_5, temp_4));
+					TGPR(temp_117, rs);
+					TGPR(temp_118, rt);
+					DO_LDS();
+					WGPR(rd, jit_insn_shl(func, temp_118, temp_117));
 					return(true);
 					break;
 				}
 				case 0x6: {
 					/* SRLV */
-					jit_label_t temp_122 = jit_label_undefined, temp_123 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_122);
+					jit_label_t temp_235 = jit_label_undefined, temp_236 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_235);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_123);
-					jit_insn_label(func, &temp_122);
+					jit_insn_branch(func, &temp_236);
+					jit_insn_label(func, &temp_235);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_123);
+					jit_insn_label(func, &temp_236);
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					DEP(rs);
 					DEP(rt);
 					RES(rd);
-					TGPR(temp_6, rs);
-					TGPR(temp_7, rt);
-					do_lds(func);
-					WGPR(rd, jit_insn_ushr(func, temp_7, temp_6));
+					TGPR(temp_119, rs);
+					TGPR(temp_120, rt);
+					DO_LDS();
+					WGPR(rd, jit_insn_ushr(func, temp_120, temp_119));
 					return(true);
 					break;
 				}
 				case 0x7: {
 					/* SRAV */
-					jit_label_t temp_124 = jit_label_undefined, temp_125 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_124);
+					jit_label_t temp_237 = jit_label_undefined, temp_238 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_237);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_125);
-					jit_insn_label(func, &temp_124);
+					jit_insn_branch(func, &temp_238);
+					jit_insn_label(func, &temp_237);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_125);
+					jit_insn_label(func, &temp_238);
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					DEP(rs);
 					DEP(rt);
 					RES(rd);
-					TGPR(temp_8, rs);
-					TGPR(temp_9, rt);
-					do_lds(func);
-					WGPR(rd, jit_insn_sshr(func, temp_9, temp_8));
+					TGPR(temp_121, rs);
+					TGPR(temp_122, rt);
+					DO_LDS();
+					WGPR(rd, jit_insn_sshr(func, temp_122, temp_121));
 					return(true);
 					break;
 				}
 				case 0x8: {
 					/* JR */
-					jit_label_t temp_126 = jit_label_undefined, temp_127 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_126);
+					jit_label_t temp_239 = jit_label_undefined, temp_240 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_239);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_127);
-					jit_insn_label(func, &temp_126);
+					jit_insn_branch(func, &temp_240);
+					jit_insn_label(func, &temp_239);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_127);
+					jit_insn_label(func, &temp_240);
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					DEP(rs);
-					TGPR(temp_10, rs);
-					do_lds(func);
-					call_branch(func, temp_10);
+					TGPR(temp_123, rs);
+					DO_LDS();
+					call_branch(func, temp_123);
 					branched = true;
 					return(true);
 					break;
 				}
 				case 0x9: {
 					/* JALR */
-					jit_label_t temp_128 = jit_label_undefined, temp_129 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_128);
+					jit_label_t temp_241 = jit_label_undefined, temp_242 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_241);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_129);
-					jit_insn_label(func, &temp_128);
+					jit_insn_branch(func, &temp_242);
+					jit_insn_label(func, &temp_241);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_129);
+					jit_insn_label(func, &temp_242);
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					DEP(rs);
 					RES(rd);
-					TGPR(temp_11, rs);
-					do_lds(func);
+					TGPR(temp_124, rs);
+					DO_LDS();
 					WGPR(rd, jit_insn_add(func, jit_insn_add(func, make_uint(pc), make_uint(0x4)), make_uint(0x4)));
-					call_branch(func, temp_11);
+					call_branch(func, temp_124);
 					branched = true;
 					return(true);
 					break;
 				}
 				case 0xc: {
 					/* SYSCALL */
-					jit_label_t temp_130 = jit_label_undefined, temp_131 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_130);
+					jit_label_t temp_243 = jit_label_undefined, temp_244 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_243);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_131);
-					jit_insn_label(func, &temp_130);
+					jit_insn_branch(func, &temp_244);
+					jit_insn_label(func, &temp_243);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_131);
+					jit_insn_label(func, &temp_244);
 					uint32_t code = ((inst) >> (0x6)) & (0xfffff);
-					do_lds(func);
+					DO_LDS();
 					call_syscall(func, code, pc, inst);
 					branched = true;
 					no_delay = true;
@@ -427,15 +428,15 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 				}
 				case 0xd: {
 					/* BREAK */
-					jit_label_t temp_132 = jit_label_undefined, temp_133 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_132);
+					jit_label_t temp_245 = jit_label_undefined, temp_246 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_245);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_133);
-					jit_insn_label(func, &temp_132);
+					jit_insn_branch(func, &temp_246);
+					jit_insn_label(func, &temp_245);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_133);
+					jit_insn_label(func, &temp_246);
 					uint32_t code = ((inst) >> (0x6)) & (0xfffff);
-					do_lds(func);
+					DO_LDS();
 					call_break(func, code, pc, inst);
 					branched = true;
 					no_delay = true;
@@ -444,16 +445,16 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 				}
 				case 0x10: {
 					/* MFHI */
-					jit_label_t temp_134 = jit_label_undefined, temp_135 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_134);
+					jit_label_t temp_247 = jit_label_undefined, temp_248 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_247);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_135);
-					jit_insn_label(func, &temp_134);
+					jit_insn_branch(func, &temp_248);
+					jit_insn_label(func, &temp_247);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_135);
+					jit_insn_label(func, &temp_248);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					RES(rd);
-					do_lds(func);
+					DO_LDS();
 					WGPR(rd, RHI());
 					call_absorb_muldiv_delay(func);
 					return(true);
@@ -461,33 +462,33 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 				}
 				case 0x11: {
 					/* MTHI */
-					jit_label_t temp_136 = jit_label_undefined, temp_137 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_136);
+					jit_label_t temp_249 = jit_label_undefined, temp_250 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_249);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_137);
-					jit_insn_label(func, &temp_136);
+					jit_insn_branch(func, &temp_250);
+					jit_insn_label(func, &temp_249);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_137);
+					jit_insn_label(func, &temp_250);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					DEP(rd);
-					TGPR(temp_12, rd);
-					do_lds(func);
-					WHI(temp_12)
+					TGPR(temp_125, rd);
+					DO_LDS();
+					WHI(temp_125)
 					return(true);
 					break;
 				}
 				case 0x12: {
 					/* MFLO */
-					jit_label_t temp_138 = jit_label_undefined, temp_139 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_138);
+					jit_label_t temp_251 = jit_label_undefined, temp_252 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_251);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_139);
-					jit_insn_label(func, &temp_138);
+					jit_insn_branch(func, &temp_252);
+					jit_insn_label(func, &temp_251);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_139);
+					jit_insn_label(func, &temp_252);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					RES(rd);
-					do_lds(func);
+					DO_LDS();
 					WGPR(rd, RLO());
 					call_absorb_muldiv_delay(func);
 					return(true);
@@ -495,353 +496,353 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 				}
 				case 0x13: {
 					/* MTLO */
-					jit_label_t temp_140 = jit_label_undefined, temp_141 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_140);
+					jit_label_t temp_253 = jit_label_undefined, temp_254 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_253);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_141);
-					jit_insn_label(func, &temp_140);
+					jit_insn_branch(func, &temp_254);
+					jit_insn_label(func, &temp_253);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_141);
+					jit_insn_label(func, &temp_254);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					DEP(rd);
-					TGPR(temp_13, rd);
-					do_lds(func);
-					WLO(temp_13)
+					TGPR(temp_126, rd);
+					DO_LDS();
+					WLO(temp_126)
 					return(true);
 					break;
 				}
 				case 0x18: {
 					/* MULT */
-					jit_label_t temp_142 = jit_label_undefined, temp_143 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_142);
+					jit_label_t temp_255 = jit_label_undefined, temp_256 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_255);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_143);
-					jit_insn_label(func, &temp_142);
+					jit_insn_branch(func, &temp_256);
+					jit_insn_label(func, &temp_255);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_143);
+					jit_insn_label(func, &temp_256);
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					DEP(rs);
 					DEP(rt);
-					TGPR(temp_14, rs);
-					TGPR(temp_15, rt);
-					do_lds(func);
-					jit_value_t _t = jit_insn_mul(func, jit_insn_convert(func, temp_14, jit_type_long, 0), jit_insn_convert(func, temp_15, jit_type_long, 0));
+					TGPR(temp_127, rs);
+					TGPR(temp_128, rt);
+					DO_LDS();
+					jit_value_t _t = jit_insn_mul(func, jit_insn_convert(func, temp_127, jit_type_long, 0), jit_insn_convert(func, temp_128, jit_type_long, 0));
 					WLO(jit_insn_convert(func, _t, jit_type_uint, 0))
 					return(true);
 					break;
 				}
 				case 0x19: {
 					/* MULTU */
-					jit_label_t temp_144 = jit_label_undefined, temp_145 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_144);
+					jit_label_t temp_257 = jit_label_undefined, temp_258 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_257);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_145);
-					jit_insn_label(func, &temp_144);
+					jit_insn_branch(func, &temp_258);
+					jit_insn_label(func, &temp_257);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_145);
+					jit_insn_label(func, &temp_258);
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					DEP(rs);
 					DEP(rt);
-					TGPR(temp_16, rs);
-					TGPR(temp_17, rt);
-					do_lds(func);
-					jit_value_t _t = jit_insn_mul(func, jit_insn_convert(func, temp_16, jit_type_ulong, 0), jit_insn_convert(func, temp_17, jit_type_ulong, 0));
+					TGPR(temp_129, rs);
+					TGPR(temp_130, rt);
+					DO_LDS();
+					jit_value_t _t = jit_insn_mul(func, jit_insn_convert(func, temp_129, jit_type_ulong, 0), jit_insn_convert(func, temp_130, jit_type_ulong, 0));
 					WLO(jit_insn_convert(func, _t, jit_type_uint, 0))
 					return(true);
 					break;
 				}
 				case 0x1a: {
 					/* DIV */
-					jit_label_t temp_146 = jit_label_undefined, temp_147 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_146);
+					jit_label_t temp_259 = jit_label_undefined, temp_260 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_259);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_147);
-					jit_insn_label(func, &temp_146);
+					jit_insn_branch(func, &temp_260);
+					jit_insn_label(func, &temp_259);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_147);
+					jit_insn_label(func, &temp_260);
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					DEP(rs);
 					DEP(rt);
-					TGPR(temp_18, rs);
-					TGPR(temp_19, rt);
-					do_lds(func);
-					jit_label_t temp_148 = jit_label_undefined, temp_149 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, temp_19, make_uint(0x0)), &temp_148);
-					jit_label_t temp_150 = jit_label_undefined, temp_151 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_and(func, jit_insn_eq(func, temp_18, make_uint(0x80000000)), jit_insn_eq(func, temp_19, make_uint(0xffffffff))), &temp_150);
-					WLO(jit_insn_div(func, jit_insn_convert(func, temp_18, jit_type_int, 0), jit_insn_convert(func, temp_19, jit_type_int, 0)))
-					WHI(jit_insn_rem(func, jit_insn_convert(func, temp_18, jit_type_int, 0), jit_insn_convert(func, temp_19, jit_type_int, 0)))
+					TGPR(temp_131, rs);
+					TGPR(temp_132, rt);
+					DO_LDS();
+					jit_label_t temp_261 = jit_label_undefined, temp_262 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, temp_132, make_uint(0x0)), &temp_261);
+					jit_label_t temp_263 = jit_label_undefined, temp_264 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_and(func, jit_insn_eq(func, temp_131, make_uint(0x80000000)), jit_insn_eq(func, temp_132, make_uint(0xffffffff))), &temp_263);
+					WLO(jit_insn_div(func, jit_insn_convert(func, temp_131, jit_type_int, 0), jit_insn_convert(func, temp_132, jit_type_int, 0)))
+					WHI(jit_insn_rem(func, jit_insn_convert(func, temp_131, jit_type_int, 0), jit_insn_convert(func, temp_132, jit_type_int, 0)))
 					call_muldiv_delay(func, make_uint(0x0), make_uint(0x0));
-					jit_insn_branch(func, &temp_151);
-					jit_insn_label(func, &temp_150);
+					jit_insn_branch(func, &temp_264);
+					jit_insn_label(func, &temp_263);
 					WLO(make_uint(0x80000000))
 					WHI(make_uint(0x0))
-					jit_insn_label(func, &temp_151);
-					jit_insn_branch(func, &temp_149);
-					jit_insn_label(func, &temp_148);
-					jit_label_t temp_152 = jit_label_undefined, temp_153 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_ne(func, jit_insn_and(func, temp_18, make_uint(0x80000000)), make_uint(0x0)), &temp_152);
+					jit_insn_label(func, &temp_264);
+					jit_insn_branch(func, &temp_262);
+					jit_insn_label(func, &temp_261);
+					jit_label_t temp_265 = jit_label_undefined, temp_266 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_ne(func, jit_insn_and(func, temp_131, make_uint(0x80000000)), make_uint(0x0)), &temp_265);
 					WLO(make_uint(0xffffffff))
-					jit_insn_branch(func, &temp_153);
-					jit_insn_label(func, &temp_152);
+					jit_insn_branch(func, &temp_266);
+					jit_insn_label(func, &temp_265);
 					WLO(make_uint(0x1))
-					jit_insn_label(func, &temp_153);
-					WHI(temp_18)
-					jit_insn_label(func, &temp_149);
+					jit_insn_label(func, &temp_266);
+					WHI(temp_131)
+					jit_insn_label(func, &temp_262);
 					return(true);
 					break;
 				}
 				case 0x1b: {
 					/* DIVU */
-					jit_label_t temp_154 = jit_label_undefined, temp_155 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_154);
+					jit_label_t temp_267 = jit_label_undefined, temp_268 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_267);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_155);
-					jit_insn_label(func, &temp_154);
+					jit_insn_branch(func, &temp_268);
+					jit_insn_label(func, &temp_267);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_155);
+					jit_insn_label(func, &temp_268);
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					DEP(rs);
 					DEP(rt);
-					TGPR(temp_20, rs);
-					TGPR(temp_21, rt);
-					do_lds(func);
-					jit_label_t temp_156 = jit_label_undefined, temp_157 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, temp_21, make_uint(0x0)), &temp_156);
-					WLO(jit_insn_div(func, temp_20, temp_21))
-					WHI(jit_insn_rem(func, temp_20, temp_21))
+					TGPR(temp_133, rs);
+					TGPR(temp_134, rt);
+					DO_LDS();
+					jit_label_t temp_269 = jit_label_undefined, temp_270 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, temp_134, make_uint(0x0)), &temp_269);
+					WLO(jit_insn_div(func, temp_133, temp_134))
+					WHI(jit_insn_rem(func, temp_133, temp_134))
 					call_muldiv_delay(func, make_uint(0x0), make_uint(0x0));
-					jit_insn_branch(func, &temp_157);
-					jit_insn_label(func, &temp_156);
+					jit_insn_branch(func, &temp_270);
+					jit_insn_label(func, &temp_269);
 					WLO(make_uint(0xffffffff))
-					WHI(temp_20)
-					jit_insn_label(func, &temp_157);
+					WHI(temp_133)
+					jit_insn_label(func, &temp_270);
 					return(true);
 					break;
 				}
 				case 0x20: {
 					/* ADD */
-					jit_label_t temp_158 = jit_label_undefined, temp_159 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_158);
+					jit_label_t temp_271 = jit_label_undefined, temp_272 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_271);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_159);
-					jit_insn_label(func, &temp_158);
+					jit_insn_branch(func, &temp_272);
+					jit_insn_label(func, &temp_271);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_159);
+					jit_insn_label(func, &temp_272);
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					DEP(rs);
 					DEP(rt);
 					RES(rd);
-					TGPR(temp_22, rs);
-					TGPR(temp_23, rt);
-					do_lds(func);
-					call_overflow(func, temp_22, temp_23, 1, pc, inst);
-					WGPR(rd, jit_insn_add(func, temp_22, temp_23));
+					TGPR(temp_135, rs);
+					TGPR(temp_136, rt);
+					DO_LDS();
+					call_overflow(func, temp_135, temp_136, 1, pc, inst);
+					WGPR(rd, jit_insn_add(func, temp_135, temp_136));
 					return(true);
 					break;
 				}
 				case 0x21: {
 					/* ADDU */
-					jit_label_t temp_160 = jit_label_undefined, temp_161 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_160);
+					jit_label_t temp_273 = jit_label_undefined, temp_274 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_273);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_161);
-					jit_insn_label(func, &temp_160);
+					jit_insn_branch(func, &temp_274);
+					jit_insn_label(func, &temp_273);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_161);
+					jit_insn_label(func, &temp_274);
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					DEP(rs);
 					DEP(rt);
 					RES(rd);
-					TGPR(temp_24, rs);
-					TGPR(temp_25, rt);
-					do_lds(func);
-					WGPR(rd, jit_insn_add(func, temp_24, temp_25));
+					TGPR(temp_137, rs);
+					TGPR(temp_138, rt);
+					DO_LDS();
+					WGPR(rd, jit_insn_add(func, temp_137, temp_138));
 					return(true);
 					break;
 				}
 				case 0x22: {
 					/* SUB */
-					jit_label_t temp_162 = jit_label_undefined, temp_163 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_162);
+					jit_label_t temp_275 = jit_label_undefined, temp_276 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_275);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_163);
-					jit_insn_label(func, &temp_162);
+					jit_insn_branch(func, &temp_276);
+					jit_insn_label(func, &temp_275);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_163);
+					jit_insn_label(func, &temp_276);
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					DEP(rs);
 					DEP(rt);
 					RES(rd);
-					TGPR(temp_26, rs);
-					TGPR(temp_27, rt);
-					do_lds(func);
-					call_overflow(func, temp_26, temp_27, -1, pc, inst);
-					WGPR(rd, jit_insn_sub(func, temp_26, temp_27));
+					TGPR(temp_139, rs);
+					TGPR(temp_140, rt);
+					DO_LDS();
+					call_overflow(func, temp_139, temp_140, -1, pc, inst);
+					WGPR(rd, jit_insn_sub(func, temp_139, temp_140));
 					return(true);
 					break;
 				}
 				case 0x23: {
 					/* SUBU */
-					jit_label_t temp_164 = jit_label_undefined, temp_165 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_164);
+					jit_label_t temp_277 = jit_label_undefined, temp_278 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_277);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_165);
-					jit_insn_label(func, &temp_164);
+					jit_insn_branch(func, &temp_278);
+					jit_insn_label(func, &temp_277);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_165);
+					jit_insn_label(func, &temp_278);
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					DEP(rs);
 					DEP(rt);
 					RES(rd);
-					TGPR(temp_28, rs);
-					TGPR(temp_29, rt);
-					do_lds(func);
-					WGPR(rd, jit_insn_sub(func, temp_28, temp_29));
+					TGPR(temp_141, rs);
+					TGPR(temp_142, rt);
+					DO_LDS();
+					WGPR(rd, jit_insn_sub(func, temp_141, temp_142));
 					return(true);
 					break;
 				}
 				case 0x24: {
 					/* AND */
-					jit_label_t temp_166 = jit_label_undefined, temp_167 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_166);
+					jit_label_t temp_279 = jit_label_undefined, temp_280 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_279);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_167);
-					jit_insn_label(func, &temp_166);
+					jit_insn_branch(func, &temp_280);
+					jit_insn_label(func, &temp_279);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_167);
+					jit_insn_label(func, &temp_280);
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					DEP(rs);
 					DEP(rt);
 					RES(rd);
-					TGPR(temp_30, rs);
-					TGPR(temp_31, rt);
-					do_lds(func);
-					WGPR(rd, jit_insn_and(func, temp_30, temp_31));
+					TGPR(temp_143, rs);
+					TGPR(temp_144, rt);
+					DO_LDS();
+					WGPR(rd, jit_insn_and(func, temp_143, temp_144));
 					return(true);
 					break;
 				}
 				case 0x25: {
 					/* OR */
-					jit_label_t temp_168 = jit_label_undefined, temp_169 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_168);
+					jit_label_t temp_281 = jit_label_undefined, temp_282 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_281);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_169);
-					jit_insn_label(func, &temp_168);
+					jit_insn_branch(func, &temp_282);
+					jit_insn_label(func, &temp_281);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_169);
+					jit_insn_label(func, &temp_282);
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					DEP(rs);
 					DEP(rt);
 					RES(rd);
-					TGPR(temp_32, rs);
-					TGPR(temp_33, rt);
-					do_lds(func);
-					WGPR(rd, jit_insn_or(func, temp_32, temp_33));
+					TGPR(temp_145, rs);
+					TGPR(temp_146, rt);
+					DO_LDS();
+					WGPR(rd, jit_insn_or(func, temp_145, temp_146));
 					return(true);
 					break;
 				}
 				case 0x26: {
 					/* XOR */
-					jit_label_t temp_170 = jit_label_undefined, temp_171 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_170);
+					jit_label_t temp_283 = jit_label_undefined, temp_284 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_283);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_171);
-					jit_insn_label(func, &temp_170);
+					jit_insn_branch(func, &temp_284);
+					jit_insn_label(func, &temp_283);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_171);
+					jit_insn_label(func, &temp_284);
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					DEP(rs);
 					DEP(rt);
 					RES(rd);
-					TGPR(temp_34, rs);
-					TGPR(temp_35, rt);
-					do_lds(func);
-					WGPR(rd, jit_insn_xor(func, temp_34, temp_35));
+					TGPR(temp_147, rs);
+					TGPR(temp_148, rt);
+					DO_LDS();
+					WGPR(rd, jit_insn_xor(func, temp_147, temp_148));
 					return(true);
 					break;
 				}
 				case 0x27: {
 					/* NOR */
-					jit_label_t temp_172 = jit_label_undefined, temp_173 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_172);
+					jit_label_t temp_285 = jit_label_undefined, temp_286 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_285);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_173);
-					jit_insn_label(func, &temp_172);
+					jit_insn_branch(func, &temp_286);
+					jit_insn_label(func, &temp_285);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_173);
+					jit_insn_label(func, &temp_286);
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					DEP(rs);
 					DEP(rt);
 					RES(rd);
-					TGPR(temp_36, rs);
-					TGPR(temp_37, rt);
-					do_lds(func);
-					WGPR(rd, jit_insn_not(func, jit_insn_or(func, temp_36, temp_37)));
+					TGPR(temp_149, rs);
+					TGPR(temp_150, rt);
+					DO_LDS();
+					WGPR(rd, jit_insn_not(func, jit_insn_or(func, temp_149, temp_150)));
 					return(true);
 					break;
 				}
 				case 0x2a: {
 					/* SLT */
-					jit_label_t temp_174 = jit_label_undefined, temp_175 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_174);
+					jit_label_t temp_287 = jit_label_undefined, temp_288 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_287);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_175);
-					jit_insn_label(func, &temp_174);
+					jit_insn_branch(func, &temp_288);
+					jit_insn_label(func, &temp_287);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_175);
+					jit_insn_label(func, &temp_288);
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					DEP(rs);
 					DEP(rt);
 					RES(rd);
-					TGPR(temp_38, rs);
-					TGPR(temp_39, rt);
-					do_lds(func);
-					WGPR(rd, jit_insn_lt(func, jit_insn_convert(func, temp_38, jit_type_int, 0), jit_insn_convert(func, temp_39, jit_type_int, 0)));
+					TGPR(temp_151, rs);
+					TGPR(temp_152, rt);
+					DO_LDS();
+					WGPR(rd, jit_insn_lt(func, jit_insn_convert(func, temp_151, jit_type_int, 0), jit_insn_convert(func, temp_152, jit_type_int, 0)));
 					return(true);
 					break;
 				}
 				case 0x2b: {
 					/* SLTU */
-					jit_label_t temp_176 = jit_label_undefined, temp_177 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_176);
+					jit_label_t temp_289 = jit_label_undefined, temp_290 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_289);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_177);
-					jit_insn_label(func, &temp_176);
+					jit_insn_branch(func, &temp_290);
+					jit_insn_label(func, &temp_289);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_177);
+					jit_insn_label(func, &temp_290);
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					DEP(rs);
 					DEP(rt);
 					RES(rd);
-					TGPR(temp_40, rs);
-					TGPR(temp_41, rt);
-					do_lds(func);
-					WGPR(rd, jit_insn_lt(func, temp_40, temp_41));
+					TGPR(temp_153, rs);
+					TGPR(temp_154, rt);
+					DO_LDS();
+					WGPR(rd, jit_insn_lt(func, temp_153, temp_154));
 					return(true);
 					break;
 				}
@@ -852,864 +853,864 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 			switch(((inst) >> (0x10)) & (0x1f)) {
 				case 0x0: {
 					/* BLTZanonymous_0 */
-					jit_label_t temp_178 = jit_label_undefined, temp_179 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_178);
+					jit_label_t temp_291 = jit_label_undefined, temp_292 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_291);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_179);
-					jit_insn_label(func, &temp_178);
+					jit_insn_branch(func, &temp_292);
+					jit_insn_label(func, &temp_291);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_179);
+					jit_insn_label(func, &temp_292);
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
-					TGPR(temp_42, rs);
-					do_lds(func);
+					TGPR(temp_155, rs);
+					DO_LDS();
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
-					jit_label_t temp_180 = jit_label_undefined, temp_181 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_lt(func, jit_insn_convert(func, temp_42, jit_type_int, 0), make_uint(0x0)), &temp_180);
+					jit_label_t temp_293 = jit_label_undefined, temp_294 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_lt(func, jit_insn_convert(func, temp_155, jit_type_int, 0), make_uint(0x0)), &temp_293);
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
-					jit_insn_branch(func, &temp_181);
-					jit_insn_label(func, &temp_180);
+					jit_insn_branch(func, &temp_294);
+					jit_insn_label(func, &temp_293);
 					call_branch_block(func, rcpu->GetBlockReference(target));
-					jit_insn_label(func, &temp_181);
+					jit_insn_label(func, &temp_294);
 					branched = true;
 					return(true);
 					break;
 				}
 				case 0x1: {
 					/* BGEZanonymous_0 */
-					jit_label_t temp_182 = jit_label_undefined, temp_183 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_182);
+					jit_label_t temp_295 = jit_label_undefined, temp_296 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_295);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_183);
-					jit_insn_label(func, &temp_182);
+					jit_insn_branch(func, &temp_296);
+					jit_insn_label(func, &temp_295);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_183);
+					jit_insn_label(func, &temp_296);
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
-					TGPR(temp_43, rs);
-					do_lds(func);
+					TGPR(temp_156, rs);
+					DO_LDS();
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
-					jit_label_t temp_184 = jit_label_undefined, temp_185 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_ge(func, jit_insn_convert(func, temp_43, jit_type_int, 0), make_uint(0x0)), &temp_184);
+					jit_label_t temp_297 = jit_label_undefined, temp_298 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_ge(func, jit_insn_convert(func, temp_156, jit_type_int, 0), make_uint(0x0)), &temp_297);
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
-					jit_insn_branch(func, &temp_185);
-					jit_insn_label(func, &temp_184);
+					jit_insn_branch(func, &temp_298);
+					jit_insn_label(func, &temp_297);
 					call_branch_block(func, rcpu->GetBlockReference(target));
-					jit_insn_label(func, &temp_185);
+					jit_insn_label(func, &temp_298);
 					branched = true;
 					return(true);
 					break;
 				}
 				case 0x2: {
 					/* BLTZanonymous_1 */
-					jit_label_t temp_186 = jit_label_undefined, temp_187 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_186);
+					jit_label_t temp_299 = jit_label_undefined, temp_300 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_299);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_187);
-					jit_insn_label(func, &temp_186);
+					jit_insn_branch(func, &temp_300);
+					jit_insn_label(func, &temp_299);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_187);
+					jit_insn_label(func, &temp_300);
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
-					TGPR(temp_44, rs);
-					do_lds(func);
+					TGPR(temp_157, rs);
+					DO_LDS();
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
-					jit_label_t temp_188 = jit_label_undefined, temp_189 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_lt(func, jit_insn_convert(func, temp_44, jit_type_int, 0), make_uint(0x0)), &temp_188);
+					jit_label_t temp_301 = jit_label_undefined, temp_302 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_lt(func, jit_insn_convert(func, temp_157, jit_type_int, 0), make_uint(0x0)), &temp_301);
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
-					jit_insn_branch(func, &temp_189);
-					jit_insn_label(func, &temp_188);
+					jit_insn_branch(func, &temp_302);
+					jit_insn_label(func, &temp_301);
 					call_branch_block(func, rcpu->GetBlockReference(target));
-					jit_insn_label(func, &temp_189);
+					jit_insn_label(func, &temp_302);
 					branched = true;
 					return(true);
 					break;
 				}
 				case 0x3: {
 					/* BGEZanonymous_1 */
-					jit_label_t temp_190 = jit_label_undefined, temp_191 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_190);
+					jit_label_t temp_303 = jit_label_undefined, temp_304 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_303);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_191);
-					jit_insn_label(func, &temp_190);
+					jit_insn_branch(func, &temp_304);
+					jit_insn_label(func, &temp_303);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_191);
+					jit_insn_label(func, &temp_304);
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
-					TGPR(temp_45, rs);
-					do_lds(func);
+					TGPR(temp_158, rs);
+					DO_LDS();
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
-					jit_label_t temp_192 = jit_label_undefined, temp_193 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_ge(func, jit_insn_convert(func, temp_45, jit_type_int, 0), make_uint(0x0)), &temp_192);
+					jit_label_t temp_305 = jit_label_undefined, temp_306 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_ge(func, jit_insn_convert(func, temp_158, jit_type_int, 0), make_uint(0x0)), &temp_305);
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
-					jit_insn_branch(func, &temp_193);
-					jit_insn_label(func, &temp_192);
+					jit_insn_branch(func, &temp_306);
+					jit_insn_label(func, &temp_305);
 					call_branch_block(func, rcpu->GetBlockReference(target));
-					jit_insn_label(func, &temp_193);
+					jit_insn_label(func, &temp_306);
 					branched = true;
 					return(true);
 					break;
 				}
 				case 0x4: {
 					/* BLTZanonymous_2 */
-					jit_label_t temp_194 = jit_label_undefined, temp_195 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_194);
+					jit_label_t temp_307 = jit_label_undefined, temp_308 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_307);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_195);
-					jit_insn_label(func, &temp_194);
+					jit_insn_branch(func, &temp_308);
+					jit_insn_label(func, &temp_307);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_195);
+					jit_insn_label(func, &temp_308);
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
-					TGPR(temp_46, rs);
-					do_lds(func);
+					TGPR(temp_159, rs);
+					DO_LDS();
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
-					jit_label_t temp_196 = jit_label_undefined, temp_197 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_lt(func, jit_insn_convert(func, temp_46, jit_type_int, 0), make_uint(0x0)), &temp_196);
+					jit_label_t temp_309 = jit_label_undefined, temp_310 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_lt(func, jit_insn_convert(func, temp_159, jit_type_int, 0), make_uint(0x0)), &temp_309);
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
-					jit_insn_branch(func, &temp_197);
-					jit_insn_label(func, &temp_196);
+					jit_insn_branch(func, &temp_310);
+					jit_insn_label(func, &temp_309);
 					call_branch_block(func, rcpu->GetBlockReference(target));
-					jit_insn_label(func, &temp_197);
+					jit_insn_label(func, &temp_310);
 					branched = true;
 					return(true);
 					break;
 				}
 				case 0x5: {
 					/* BGEZanonymous_2 */
-					jit_label_t temp_198 = jit_label_undefined, temp_199 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_198);
+					jit_label_t temp_311 = jit_label_undefined, temp_312 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_311);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_199);
-					jit_insn_label(func, &temp_198);
+					jit_insn_branch(func, &temp_312);
+					jit_insn_label(func, &temp_311);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_199);
+					jit_insn_label(func, &temp_312);
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
-					TGPR(temp_47, rs);
-					do_lds(func);
+					TGPR(temp_160, rs);
+					DO_LDS();
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
-					jit_label_t temp_200 = jit_label_undefined, temp_201 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_ge(func, jit_insn_convert(func, temp_47, jit_type_int, 0), make_uint(0x0)), &temp_200);
+					jit_label_t temp_313 = jit_label_undefined, temp_314 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_ge(func, jit_insn_convert(func, temp_160, jit_type_int, 0), make_uint(0x0)), &temp_313);
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
-					jit_insn_branch(func, &temp_201);
-					jit_insn_label(func, &temp_200);
+					jit_insn_branch(func, &temp_314);
+					jit_insn_label(func, &temp_313);
 					call_branch_block(func, rcpu->GetBlockReference(target));
-					jit_insn_label(func, &temp_201);
+					jit_insn_label(func, &temp_314);
 					branched = true;
 					return(true);
 					break;
 				}
 				case 0x6: {
 					/* BLTZanonymous_3 */
-					jit_label_t temp_202 = jit_label_undefined, temp_203 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_202);
+					jit_label_t temp_315 = jit_label_undefined, temp_316 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_315);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_203);
-					jit_insn_label(func, &temp_202);
+					jit_insn_branch(func, &temp_316);
+					jit_insn_label(func, &temp_315);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_203);
+					jit_insn_label(func, &temp_316);
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
-					TGPR(temp_48, rs);
-					do_lds(func);
+					TGPR(temp_161, rs);
+					DO_LDS();
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
-					jit_label_t temp_204 = jit_label_undefined, temp_205 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_lt(func, jit_insn_convert(func, temp_48, jit_type_int, 0), make_uint(0x0)), &temp_204);
+					jit_label_t temp_317 = jit_label_undefined, temp_318 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_lt(func, jit_insn_convert(func, temp_161, jit_type_int, 0), make_uint(0x0)), &temp_317);
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
-					jit_insn_branch(func, &temp_205);
-					jit_insn_label(func, &temp_204);
+					jit_insn_branch(func, &temp_318);
+					jit_insn_label(func, &temp_317);
 					call_branch_block(func, rcpu->GetBlockReference(target));
-					jit_insn_label(func, &temp_205);
+					jit_insn_label(func, &temp_318);
 					branched = true;
 					return(true);
 					break;
 				}
 				case 0x7: {
 					/* BGEZanonymous_3 */
-					jit_label_t temp_206 = jit_label_undefined, temp_207 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_206);
+					jit_label_t temp_319 = jit_label_undefined, temp_320 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_319);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_207);
-					jit_insn_label(func, &temp_206);
+					jit_insn_branch(func, &temp_320);
+					jit_insn_label(func, &temp_319);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_207);
+					jit_insn_label(func, &temp_320);
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
-					TGPR(temp_49, rs);
-					do_lds(func);
+					TGPR(temp_162, rs);
+					DO_LDS();
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
-					jit_label_t temp_208 = jit_label_undefined, temp_209 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_ge(func, jit_insn_convert(func, temp_49, jit_type_int, 0), make_uint(0x0)), &temp_208);
+					jit_label_t temp_321 = jit_label_undefined, temp_322 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_ge(func, jit_insn_convert(func, temp_162, jit_type_int, 0), make_uint(0x0)), &temp_321);
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
-					jit_insn_branch(func, &temp_209);
-					jit_insn_label(func, &temp_208);
+					jit_insn_branch(func, &temp_322);
+					jit_insn_label(func, &temp_321);
 					call_branch_block(func, rcpu->GetBlockReference(target));
-					jit_insn_label(func, &temp_209);
+					jit_insn_label(func, &temp_322);
 					branched = true;
 					return(true);
 					break;
 				}
 				case 0x8: {
 					/* BLTZanonymous_4 */
-					jit_label_t temp_210 = jit_label_undefined, temp_211 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_210);
+					jit_label_t temp_323 = jit_label_undefined, temp_324 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_323);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_211);
-					jit_insn_label(func, &temp_210);
+					jit_insn_branch(func, &temp_324);
+					jit_insn_label(func, &temp_323);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_211);
+					jit_insn_label(func, &temp_324);
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
-					TGPR(temp_50, rs);
-					do_lds(func);
+					TGPR(temp_163, rs);
+					DO_LDS();
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
-					jit_label_t temp_212 = jit_label_undefined, temp_213 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_lt(func, jit_insn_convert(func, temp_50, jit_type_int, 0), make_uint(0x0)), &temp_212);
+					jit_label_t temp_325 = jit_label_undefined, temp_326 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_lt(func, jit_insn_convert(func, temp_163, jit_type_int, 0), make_uint(0x0)), &temp_325);
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
-					jit_insn_branch(func, &temp_213);
-					jit_insn_label(func, &temp_212);
+					jit_insn_branch(func, &temp_326);
+					jit_insn_label(func, &temp_325);
 					call_branch_block(func, rcpu->GetBlockReference(target));
-					jit_insn_label(func, &temp_213);
+					jit_insn_label(func, &temp_326);
 					branched = true;
 					return(true);
 					break;
 				}
 				case 0x9: {
 					/* BGEZanonymous_4 */
-					jit_label_t temp_214 = jit_label_undefined, temp_215 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_214);
+					jit_label_t temp_327 = jit_label_undefined, temp_328 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_327);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_215);
-					jit_insn_label(func, &temp_214);
+					jit_insn_branch(func, &temp_328);
+					jit_insn_label(func, &temp_327);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_215);
+					jit_insn_label(func, &temp_328);
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
-					TGPR(temp_51, rs);
-					do_lds(func);
+					TGPR(temp_164, rs);
+					DO_LDS();
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
-					jit_label_t temp_216 = jit_label_undefined, temp_217 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_ge(func, jit_insn_convert(func, temp_51, jit_type_int, 0), make_uint(0x0)), &temp_216);
+					jit_label_t temp_329 = jit_label_undefined, temp_330 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_ge(func, jit_insn_convert(func, temp_164, jit_type_int, 0), make_uint(0x0)), &temp_329);
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
-					jit_insn_branch(func, &temp_217);
-					jit_insn_label(func, &temp_216);
+					jit_insn_branch(func, &temp_330);
+					jit_insn_label(func, &temp_329);
 					call_branch_block(func, rcpu->GetBlockReference(target));
-					jit_insn_label(func, &temp_217);
+					jit_insn_label(func, &temp_330);
 					branched = true;
 					return(true);
 					break;
 				}
 				case 0xa: {
 					/* BLTZanonymous_5 */
-					jit_label_t temp_218 = jit_label_undefined, temp_219 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_218);
+					jit_label_t temp_331 = jit_label_undefined, temp_332 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_331);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_219);
-					jit_insn_label(func, &temp_218);
+					jit_insn_branch(func, &temp_332);
+					jit_insn_label(func, &temp_331);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_219);
+					jit_insn_label(func, &temp_332);
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
-					TGPR(temp_52, rs);
-					do_lds(func);
+					TGPR(temp_165, rs);
+					DO_LDS();
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
-					jit_label_t temp_220 = jit_label_undefined, temp_221 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_lt(func, jit_insn_convert(func, temp_52, jit_type_int, 0), make_uint(0x0)), &temp_220);
+					jit_label_t temp_333 = jit_label_undefined, temp_334 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_lt(func, jit_insn_convert(func, temp_165, jit_type_int, 0), make_uint(0x0)), &temp_333);
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
-					jit_insn_branch(func, &temp_221);
-					jit_insn_label(func, &temp_220);
+					jit_insn_branch(func, &temp_334);
+					jit_insn_label(func, &temp_333);
 					call_branch_block(func, rcpu->GetBlockReference(target));
-					jit_insn_label(func, &temp_221);
+					jit_insn_label(func, &temp_334);
 					branched = true;
 					return(true);
 					break;
 				}
 				case 0xb: {
 					/* BGEZanonymous_5 */
-					jit_label_t temp_222 = jit_label_undefined, temp_223 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_222);
+					jit_label_t temp_335 = jit_label_undefined, temp_336 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_335);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_223);
-					jit_insn_label(func, &temp_222);
+					jit_insn_branch(func, &temp_336);
+					jit_insn_label(func, &temp_335);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_223);
+					jit_insn_label(func, &temp_336);
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
-					TGPR(temp_53, rs);
-					do_lds(func);
+					TGPR(temp_166, rs);
+					DO_LDS();
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
-					jit_label_t temp_224 = jit_label_undefined, temp_225 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_ge(func, jit_insn_convert(func, temp_53, jit_type_int, 0), make_uint(0x0)), &temp_224);
+					jit_label_t temp_337 = jit_label_undefined, temp_338 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_ge(func, jit_insn_convert(func, temp_166, jit_type_int, 0), make_uint(0x0)), &temp_337);
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
-					jit_insn_branch(func, &temp_225);
-					jit_insn_label(func, &temp_224);
+					jit_insn_branch(func, &temp_338);
+					jit_insn_label(func, &temp_337);
 					call_branch_block(func, rcpu->GetBlockReference(target));
-					jit_insn_label(func, &temp_225);
+					jit_insn_label(func, &temp_338);
 					branched = true;
 					return(true);
 					break;
 				}
 				case 0xc: {
 					/* BLTZanonymous_6 */
-					jit_label_t temp_226 = jit_label_undefined, temp_227 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_226);
+					jit_label_t temp_339 = jit_label_undefined, temp_340 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_339);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_227);
-					jit_insn_label(func, &temp_226);
+					jit_insn_branch(func, &temp_340);
+					jit_insn_label(func, &temp_339);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_227);
+					jit_insn_label(func, &temp_340);
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
-					TGPR(temp_54, rs);
-					do_lds(func);
+					TGPR(temp_167, rs);
+					DO_LDS();
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
-					jit_label_t temp_228 = jit_label_undefined, temp_229 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_lt(func, jit_insn_convert(func, temp_54, jit_type_int, 0), make_uint(0x0)), &temp_228);
+					jit_label_t temp_341 = jit_label_undefined, temp_342 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_lt(func, jit_insn_convert(func, temp_167, jit_type_int, 0), make_uint(0x0)), &temp_341);
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
-					jit_insn_branch(func, &temp_229);
-					jit_insn_label(func, &temp_228);
+					jit_insn_branch(func, &temp_342);
+					jit_insn_label(func, &temp_341);
 					call_branch_block(func, rcpu->GetBlockReference(target));
-					jit_insn_label(func, &temp_229);
+					jit_insn_label(func, &temp_342);
 					branched = true;
 					return(true);
 					break;
 				}
 				case 0xd: {
 					/* BGEZanonymous_6 */
-					jit_label_t temp_230 = jit_label_undefined, temp_231 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_230);
+					jit_label_t temp_343 = jit_label_undefined, temp_344 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_343);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_231);
-					jit_insn_label(func, &temp_230);
+					jit_insn_branch(func, &temp_344);
+					jit_insn_label(func, &temp_343);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_231);
+					jit_insn_label(func, &temp_344);
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
-					TGPR(temp_55, rs);
-					do_lds(func);
+					TGPR(temp_168, rs);
+					DO_LDS();
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
-					jit_label_t temp_232 = jit_label_undefined, temp_233 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_ge(func, jit_insn_convert(func, temp_55, jit_type_int, 0), make_uint(0x0)), &temp_232);
+					jit_label_t temp_345 = jit_label_undefined, temp_346 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_ge(func, jit_insn_convert(func, temp_168, jit_type_int, 0), make_uint(0x0)), &temp_345);
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
-					jit_insn_branch(func, &temp_233);
-					jit_insn_label(func, &temp_232);
+					jit_insn_branch(func, &temp_346);
+					jit_insn_label(func, &temp_345);
 					call_branch_block(func, rcpu->GetBlockReference(target));
-					jit_insn_label(func, &temp_233);
+					jit_insn_label(func, &temp_346);
 					branched = true;
 					return(true);
 					break;
 				}
 				case 0xe: {
 					/* BLTZanonymous_7 */
-					jit_label_t temp_234 = jit_label_undefined, temp_235 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_234);
+					jit_label_t temp_347 = jit_label_undefined, temp_348 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_347);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_235);
-					jit_insn_label(func, &temp_234);
+					jit_insn_branch(func, &temp_348);
+					jit_insn_label(func, &temp_347);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_235);
+					jit_insn_label(func, &temp_348);
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
-					TGPR(temp_56, rs);
-					do_lds(func);
+					TGPR(temp_169, rs);
+					DO_LDS();
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
-					jit_label_t temp_236 = jit_label_undefined, temp_237 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_lt(func, jit_insn_convert(func, temp_56, jit_type_int, 0), make_uint(0x0)), &temp_236);
+					jit_label_t temp_349 = jit_label_undefined, temp_350 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_lt(func, jit_insn_convert(func, temp_169, jit_type_int, 0), make_uint(0x0)), &temp_349);
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
-					jit_insn_branch(func, &temp_237);
-					jit_insn_label(func, &temp_236);
+					jit_insn_branch(func, &temp_350);
+					jit_insn_label(func, &temp_349);
 					call_branch_block(func, rcpu->GetBlockReference(target));
-					jit_insn_label(func, &temp_237);
+					jit_insn_label(func, &temp_350);
 					branched = true;
 					return(true);
 					break;
 				}
 				case 0xf: {
 					/* BGEZanonymous_7 */
-					jit_label_t temp_238 = jit_label_undefined, temp_239 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_238);
+					jit_label_t temp_351 = jit_label_undefined, temp_352 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_351);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_239);
-					jit_insn_label(func, &temp_238);
+					jit_insn_branch(func, &temp_352);
+					jit_insn_label(func, &temp_351);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_239);
+					jit_insn_label(func, &temp_352);
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
-					TGPR(temp_57, rs);
-					do_lds(func);
+					TGPR(temp_170, rs);
+					DO_LDS();
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
-					jit_label_t temp_240 = jit_label_undefined, temp_241 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_ge(func, jit_insn_convert(func, temp_57, jit_type_int, 0), make_uint(0x0)), &temp_240);
+					jit_label_t temp_353 = jit_label_undefined, temp_354 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_ge(func, jit_insn_convert(func, temp_170, jit_type_int, 0), make_uint(0x0)), &temp_353);
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
-					jit_insn_branch(func, &temp_241);
-					jit_insn_label(func, &temp_240);
+					jit_insn_branch(func, &temp_354);
+					jit_insn_label(func, &temp_353);
 					call_branch_block(func, rcpu->GetBlockReference(target));
-					jit_insn_label(func, &temp_241);
+					jit_insn_label(func, &temp_354);
 					branched = true;
 					return(true);
 					break;
 				}
 				case 0x10: {
 					/* BLTZALanonymous_0 */
-					jit_label_t temp_242 = jit_label_undefined, temp_243 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_242);
+					jit_label_t temp_355 = jit_label_undefined, temp_356 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_355);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_243);
-					jit_insn_label(func, &temp_242);
+					jit_insn_branch(func, &temp_356);
+					jit_insn_label(func, &temp_355);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_243);
+					jit_insn_label(func, &temp_356);
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
 					RES(0x1f);
-					TGPR(temp_58, rs);
-					do_lds(func);
+					TGPR(temp_171, rs);
+					DO_LDS();
 					WGPR(0x1f, jit_insn_add(func, make_uint(pc), make_uint(0x4)));
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
-					jit_label_t temp_244 = jit_label_undefined, temp_245 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_lt(func, jit_insn_convert(func, temp_58, jit_type_int, 0), make_uint(0x0)), &temp_244);
+					jit_label_t temp_357 = jit_label_undefined, temp_358 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_lt(func, jit_insn_convert(func, temp_171, jit_type_int, 0), make_uint(0x0)), &temp_357);
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
-					jit_insn_branch(func, &temp_245);
-					jit_insn_label(func, &temp_244);
+					jit_insn_branch(func, &temp_358);
+					jit_insn_label(func, &temp_357);
 					call_branch_block(func, rcpu->GetBlockReference(target));
-					jit_insn_label(func, &temp_245);
+					jit_insn_label(func, &temp_358);
 					branched = true;
 					return(true);
 					break;
 				}
 				case 0x11: {
 					/* BGEZALanonymous_0 */
-					jit_label_t temp_246 = jit_label_undefined, temp_247 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_246);
+					jit_label_t temp_359 = jit_label_undefined, temp_360 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_359);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_247);
-					jit_insn_label(func, &temp_246);
+					jit_insn_branch(func, &temp_360);
+					jit_insn_label(func, &temp_359);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_247);
+					jit_insn_label(func, &temp_360);
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
 					RES(0x1f);
-					TGPR(temp_59, rs);
-					do_lds(func);
+					TGPR(temp_172, rs);
+					DO_LDS();
 					WGPR(0x1f, jit_insn_add(func, make_uint(pc), make_uint(0x4)));
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
-					jit_label_t temp_248 = jit_label_undefined, temp_249 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_ge(func, jit_insn_convert(func, temp_59, jit_type_int, 0), make_uint(0x0)), &temp_248);
+					jit_label_t temp_361 = jit_label_undefined, temp_362 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_ge(func, jit_insn_convert(func, temp_172, jit_type_int, 0), make_uint(0x0)), &temp_361);
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
-					jit_insn_branch(func, &temp_249);
-					jit_insn_label(func, &temp_248);
+					jit_insn_branch(func, &temp_362);
+					jit_insn_label(func, &temp_361);
 					call_branch_block(func, rcpu->GetBlockReference(target));
-					jit_insn_label(func, &temp_249);
+					jit_insn_label(func, &temp_362);
 					branched = true;
 					return(true);
 					break;
 				}
 				case 0x12: {
 					/* BLTZALanonymous_1 */
-					jit_label_t temp_250 = jit_label_undefined, temp_251 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_250);
+					jit_label_t temp_363 = jit_label_undefined, temp_364 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_363);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_251);
-					jit_insn_label(func, &temp_250);
+					jit_insn_branch(func, &temp_364);
+					jit_insn_label(func, &temp_363);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_251);
+					jit_insn_label(func, &temp_364);
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
 					RES(0x1f);
-					TGPR(temp_60, rs);
-					do_lds(func);
+					TGPR(temp_173, rs);
+					DO_LDS();
 					WGPR(0x1f, jit_insn_add(func, make_uint(pc), make_uint(0x4)));
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
-					jit_label_t temp_252 = jit_label_undefined, temp_253 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_lt(func, jit_insn_convert(func, temp_60, jit_type_int, 0), make_uint(0x0)), &temp_252);
+					jit_label_t temp_365 = jit_label_undefined, temp_366 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_lt(func, jit_insn_convert(func, temp_173, jit_type_int, 0), make_uint(0x0)), &temp_365);
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
-					jit_insn_branch(func, &temp_253);
-					jit_insn_label(func, &temp_252);
+					jit_insn_branch(func, &temp_366);
+					jit_insn_label(func, &temp_365);
 					call_branch_block(func, rcpu->GetBlockReference(target));
-					jit_insn_label(func, &temp_253);
+					jit_insn_label(func, &temp_366);
 					branched = true;
 					return(true);
 					break;
 				}
 				case 0x13: {
 					/* BGEZALanonymous_1 */
-					jit_label_t temp_254 = jit_label_undefined, temp_255 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_254);
+					jit_label_t temp_367 = jit_label_undefined, temp_368 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_367);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_255);
-					jit_insn_label(func, &temp_254);
+					jit_insn_branch(func, &temp_368);
+					jit_insn_label(func, &temp_367);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_255);
+					jit_insn_label(func, &temp_368);
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
 					RES(0x1f);
-					TGPR(temp_61, rs);
-					do_lds(func);
+					TGPR(temp_174, rs);
+					DO_LDS();
 					WGPR(0x1f, jit_insn_add(func, make_uint(pc), make_uint(0x4)));
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
-					jit_label_t temp_256 = jit_label_undefined, temp_257 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_ge(func, jit_insn_convert(func, temp_61, jit_type_int, 0), make_uint(0x0)), &temp_256);
+					jit_label_t temp_369 = jit_label_undefined, temp_370 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_ge(func, jit_insn_convert(func, temp_174, jit_type_int, 0), make_uint(0x0)), &temp_369);
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
-					jit_insn_branch(func, &temp_257);
-					jit_insn_label(func, &temp_256);
+					jit_insn_branch(func, &temp_370);
+					jit_insn_label(func, &temp_369);
 					call_branch_block(func, rcpu->GetBlockReference(target));
-					jit_insn_label(func, &temp_257);
+					jit_insn_label(func, &temp_370);
 					branched = true;
 					return(true);
 					break;
 				}
 				case 0x14: {
 					/* BLTZALanonymous_2 */
-					jit_label_t temp_258 = jit_label_undefined, temp_259 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_258);
+					jit_label_t temp_371 = jit_label_undefined, temp_372 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_371);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_259);
-					jit_insn_label(func, &temp_258);
+					jit_insn_branch(func, &temp_372);
+					jit_insn_label(func, &temp_371);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_259);
+					jit_insn_label(func, &temp_372);
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
 					RES(0x1f);
-					TGPR(temp_62, rs);
-					do_lds(func);
+					TGPR(temp_175, rs);
+					DO_LDS();
 					WGPR(0x1f, jit_insn_add(func, make_uint(pc), make_uint(0x4)));
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
-					jit_label_t temp_260 = jit_label_undefined, temp_261 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_lt(func, jit_insn_convert(func, temp_62, jit_type_int, 0), make_uint(0x0)), &temp_260);
+					jit_label_t temp_373 = jit_label_undefined, temp_374 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_lt(func, jit_insn_convert(func, temp_175, jit_type_int, 0), make_uint(0x0)), &temp_373);
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
-					jit_insn_branch(func, &temp_261);
-					jit_insn_label(func, &temp_260);
+					jit_insn_branch(func, &temp_374);
+					jit_insn_label(func, &temp_373);
 					call_branch_block(func, rcpu->GetBlockReference(target));
-					jit_insn_label(func, &temp_261);
+					jit_insn_label(func, &temp_374);
 					branched = true;
 					return(true);
 					break;
 				}
 				case 0x15: {
 					/* BGEZALanonymous_2 */
-					jit_label_t temp_262 = jit_label_undefined, temp_263 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_262);
+					jit_label_t temp_375 = jit_label_undefined, temp_376 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_375);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_263);
-					jit_insn_label(func, &temp_262);
+					jit_insn_branch(func, &temp_376);
+					jit_insn_label(func, &temp_375);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_263);
+					jit_insn_label(func, &temp_376);
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
 					RES(0x1f);
-					TGPR(temp_63, rs);
-					do_lds(func);
+					TGPR(temp_176, rs);
+					DO_LDS();
 					WGPR(0x1f, jit_insn_add(func, make_uint(pc), make_uint(0x4)));
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
-					jit_label_t temp_264 = jit_label_undefined, temp_265 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_ge(func, jit_insn_convert(func, temp_63, jit_type_int, 0), make_uint(0x0)), &temp_264);
+					jit_label_t temp_377 = jit_label_undefined, temp_378 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_ge(func, jit_insn_convert(func, temp_176, jit_type_int, 0), make_uint(0x0)), &temp_377);
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
-					jit_insn_branch(func, &temp_265);
-					jit_insn_label(func, &temp_264);
+					jit_insn_branch(func, &temp_378);
+					jit_insn_label(func, &temp_377);
 					call_branch_block(func, rcpu->GetBlockReference(target));
-					jit_insn_label(func, &temp_265);
+					jit_insn_label(func, &temp_378);
 					branched = true;
 					return(true);
 					break;
 				}
 				case 0x16: {
 					/* BLTZALanonymous_3 */
-					jit_label_t temp_266 = jit_label_undefined, temp_267 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_266);
+					jit_label_t temp_379 = jit_label_undefined, temp_380 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_379);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_267);
-					jit_insn_label(func, &temp_266);
+					jit_insn_branch(func, &temp_380);
+					jit_insn_label(func, &temp_379);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_267);
+					jit_insn_label(func, &temp_380);
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
 					RES(0x1f);
-					TGPR(temp_64, rs);
-					do_lds(func);
+					TGPR(temp_177, rs);
+					DO_LDS();
 					WGPR(0x1f, jit_insn_add(func, make_uint(pc), make_uint(0x4)));
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
-					jit_label_t temp_268 = jit_label_undefined, temp_269 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_lt(func, jit_insn_convert(func, temp_64, jit_type_int, 0), make_uint(0x0)), &temp_268);
+					jit_label_t temp_381 = jit_label_undefined, temp_382 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_lt(func, jit_insn_convert(func, temp_177, jit_type_int, 0), make_uint(0x0)), &temp_381);
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
-					jit_insn_branch(func, &temp_269);
-					jit_insn_label(func, &temp_268);
+					jit_insn_branch(func, &temp_382);
+					jit_insn_label(func, &temp_381);
 					call_branch_block(func, rcpu->GetBlockReference(target));
-					jit_insn_label(func, &temp_269);
+					jit_insn_label(func, &temp_382);
 					branched = true;
 					return(true);
 					break;
 				}
 				case 0x17: {
 					/* BGEZALanonymous_3 */
-					jit_label_t temp_270 = jit_label_undefined, temp_271 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_270);
+					jit_label_t temp_383 = jit_label_undefined, temp_384 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_383);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_271);
-					jit_insn_label(func, &temp_270);
+					jit_insn_branch(func, &temp_384);
+					jit_insn_label(func, &temp_383);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_271);
+					jit_insn_label(func, &temp_384);
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
 					RES(0x1f);
-					TGPR(temp_65, rs);
-					do_lds(func);
+					TGPR(temp_178, rs);
+					DO_LDS();
 					WGPR(0x1f, jit_insn_add(func, make_uint(pc), make_uint(0x4)));
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
-					jit_label_t temp_272 = jit_label_undefined, temp_273 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_ge(func, jit_insn_convert(func, temp_65, jit_type_int, 0), make_uint(0x0)), &temp_272);
+					jit_label_t temp_385 = jit_label_undefined, temp_386 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_ge(func, jit_insn_convert(func, temp_178, jit_type_int, 0), make_uint(0x0)), &temp_385);
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
-					jit_insn_branch(func, &temp_273);
-					jit_insn_label(func, &temp_272);
+					jit_insn_branch(func, &temp_386);
+					jit_insn_label(func, &temp_385);
 					call_branch_block(func, rcpu->GetBlockReference(target));
-					jit_insn_label(func, &temp_273);
+					jit_insn_label(func, &temp_386);
 					branched = true;
 					return(true);
 					break;
 				}
 				case 0x18: {
 					/* BLTZALanonymous_4 */
-					jit_label_t temp_274 = jit_label_undefined, temp_275 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_274);
+					jit_label_t temp_387 = jit_label_undefined, temp_388 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_387);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_275);
-					jit_insn_label(func, &temp_274);
+					jit_insn_branch(func, &temp_388);
+					jit_insn_label(func, &temp_387);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_275);
+					jit_insn_label(func, &temp_388);
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
 					RES(0x1f);
-					TGPR(temp_66, rs);
-					do_lds(func);
+					TGPR(temp_179, rs);
+					DO_LDS();
 					WGPR(0x1f, jit_insn_add(func, make_uint(pc), make_uint(0x4)));
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
-					jit_label_t temp_276 = jit_label_undefined, temp_277 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_lt(func, jit_insn_convert(func, temp_66, jit_type_int, 0), make_uint(0x0)), &temp_276);
+					jit_label_t temp_389 = jit_label_undefined, temp_390 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_lt(func, jit_insn_convert(func, temp_179, jit_type_int, 0), make_uint(0x0)), &temp_389);
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
-					jit_insn_branch(func, &temp_277);
-					jit_insn_label(func, &temp_276);
+					jit_insn_branch(func, &temp_390);
+					jit_insn_label(func, &temp_389);
 					call_branch_block(func, rcpu->GetBlockReference(target));
-					jit_insn_label(func, &temp_277);
+					jit_insn_label(func, &temp_390);
 					branched = true;
 					return(true);
 					break;
 				}
 				case 0x19: {
 					/* BGEZALanonymous_4 */
-					jit_label_t temp_278 = jit_label_undefined, temp_279 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_278);
+					jit_label_t temp_391 = jit_label_undefined, temp_392 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_391);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_279);
-					jit_insn_label(func, &temp_278);
+					jit_insn_branch(func, &temp_392);
+					jit_insn_label(func, &temp_391);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_279);
+					jit_insn_label(func, &temp_392);
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
 					RES(0x1f);
-					TGPR(temp_67, rs);
-					do_lds(func);
+					TGPR(temp_180, rs);
+					DO_LDS();
 					WGPR(0x1f, jit_insn_add(func, make_uint(pc), make_uint(0x4)));
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
-					jit_label_t temp_280 = jit_label_undefined, temp_281 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_ge(func, jit_insn_convert(func, temp_67, jit_type_int, 0), make_uint(0x0)), &temp_280);
+					jit_label_t temp_393 = jit_label_undefined, temp_394 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_ge(func, jit_insn_convert(func, temp_180, jit_type_int, 0), make_uint(0x0)), &temp_393);
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
-					jit_insn_branch(func, &temp_281);
-					jit_insn_label(func, &temp_280);
+					jit_insn_branch(func, &temp_394);
+					jit_insn_label(func, &temp_393);
 					call_branch_block(func, rcpu->GetBlockReference(target));
-					jit_insn_label(func, &temp_281);
+					jit_insn_label(func, &temp_394);
 					branched = true;
 					return(true);
 					break;
 				}
 				case 0x1a: {
 					/* BLTZALanonymous_5 */
-					jit_label_t temp_282 = jit_label_undefined, temp_283 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_282);
+					jit_label_t temp_395 = jit_label_undefined, temp_396 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_395);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_283);
-					jit_insn_label(func, &temp_282);
+					jit_insn_branch(func, &temp_396);
+					jit_insn_label(func, &temp_395);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_283);
+					jit_insn_label(func, &temp_396);
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
 					RES(0x1f);
-					TGPR(temp_68, rs);
-					do_lds(func);
+					TGPR(temp_181, rs);
+					DO_LDS();
 					WGPR(0x1f, jit_insn_add(func, make_uint(pc), make_uint(0x4)));
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
-					jit_label_t temp_284 = jit_label_undefined, temp_285 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_lt(func, jit_insn_convert(func, temp_68, jit_type_int, 0), make_uint(0x0)), &temp_284);
+					jit_label_t temp_397 = jit_label_undefined, temp_398 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_lt(func, jit_insn_convert(func, temp_181, jit_type_int, 0), make_uint(0x0)), &temp_397);
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
-					jit_insn_branch(func, &temp_285);
-					jit_insn_label(func, &temp_284);
+					jit_insn_branch(func, &temp_398);
+					jit_insn_label(func, &temp_397);
 					call_branch_block(func, rcpu->GetBlockReference(target));
-					jit_insn_label(func, &temp_285);
+					jit_insn_label(func, &temp_398);
 					branched = true;
 					return(true);
 					break;
 				}
 				case 0x1b: {
 					/* BGEZALanonymous_5 */
-					jit_label_t temp_286 = jit_label_undefined, temp_287 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_286);
+					jit_label_t temp_399 = jit_label_undefined, temp_400 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_399);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_287);
-					jit_insn_label(func, &temp_286);
+					jit_insn_branch(func, &temp_400);
+					jit_insn_label(func, &temp_399);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_287);
+					jit_insn_label(func, &temp_400);
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
 					RES(0x1f);
-					TGPR(temp_69, rs);
-					do_lds(func);
+					TGPR(temp_182, rs);
+					DO_LDS();
 					WGPR(0x1f, jit_insn_add(func, make_uint(pc), make_uint(0x4)));
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
-					jit_label_t temp_288 = jit_label_undefined, temp_289 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_ge(func, jit_insn_convert(func, temp_69, jit_type_int, 0), make_uint(0x0)), &temp_288);
+					jit_label_t temp_401 = jit_label_undefined, temp_402 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_ge(func, jit_insn_convert(func, temp_182, jit_type_int, 0), make_uint(0x0)), &temp_401);
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
-					jit_insn_branch(func, &temp_289);
-					jit_insn_label(func, &temp_288);
+					jit_insn_branch(func, &temp_402);
+					jit_insn_label(func, &temp_401);
 					call_branch_block(func, rcpu->GetBlockReference(target));
-					jit_insn_label(func, &temp_289);
+					jit_insn_label(func, &temp_402);
 					branched = true;
 					return(true);
 					break;
 				}
 				case 0x1c: {
 					/* BLTZALanonymous_6 */
-					jit_label_t temp_290 = jit_label_undefined, temp_291 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_290);
+					jit_label_t temp_403 = jit_label_undefined, temp_404 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_403);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_291);
-					jit_insn_label(func, &temp_290);
+					jit_insn_branch(func, &temp_404);
+					jit_insn_label(func, &temp_403);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_291);
+					jit_insn_label(func, &temp_404);
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
 					RES(0x1f);
-					TGPR(temp_70, rs);
-					do_lds(func);
+					TGPR(temp_183, rs);
+					DO_LDS();
 					WGPR(0x1f, jit_insn_add(func, make_uint(pc), make_uint(0x4)));
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
-					jit_label_t temp_292 = jit_label_undefined, temp_293 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_lt(func, jit_insn_convert(func, temp_70, jit_type_int, 0), make_uint(0x0)), &temp_292);
+					jit_label_t temp_405 = jit_label_undefined, temp_406 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_lt(func, jit_insn_convert(func, temp_183, jit_type_int, 0), make_uint(0x0)), &temp_405);
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
-					jit_insn_branch(func, &temp_293);
-					jit_insn_label(func, &temp_292);
+					jit_insn_branch(func, &temp_406);
+					jit_insn_label(func, &temp_405);
 					call_branch_block(func, rcpu->GetBlockReference(target));
-					jit_insn_label(func, &temp_293);
+					jit_insn_label(func, &temp_406);
 					branched = true;
 					return(true);
 					break;
 				}
 				case 0x1d: {
 					/* BGEZALanonymous_6 */
-					jit_label_t temp_294 = jit_label_undefined, temp_295 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_294);
+					jit_label_t temp_407 = jit_label_undefined, temp_408 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_407);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_295);
-					jit_insn_label(func, &temp_294);
+					jit_insn_branch(func, &temp_408);
+					jit_insn_label(func, &temp_407);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_295);
+					jit_insn_label(func, &temp_408);
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
 					RES(0x1f);
-					TGPR(temp_71, rs);
-					do_lds(func);
+					TGPR(temp_184, rs);
+					DO_LDS();
 					WGPR(0x1f, jit_insn_add(func, make_uint(pc), make_uint(0x4)));
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
-					jit_label_t temp_296 = jit_label_undefined, temp_297 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_ge(func, jit_insn_convert(func, temp_71, jit_type_int, 0), make_uint(0x0)), &temp_296);
+					jit_label_t temp_409 = jit_label_undefined, temp_410 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_ge(func, jit_insn_convert(func, temp_184, jit_type_int, 0), make_uint(0x0)), &temp_409);
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
-					jit_insn_branch(func, &temp_297);
-					jit_insn_label(func, &temp_296);
+					jit_insn_branch(func, &temp_410);
+					jit_insn_label(func, &temp_409);
 					call_branch_block(func, rcpu->GetBlockReference(target));
-					jit_insn_label(func, &temp_297);
+					jit_insn_label(func, &temp_410);
 					branched = true;
 					return(true);
 					break;
 				}
 				case 0x1e: {
 					/* BLTZALanonymous_7 */
-					jit_label_t temp_298 = jit_label_undefined, temp_299 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_298);
+					jit_label_t temp_411 = jit_label_undefined, temp_412 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_411);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_299);
-					jit_insn_label(func, &temp_298);
+					jit_insn_branch(func, &temp_412);
+					jit_insn_label(func, &temp_411);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_299);
+					jit_insn_label(func, &temp_412);
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
 					RES(0x1f);
-					TGPR(temp_72, rs);
-					do_lds(func);
+					TGPR(temp_185, rs);
+					DO_LDS();
 					WGPR(0x1f, jit_insn_add(func, make_uint(pc), make_uint(0x4)));
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
-					jit_label_t temp_300 = jit_label_undefined, temp_301 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_lt(func, jit_insn_convert(func, temp_72, jit_type_int, 0), make_uint(0x0)), &temp_300);
+					jit_label_t temp_413 = jit_label_undefined, temp_414 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_lt(func, jit_insn_convert(func, temp_185, jit_type_int, 0), make_uint(0x0)), &temp_413);
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
-					jit_insn_branch(func, &temp_301);
-					jit_insn_label(func, &temp_300);
+					jit_insn_branch(func, &temp_414);
+					jit_insn_label(func, &temp_413);
 					call_branch_block(func, rcpu->GetBlockReference(target));
-					jit_insn_label(func, &temp_301);
+					jit_insn_label(func, &temp_414);
 					branched = true;
 					return(true);
 					break;
 				}
 				case 0x1f: {
 					/* BGEZALanonymous_7 */
-					jit_label_t temp_302 = jit_label_undefined, temp_303 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_302);
+					jit_label_t temp_415 = jit_label_undefined, temp_416 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_415);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_303);
-					jit_insn_label(func, &temp_302);
+					jit_insn_branch(func, &temp_416);
+					jit_insn_label(func, &temp_415);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_303);
+					jit_insn_label(func, &temp_416);
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
 					RES(0x1f);
-					TGPR(temp_73, rs);
-					do_lds(func);
+					TGPR(temp_186, rs);
+					DO_LDS();
 					WGPR(0x1f, jit_insn_add(func, make_uint(pc), make_uint(0x4)));
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
-					jit_label_t temp_304 = jit_label_undefined, temp_305 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_ge(func, jit_insn_convert(func, temp_73, jit_type_int, 0), make_uint(0x0)), &temp_304);
+					jit_label_t temp_417 = jit_label_undefined, temp_418 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_ge(func, jit_insn_convert(func, temp_186, jit_type_int, 0), make_uint(0x0)), &temp_417);
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
-					jit_insn_branch(func, &temp_305);
-					jit_insn_label(func, &temp_304);
+					jit_insn_branch(func, &temp_418);
+					jit_insn_label(func, &temp_417);
 					call_branch_block(func, rcpu->GetBlockReference(target));
-					jit_insn_label(func, &temp_305);
+					jit_insn_label(func, &temp_418);
 					branched = true;
 					return(true);
 					break;
@@ -1719,15 +1720,15 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 		}
 		case 0x2: {
 			/* J */
-			jit_label_t temp_306 = jit_label_undefined, temp_307 = jit_label_undefined;
-			jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_306);
+			jit_label_t temp_419 = jit_label_undefined, temp_420 = jit_label_undefined;
+			jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_419);
 			STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-			jit_insn_branch(func, &temp_307);
-			jit_insn_label(func, &temp_306);
+			jit_insn_branch(func, &temp_420);
+			jit_insn_label(func, &temp_419);
 			call_timestamp_inc(func, 1);
-			jit_insn_label(func, &temp_307);
+			jit_insn_label(func, &temp_420);
 			uint32_t imm = (inst) & (0x3ffffff);
-			do_lds(func);
+			DO_LDS();
 			uint32_t target = (((pc) + (0x4)) & (0xf0000000)) + ((imm) << (0x2));
 			call_branch_block(func, rcpu->GetBlockReference(target));
 			branched = true;
@@ -1736,16 +1737,16 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 		}
 		case 0x3: {
 			/* JAL */
-			jit_label_t temp_308 = jit_label_undefined, temp_309 = jit_label_undefined;
-			jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_308);
+			jit_label_t temp_421 = jit_label_undefined, temp_422 = jit_label_undefined;
+			jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_421);
 			STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-			jit_insn_branch(func, &temp_309);
-			jit_insn_label(func, &temp_308);
+			jit_insn_branch(func, &temp_422);
+			jit_insn_label(func, &temp_421);
 			call_timestamp_inc(func, 1);
-			jit_insn_label(func, &temp_309);
+			jit_insn_label(func, &temp_422);
 			uint32_t imm = (inst) & (0x3ffffff);
 			RES(0x1f);
-			do_lds(func);
+			DO_LDS();
 			WGPR(0x1f, jit_insn_add(func, jit_insn_add(func, make_uint(pc), make_uint(0x4)), make_uint(0x4)));
 			uint32_t target = (((pc) + (0x4)) & (0xf0000000)) + ((imm) << (0x2));
 			call_branch_block(func, rcpu->GetBlockReference(target));
@@ -1755,58 +1756,58 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 		}
 		case 0x4: {
 			/* BEQ */
-			jit_label_t temp_310 = jit_label_undefined, temp_311 = jit_label_undefined;
-			jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_310);
+			jit_label_t temp_423 = jit_label_undefined, temp_424 = jit_label_undefined;
+			jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_423);
 			STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-			jit_insn_branch(func, &temp_311);
-			jit_insn_label(func, &temp_310);
+			jit_insn_branch(func, &temp_424);
+			jit_insn_label(func, &temp_423);
 			call_timestamp_inc(func, 1);
-			jit_insn_label(func, &temp_311);
+			jit_insn_label(func, &temp_424);
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
 			DEP(rs);
 			DEP(rt);
-			TGPR(temp_74, rs);
-			TGPR(temp_75, rt);
-			do_lds(func);
+			TGPR(temp_187, rs);
+			TGPR(temp_188, rt);
+			DO_LDS();
 			uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
-			jit_label_t temp_312 = jit_label_undefined, temp_313 = jit_label_undefined;
-			jit_insn_branch_if(func, jit_insn_eq(func, temp_74, temp_75), &temp_312);
+			jit_label_t temp_425 = jit_label_undefined, temp_426 = jit_label_undefined;
+			jit_insn_branch_if(func, jit_insn_eq(func, temp_187, temp_188), &temp_425);
 			call_branch_block(func, rcpu->GetBlockReference(pc + 8));
-			jit_insn_branch(func, &temp_313);
-			jit_insn_label(func, &temp_312);
+			jit_insn_branch(func, &temp_426);
+			jit_insn_label(func, &temp_425);
 			call_branch_block(func, rcpu->GetBlockReference(target));
-			jit_insn_label(func, &temp_313);
+			jit_insn_label(func, &temp_426);
 			branched = true;
 			return(true);
 			break;
 		}
 		case 0x5: {
 			/* BNE */
-			jit_label_t temp_314 = jit_label_undefined, temp_315 = jit_label_undefined;
-			jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_314);
+			jit_label_t temp_427 = jit_label_undefined, temp_428 = jit_label_undefined;
+			jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_427);
 			STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-			jit_insn_branch(func, &temp_315);
-			jit_insn_label(func, &temp_314);
+			jit_insn_branch(func, &temp_428);
+			jit_insn_label(func, &temp_427);
 			call_timestamp_inc(func, 1);
-			jit_insn_label(func, &temp_315);
+			jit_insn_label(func, &temp_428);
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
 			DEP(rs);
 			DEP(rt);
-			TGPR(temp_76, rs);
-			TGPR(temp_77, rt);
-			do_lds(func);
+			TGPR(temp_189, rs);
+			TGPR(temp_190, rt);
+			DO_LDS();
 			uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
-			jit_label_t temp_316 = jit_label_undefined, temp_317 = jit_label_undefined;
-			jit_insn_branch_if(func, jit_insn_ne(func, temp_76, temp_77), &temp_316);
+			jit_label_t temp_429 = jit_label_undefined, temp_430 = jit_label_undefined;
+			jit_insn_branch_if(func, jit_insn_ne(func, temp_189, temp_190), &temp_429);
 			call_branch_block(func, rcpu->GetBlockReference(pc + 8));
-			jit_insn_branch(func, &temp_317);
-			jit_insn_label(func, &temp_316);
+			jit_insn_branch(func, &temp_430);
+			jit_insn_label(func, &temp_429);
 			call_branch_block(func, rcpu->GetBlockReference(target));
-			jit_insn_label(func, &temp_317);
+			jit_insn_label(func, &temp_430);
 			branched = true;
 			return(true);
 			break;
@@ -1815,26 +1816,26 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 			switch(((inst) >> (0x10)) & (0x1f)) {
 				case 0x0: {
 					/* BLEZ */
-					jit_label_t temp_318 = jit_label_undefined, temp_319 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_318);
+					jit_label_t temp_431 = jit_label_undefined, temp_432 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_431);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_319);
-					jit_insn_label(func, &temp_318);
+					jit_insn_branch(func, &temp_432);
+					jit_insn_label(func, &temp_431);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_319);
+					jit_insn_label(func, &temp_432);
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
-					TGPR(temp_78, rs);
-					do_lds(func);
+					TGPR(temp_191, rs);
+					DO_LDS();
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
-					jit_label_t temp_320 = jit_label_undefined, temp_321 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_le(func, jit_insn_convert(func, temp_78, jit_type_int, 0), make_uint(0x0)), &temp_320);
+					jit_label_t temp_433 = jit_label_undefined, temp_434 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_le(func, jit_insn_convert(func, temp_191, jit_type_int, 0), make_uint(0x0)), &temp_433);
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
-					jit_insn_branch(func, &temp_321);
-					jit_insn_label(func, &temp_320);
+					jit_insn_branch(func, &temp_434);
+					jit_insn_label(func, &temp_433);
 					call_branch_block(func, rcpu->GetBlockReference(target));
-					jit_insn_label(func, &temp_321);
+					jit_insn_label(func, &temp_434);
 					branched = true;
 					return(true);
 					break;
@@ -1846,26 +1847,26 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 			switch(((inst) >> (0x10)) & (0x1f)) {
 				case 0x0: {
 					/* BGTZ */
-					jit_label_t temp_322 = jit_label_undefined, temp_323 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_322);
+					jit_label_t temp_435 = jit_label_undefined, temp_436 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_435);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_323);
-					jit_insn_label(func, &temp_322);
+					jit_insn_branch(func, &temp_436);
+					jit_insn_label(func, &temp_435);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_323);
+					jit_insn_label(func, &temp_436);
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
-					TGPR(temp_79, rs);
-					do_lds(func);
+					TGPR(temp_192, rs);
+					DO_LDS();
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
-					jit_label_t temp_324 = jit_label_undefined, temp_325 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_gt(func, jit_insn_convert(func, temp_79, jit_type_int, 0), make_uint(0x0)), &temp_324);
+					jit_label_t temp_437 = jit_label_undefined, temp_438 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_gt(func, jit_insn_convert(func, temp_192, jit_type_int, 0), make_uint(0x0)), &temp_437);
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
-					jit_insn_branch(func, &temp_325);
-					jit_insn_label(func, &temp_324);
+					jit_insn_branch(func, &temp_438);
+					jit_insn_label(func, &temp_437);
 					call_branch_block(func, rcpu->GetBlockReference(target));
-					jit_insn_label(func, &temp_325);
+					jit_insn_label(func, &temp_438);
 					branched = true;
 					return(true);
 					break;
@@ -1875,165 +1876,165 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 		}
 		case 0x8: {
 			/* ADDI */
-			jit_label_t temp_326 = jit_label_undefined, temp_327 = jit_label_undefined;
-			jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_326);
+			jit_label_t temp_439 = jit_label_undefined, temp_440 = jit_label_undefined;
+			jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_439);
 			STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-			jit_insn_branch(func, &temp_327);
-			jit_insn_label(func, &temp_326);
+			jit_insn_branch(func, &temp_440);
+			jit_insn_label(func, &temp_439);
 			call_timestamp_inc(func, 1);
-			jit_insn_label(func, &temp_327);
+			jit_insn_label(func, &temp_440);
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
 			DEP(rs);
 			RES(rt);
-			TGPR(temp_80, rs);
-			do_lds(func);
+			TGPR(temp_193, rs);
+			DO_LDS();
 			uint32_t eimm = signext(0x10, imm);
-			call_overflow(func, temp_80, make_uint(eimm), 1, pc, inst);
-			WGPR(rt, jit_insn_add(func, temp_80, make_uint(eimm)));
+			call_overflow(func, temp_193, make_uint(eimm), 1, pc, inst);
+			WGPR(rt, jit_insn_add(func, temp_193, make_uint(eimm)));
 			return(true);
 			break;
 		}
 		case 0x9: {
 			/* ADDIU */
-			jit_label_t temp_328 = jit_label_undefined, temp_329 = jit_label_undefined;
-			jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_328);
+			jit_label_t temp_441 = jit_label_undefined, temp_442 = jit_label_undefined;
+			jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_441);
 			STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-			jit_insn_branch(func, &temp_329);
-			jit_insn_label(func, &temp_328);
+			jit_insn_branch(func, &temp_442);
+			jit_insn_label(func, &temp_441);
 			call_timestamp_inc(func, 1);
-			jit_insn_label(func, &temp_329);
+			jit_insn_label(func, &temp_442);
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
 			DEP(rs);
 			RES(rt);
-			TGPR(temp_81, rs);
-			do_lds(func);
+			TGPR(temp_194, rs);
+			DO_LDS();
 			uint32_t eimm = signext(0x10, imm);
-			WGPR(rt, jit_insn_add(func, temp_81, make_uint(eimm)));
+			WGPR(rt, jit_insn_add(func, temp_194, make_uint(eimm)));
 			return(true);
 			break;
 		}
 		case 0xa: {
 			/* SLTI */
-			jit_label_t temp_330 = jit_label_undefined, temp_331 = jit_label_undefined;
-			jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_330);
+			jit_label_t temp_443 = jit_label_undefined, temp_444 = jit_label_undefined;
+			jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_443);
 			STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-			jit_insn_branch(func, &temp_331);
-			jit_insn_label(func, &temp_330);
+			jit_insn_branch(func, &temp_444);
+			jit_insn_label(func, &temp_443);
 			call_timestamp_inc(func, 1);
-			jit_insn_label(func, &temp_331);
+			jit_insn_label(func, &temp_444);
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
 			DEP(rs);
 			RES(rt);
-			TGPR(temp_82, rs);
-			do_lds(func);
+			TGPR(temp_195, rs);
+			DO_LDS();
 			uint32_t eimm = signext(0x10, imm);
-			WGPR(rt, jit_insn_lt(func, jit_insn_convert(func, temp_82, jit_type_int, 0), make_uint(eimm)));
+			WGPR(rt, jit_insn_lt(func, jit_insn_convert(func, temp_195, jit_type_int, 0), make_uint(eimm)));
 			return(true);
 			break;
 		}
 		case 0xb: {
 			/* SLTIU */
-			jit_label_t temp_332 = jit_label_undefined, temp_333 = jit_label_undefined;
-			jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_332);
+			jit_label_t temp_445 = jit_label_undefined, temp_446 = jit_label_undefined;
+			jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_445);
 			STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-			jit_insn_branch(func, &temp_333);
-			jit_insn_label(func, &temp_332);
+			jit_insn_branch(func, &temp_446);
+			jit_insn_label(func, &temp_445);
 			call_timestamp_inc(func, 1);
-			jit_insn_label(func, &temp_333);
+			jit_insn_label(func, &temp_446);
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
 			DEP(rs);
 			RES(rt);
-			TGPR(temp_83, rs);
-			do_lds(func);
+			TGPR(temp_196, rs);
+			DO_LDS();
 			uint32_t eimm = signext(0x10, imm);
-			WGPR(rt, jit_insn_lt(func, temp_83, make_uint(eimm)));
+			WGPR(rt, jit_insn_lt(func, temp_196, make_uint(eimm)));
 			return(true);
 			break;
 		}
 		case 0xc: {
 			/* ANDI */
-			jit_label_t temp_334 = jit_label_undefined, temp_335 = jit_label_undefined;
-			jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_334);
+			jit_label_t temp_447 = jit_label_undefined, temp_448 = jit_label_undefined;
+			jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_447);
 			STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-			jit_insn_branch(func, &temp_335);
-			jit_insn_label(func, &temp_334);
+			jit_insn_branch(func, &temp_448);
+			jit_insn_label(func, &temp_447);
 			call_timestamp_inc(func, 1);
-			jit_insn_label(func, &temp_335);
+			jit_insn_label(func, &temp_448);
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
 			DEP(rs);
 			RES(rt);
-			TGPR(temp_84, rs);
-			do_lds(func);
+			TGPR(temp_197, rs);
+			DO_LDS();
 			uint32_t eimm = imm;
-			WGPR(rt, jit_insn_and(func, temp_84, make_uint(eimm)));
+			WGPR(rt, jit_insn_and(func, temp_197, make_uint(eimm)));
 			return(true);
 			break;
 		}
 		case 0xd: {
 			/* ORI */
-			jit_label_t temp_336 = jit_label_undefined, temp_337 = jit_label_undefined;
-			jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_336);
+			jit_label_t temp_449 = jit_label_undefined, temp_450 = jit_label_undefined;
+			jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_449);
 			STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-			jit_insn_branch(func, &temp_337);
-			jit_insn_label(func, &temp_336);
+			jit_insn_branch(func, &temp_450);
+			jit_insn_label(func, &temp_449);
 			call_timestamp_inc(func, 1);
-			jit_insn_label(func, &temp_337);
+			jit_insn_label(func, &temp_450);
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
 			DEP(rs);
 			RES(rt);
-			TGPR(temp_85, rs);
-			do_lds(func);
+			TGPR(temp_198, rs);
+			DO_LDS();
 			uint32_t eimm = imm;
-			WGPR(rt, jit_insn_or(func, temp_85, make_uint(eimm)));
+			WGPR(rt, jit_insn_or(func, temp_198, make_uint(eimm)));
 			return(true);
 			break;
 		}
 		case 0xe: {
 			/* XORI */
-			jit_label_t temp_338 = jit_label_undefined, temp_339 = jit_label_undefined;
-			jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_338);
+			jit_label_t temp_451 = jit_label_undefined, temp_452 = jit_label_undefined;
+			jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_451);
 			STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-			jit_insn_branch(func, &temp_339);
-			jit_insn_label(func, &temp_338);
+			jit_insn_branch(func, &temp_452);
+			jit_insn_label(func, &temp_451);
 			call_timestamp_inc(func, 1);
-			jit_insn_label(func, &temp_339);
+			jit_insn_label(func, &temp_452);
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
 			DEP(rs);
 			RES(rt);
-			TGPR(temp_86, rs);
-			do_lds(func);
+			TGPR(temp_199, rs);
+			DO_LDS();
 			uint32_t eimm = imm;
-			WGPR(rt, jit_insn_xor(func, temp_86, make_uint(eimm)));
+			WGPR(rt, jit_insn_xor(func, temp_199, make_uint(eimm)));
 			return(true);
 			break;
 		}
 		case 0xf: {
 			/* LUI */
-			jit_label_t temp_340 = jit_label_undefined, temp_341 = jit_label_undefined;
-			jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_340);
+			jit_label_t temp_453 = jit_label_undefined, temp_454 = jit_label_undefined;
+			jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_453);
 			STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-			jit_insn_branch(func, &temp_341);
-			jit_insn_label(func, &temp_340);
+			jit_insn_branch(func, &temp_454);
+			jit_insn_label(func, &temp_453);
 			call_timestamp_inc(func, 1);
-			jit_insn_label(func, &temp_341);
+			jit_insn_label(func, &temp_454);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
 			RES(rt);
-			do_lds(func);
+			DO_LDS();
 			WGPR(rt, jit_insn_shl(func, make_uint(imm), make_uint(0x10)));
 			return(true);
 			break;
@@ -2042,330 +2043,330 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 			switch(((inst) >> (0x15)) & (0x1f)) {
 				case 0x0: {
 					/* MFCzanonymous_8 */
-					jit_label_t temp_342 = jit_label_undefined, temp_343 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_342);
+					jit_label_t temp_455 = jit_label_undefined, temp_456 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_455);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_343);
-					jit_insn_label(func, &temp_342);
+					jit_insn_branch(func, &temp_456);
+					jit_insn_label(func, &temp_455);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_343);
+					jit_insn_label(func, &temp_456);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					RES(rt);
-					do_lds(func);
-					if((rt) != (0x0)) { defer_set(func, rt, call_read_copreg(func, cop, rd)); }
+					DO_LDS();
+					defer_set(func, rt, call_read_copreg(func, cop, rd));
 					return(true);
 					break;
 				}
 				case 0x2: {
 					/* CFCzanonymous_8 */
-					jit_label_t temp_344 = jit_label_undefined, temp_345 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_344);
+					jit_label_t temp_457 = jit_label_undefined, temp_458 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_457);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_345);
-					jit_insn_label(func, &temp_344);
+					jit_insn_branch(func, &temp_458);
+					jit_insn_label(func, &temp_457);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_345);
+					jit_insn_label(func, &temp_458);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					RES(rt);
-					do_lds(func);
+					DO_LDS();
 					WGPR(rt, call_read_copcreg(func, cop, rd));
 					return(true);
 					break;
 				}
 				case 0x4: {
 					/* MTCzanonymous_8 */
-					jit_label_t temp_346 = jit_label_undefined, temp_347 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_346);
+					jit_label_t temp_459 = jit_label_undefined, temp_460 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_459);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_347);
-					jit_insn_label(func, &temp_346);
+					jit_insn_branch(func, &temp_460);
+					jit_insn_label(func, &temp_459);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_347);
+					jit_insn_label(func, &temp_460);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					DEP(rt);
-					TGPR(temp_87, rt);
-					do_lds(func);
-					call_write_copreg(func, cop, rd, temp_87);
+					TGPR(temp_200, rt);
+					DO_LDS();
+					call_write_copreg(func, cop, rd, temp_200);
 					return(true);
 					break;
 				}
 				case 0x6: {
 					/* CTCzanonymous_8 */
-					jit_label_t temp_348 = jit_label_undefined, temp_349 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_348);
+					jit_label_t temp_461 = jit_label_undefined, temp_462 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_461);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_349);
-					jit_insn_label(func, &temp_348);
+					jit_insn_branch(func, &temp_462);
+					jit_insn_label(func, &temp_461);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_349);
+					jit_insn_label(func, &temp_462);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					DEP(rt);
-					TGPR(temp_88, rt);
-					do_lds(func);
-					call_write_copcreg(func, cop, rd, temp_88);
+					TGPR(temp_201, rt);
+					DO_LDS();
+					call_write_copcreg(func, cop, rd, temp_201);
 					return(true);
 					break;
 				}
 				case 0x10: {
 					/* COPzanonymous_12anonymous_8 */
-					jit_label_t temp_350 = jit_label_undefined, temp_351 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_350);
+					jit_label_t temp_463 = jit_label_undefined, temp_464 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_463);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_351);
-					jit_insn_label(func, &temp_350);
+					jit_insn_branch(func, &temp_464);
+					jit_insn_label(func, &temp_463);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_351);
+					jit_insn_label(func, &temp_464);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
 				case 0x11: {
 					/* COPzanonymous_13anonymous_8 */
-					jit_label_t temp_352 = jit_label_undefined, temp_353 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_352);
+					jit_label_t temp_465 = jit_label_undefined, temp_466 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_465);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_353);
-					jit_insn_label(func, &temp_352);
+					jit_insn_branch(func, &temp_466);
+					jit_insn_label(func, &temp_465);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_353);
+					jit_insn_label(func, &temp_466);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
 				case 0x12: {
 					/* COPzanonymous_14anonymous_8 */
-					jit_label_t temp_354 = jit_label_undefined, temp_355 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_354);
+					jit_label_t temp_467 = jit_label_undefined, temp_468 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_467);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_355);
-					jit_insn_label(func, &temp_354);
+					jit_insn_branch(func, &temp_468);
+					jit_insn_label(func, &temp_467);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_355);
+					jit_insn_label(func, &temp_468);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
 				case 0x13: {
 					/* COPzanonymous_15anonymous_8 */
-					jit_label_t temp_356 = jit_label_undefined, temp_357 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_356);
+					jit_label_t temp_469 = jit_label_undefined, temp_470 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_469);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_357);
-					jit_insn_label(func, &temp_356);
+					jit_insn_branch(func, &temp_470);
+					jit_insn_label(func, &temp_469);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_357);
+					jit_insn_label(func, &temp_470);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
 				case 0x14: {
 					/* COPzanonymous_16anonymous_8 */
-					jit_label_t temp_358 = jit_label_undefined, temp_359 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_358);
+					jit_label_t temp_471 = jit_label_undefined, temp_472 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_471);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_359);
-					jit_insn_label(func, &temp_358);
+					jit_insn_branch(func, &temp_472);
+					jit_insn_label(func, &temp_471);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_359);
+					jit_insn_label(func, &temp_472);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
 				case 0x15: {
 					/* COPzanonymous_17anonymous_8 */
-					jit_label_t temp_360 = jit_label_undefined, temp_361 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_360);
+					jit_label_t temp_473 = jit_label_undefined, temp_474 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_473);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_361);
-					jit_insn_label(func, &temp_360);
+					jit_insn_branch(func, &temp_474);
+					jit_insn_label(func, &temp_473);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_361);
+					jit_insn_label(func, &temp_474);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
 				case 0x16: {
 					/* COPzanonymous_18anonymous_8 */
-					jit_label_t temp_362 = jit_label_undefined, temp_363 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_362);
+					jit_label_t temp_475 = jit_label_undefined, temp_476 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_475);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_363);
-					jit_insn_label(func, &temp_362);
+					jit_insn_branch(func, &temp_476);
+					jit_insn_label(func, &temp_475);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_363);
+					jit_insn_label(func, &temp_476);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
 				case 0x17: {
 					/* COPzanonymous_19anonymous_8 */
-					jit_label_t temp_364 = jit_label_undefined, temp_365 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_364);
+					jit_label_t temp_477 = jit_label_undefined, temp_478 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_477);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_365);
-					jit_insn_label(func, &temp_364);
+					jit_insn_branch(func, &temp_478);
+					jit_insn_label(func, &temp_477);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_365);
+					jit_insn_label(func, &temp_478);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
 				case 0x18: {
 					/* COPzanonymous_20anonymous_8 */
-					jit_label_t temp_366 = jit_label_undefined, temp_367 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_366);
+					jit_label_t temp_479 = jit_label_undefined, temp_480 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_479);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_367);
-					jit_insn_label(func, &temp_366);
+					jit_insn_branch(func, &temp_480);
+					jit_insn_label(func, &temp_479);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_367);
+					jit_insn_label(func, &temp_480);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
 				case 0x19: {
 					/* COPzanonymous_21anonymous_8 */
-					jit_label_t temp_368 = jit_label_undefined, temp_369 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_368);
+					jit_label_t temp_481 = jit_label_undefined, temp_482 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_481);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_369);
-					jit_insn_label(func, &temp_368);
+					jit_insn_branch(func, &temp_482);
+					jit_insn_label(func, &temp_481);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_369);
+					jit_insn_label(func, &temp_482);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
 				case 0x1a: {
 					/* COPzanonymous_22anonymous_8 */
-					jit_label_t temp_370 = jit_label_undefined, temp_371 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_370);
+					jit_label_t temp_483 = jit_label_undefined, temp_484 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_483);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_371);
-					jit_insn_label(func, &temp_370);
+					jit_insn_branch(func, &temp_484);
+					jit_insn_label(func, &temp_483);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_371);
+					jit_insn_label(func, &temp_484);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
 				case 0x1b: {
 					/* COPzanonymous_23anonymous_8 */
-					jit_label_t temp_372 = jit_label_undefined, temp_373 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_372);
+					jit_label_t temp_485 = jit_label_undefined, temp_486 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_485);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_373);
-					jit_insn_label(func, &temp_372);
+					jit_insn_branch(func, &temp_486);
+					jit_insn_label(func, &temp_485);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_373);
+					jit_insn_label(func, &temp_486);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
 				case 0x1c: {
 					/* COPzanonymous_24anonymous_8 */
-					jit_label_t temp_374 = jit_label_undefined, temp_375 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_374);
+					jit_label_t temp_487 = jit_label_undefined, temp_488 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_487);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_375);
-					jit_insn_label(func, &temp_374);
+					jit_insn_branch(func, &temp_488);
+					jit_insn_label(func, &temp_487);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_375);
+					jit_insn_label(func, &temp_488);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
 				case 0x1d: {
 					/* COPzanonymous_25anonymous_8 */
-					jit_label_t temp_376 = jit_label_undefined, temp_377 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_376);
+					jit_label_t temp_489 = jit_label_undefined, temp_490 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_489);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_377);
-					jit_insn_label(func, &temp_376);
+					jit_insn_branch(func, &temp_490);
+					jit_insn_label(func, &temp_489);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_377);
+					jit_insn_label(func, &temp_490);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
 				case 0x1e: {
 					/* COPzanonymous_26anonymous_8 */
-					jit_label_t temp_378 = jit_label_undefined, temp_379 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_378);
+					jit_label_t temp_491 = jit_label_undefined, temp_492 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_491);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_379);
-					jit_insn_label(func, &temp_378);
+					jit_insn_branch(func, &temp_492);
+					jit_insn_label(func, &temp_491);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_379);
+					jit_insn_label(func, &temp_492);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
 				case 0x1f: {
 					/* COPzanonymous_27anonymous_8 */
-					jit_label_t temp_380 = jit_label_undefined, temp_381 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_380);
+					jit_label_t temp_493 = jit_label_undefined, temp_494 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_493);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_381);
-					jit_insn_label(func, &temp_380);
+					jit_insn_branch(func, &temp_494);
+					jit_insn_label(func, &temp_493);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_381);
+					jit_insn_label(func, &temp_494);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -2377,330 +2378,330 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 			switch(((inst) >> (0x15)) & (0x1f)) {
 				case 0x0: {
 					/* MFCzanonymous_9 */
-					jit_label_t temp_382 = jit_label_undefined, temp_383 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_382);
+					jit_label_t temp_495 = jit_label_undefined, temp_496 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_495);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_383);
-					jit_insn_label(func, &temp_382);
+					jit_insn_branch(func, &temp_496);
+					jit_insn_label(func, &temp_495);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_383);
+					jit_insn_label(func, &temp_496);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					RES(rt);
-					do_lds(func);
-					if((rt) != (0x0)) { defer_set(func, rt, call_read_copreg(func, cop, rd)); }
+					DO_LDS();
+					defer_set(func, rt, call_read_copreg(func, cop, rd));
 					return(true);
 					break;
 				}
 				case 0x2: {
 					/* CFCzanonymous_9 */
-					jit_label_t temp_384 = jit_label_undefined, temp_385 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_384);
+					jit_label_t temp_497 = jit_label_undefined, temp_498 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_497);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_385);
-					jit_insn_label(func, &temp_384);
+					jit_insn_branch(func, &temp_498);
+					jit_insn_label(func, &temp_497);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_385);
+					jit_insn_label(func, &temp_498);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					RES(rt);
-					do_lds(func);
+					DO_LDS();
 					WGPR(rt, call_read_copcreg(func, cop, rd));
 					return(true);
 					break;
 				}
 				case 0x4: {
 					/* MTCzanonymous_9 */
-					jit_label_t temp_386 = jit_label_undefined, temp_387 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_386);
+					jit_label_t temp_499 = jit_label_undefined, temp_500 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_499);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_387);
-					jit_insn_label(func, &temp_386);
+					jit_insn_branch(func, &temp_500);
+					jit_insn_label(func, &temp_499);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_387);
+					jit_insn_label(func, &temp_500);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					DEP(rt);
-					TGPR(temp_89, rt);
-					do_lds(func);
-					call_write_copreg(func, cop, rd, temp_89);
+					TGPR(temp_202, rt);
+					DO_LDS();
+					call_write_copreg(func, cop, rd, temp_202);
 					return(true);
 					break;
 				}
 				case 0x6: {
 					/* CTCzanonymous_9 */
-					jit_label_t temp_388 = jit_label_undefined, temp_389 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_388);
+					jit_label_t temp_501 = jit_label_undefined, temp_502 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_501);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_389);
-					jit_insn_label(func, &temp_388);
+					jit_insn_branch(func, &temp_502);
+					jit_insn_label(func, &temp_501);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_389);
+					jit_insn_label(func, &temp_502);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					DEP(rt);
-					TGPR(temp_90, rt);
-					do_lds(func);
-					call_write_copcreg(func, cop, rd, temp_90);
+					TGPR(temp_203, rt);
+					DO_LDS();
+					call_write_copcreg(func, cop, rd, temp_203);
 					return(true);
 					break;
 				}
 				case 0x10: {
 					/* COPzanonymous_12anonymous_9 */
-					jit_label_t temp_390 = jit_label_undefined, temp_391 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_390);
+					jit_label_t temp_503 = jit_label_undefined, temp_504 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_503);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_391);
-					jit_insn_label(func, &temp_390);
+					jit_insn_branch(func, &temp_504);
+					jit_insn_label(func, &temp_503);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_391);
+					jit_insn_label(func, &temp_504);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
 				case 0x11: {
 					/* COPzanonymous_13anonymous_9 */
-					jit_label_t temp_392 = jit_label_undefined, temp_393 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_392);
+					jit_label_t temp_505 = jit_label_undefined, temp_506 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_505);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_393);
-					jit_insn_label(func, &temp_392);
+					jit_insn_branch(func, &temp_506);
+					jit_insn_label(func, &temp_505);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_393);
+					jit_insn_label(func, &temp_506);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
 				case 0x12: {
 					/* COPzanonymous_14anonymous_9 */
-					jit_label_t temp_394 = jit_label_undefined, temp_395 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_394);
+					jit_label_t temp_507 = jit_label_undefined, temp_508 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_507);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_395);
-					jit_insn_label(func, &temp_394);
+					jit_insn_branch(func, &temp_508);
+					jit_insn_label(func, &temp_507);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_395);
+					jit_insn_label(func, &temp_508);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
 				case 0x13: {
 					/* COPzanonymous_15anonymous_9 */
-					jit_label_t temp_396 = jit_label_undefined, temp_397 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_396);
+					jit_label_t temp_509 = jit_label_undefined, temp_510 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_509);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_397);
-					jit_insn_label(func, &temp_396);
+					jit_insn_branch(func, &temp_510);
+					jit_insn_label(func, &temp_509);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_397);
+					jit_insn_label(func, &temp_510);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
 				case 0x14: {
 					/* COPzanonymous_16anonymous_9 */
-					jit_label_t temp_398 = jit_label_undefined, temp_399 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_398);
+					jit_label_t temp_511 = jit_label_undefined, temp_512 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_511);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_399);
-					jit_insn_label(func, &temp_398);
+					jit_insn_branch(func, &temp_512);
+					jit_insn_label(func, &temp_511);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_399);
+					jit_insn_label(func, &temp_512);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
 				case 0x15: {
 					/* COPzanonymous_17anonymous_9 */
-					jit_label_t temp_400 = jit_label_undefined, temp_401 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_400);
+					jit_label_t temp_513 = jit_label_undefined, temp_514 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_513);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_401);
-					jit_insn_label(func, &temp_400);
+					jit_insn_branch(func, &temp_514);
+					jit_insn_label(func, &temp_513);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_401);
+					jit_insn_label(func, &temp_514);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
 				case 0x16: {
 					/* COPzanonymous_18anonymous_9 */
-					jit_label_t temp_402 = jit_label_undefined, temp_403 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_402);
+					jit_label_t temp_515 = jit_label_undefined, temp_516 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_515);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_403);
-					jit_insn_label(func, &temp_402);
+					jit_insn_branch(func, &temp_516);
+					jit_insn_label(func, &temp_515);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_403);
+					jit_insn_label(func, &temp_516);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
 				case 0x17: {
 					/* COPzanonymous_19anonymous_9 */
-					jit_label_t temp_404 = jit_label_undefined, temp_405 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_404);
+					jit_label_t temp_517 = jit_label_undefined, temp_518 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_517);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_405);
-					jit_insn_label(func, &temp_404);
+					jit_insn_branch(func, &temp_518);
+					jit_insn_label(func, &temp_517);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_405);
+					jit_insn_label(func, &temp_518);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
 				case 0x18: {
 					/* COPzanonymous_20anonymous_9 */
-					jit_label_t temp_406 = jit_label_undefined, temp_407 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_406);
+					jit_label_t temp_519 = jit_label_undefined, temp_520 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_519);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_407);
-					jit_insn_label(func, &temp_406);
+					jit_insn_branch(func, &temp_520);
+					jit_insn_label(func, &temp_519);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_407);
+					jit_insn_label(func, &temp_520);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
 				case 0x19: {
 					/* COPzanonymous_21anonymous_9 */
-					jit_label_t temp_408 = jit_label_undefined, temp_409 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_408);
+					jit_label_t temp_521 = jit_label_undefined, temp_522 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_521);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_409);
-					jit_insn_label(func, &temp_408);
+					jit_insn_branch(func, &temp_522);
+					jit_insn_label(func, &temp_521);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_409);
+					jit_insn_label(func, &temp_522);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
 				case 0x1a: {
 					/* COPzanonymous_22anonymous_9 */
-					jit_label_t temp_410 = jit_label_undefined, temp_411 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_410);
+					jit_label_t temp_523 = jit_label_undefined, temp_524 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_523);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_411);
-					jit_insn_label(func, &temp_410);
+					jit_insn_branch(func, &temp_524);
+					jit_insn_label(func, &temp_523);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_411);
+					jit_insn_label(func, &temp_524);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
 				case 0x1b: {
 					/* COPzanonymous_23anonymous_9 */
-					jit_label_t temp_412 = jit_label_undefined, temp_413 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_412);
+					jit_label_t temp_525 = jit_label_undefined, temp_526 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_525);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_413);
-					jit_insn_label(func, &temp_412);
+					jit_insn_branch(func, &temp_526);
+					jit_insn_label(func, &temp_525);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_413);
+					jit_insn_label(func, &temp_526);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
 				case 0x1c: {
 					/* COPzanonymous_24anonymous_9 */
-					jit_label_t temp_414 = jit_label_undefined, temp_415 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_414);
+					jit_label_t temp_527 = jit_label_undefined, temp_528 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_527);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_415);
-					jit_insn_label(func, &temp_414);
+					jit_insn_branch(func, &temp_528);
+					jit_insn_label(func, &temp_527);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_415);
+					jit_insn_label(func, &temp_528);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
 				case 0x1d: {
 					/* COPzanonymous_25anonymous_9 */
-					jit_label_t temp_416 = jit_label_undefined, temp_417 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_416);
+					jit_label_t temp_529 = jit_label_undefined, temp_530 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_529);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_417);
-					jit_insn_label(func, &temp_416);
+					jit_insn_branch(func, &temp_530);
+					jit_insn_label(func, &temp_529);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_417);
+					jit_insn_label(func, &temp_530);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
 				case 0x1e: {
 					/* COPzanonymous_26anonymous_9 */
-					jit_label_t temp_418 = jit_label_undefined, temp_419 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_418);
+					jit_label_t temp_531 = jit_label_undefined, temp_532 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_531);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_419);
-					jit_insn_label(func, &temp_418);
+					jit_insn_branch(func, &temp_532);
+					jit_insn_label(func, &temp_531);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_419);
+					jit_insn_label(func, &temp_532);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
 				case 0x1f: {
 					/* COPzanonymous_27anonymous_9 */
-					jit_label_t temp_420 = jit_label_undefined, temp_421 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_420);
+					jit_label_t temp_533 = jit_label_undefined, temp_534 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_533);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_421);
-					jit_insn_label(func, &temp_420);
+					jit_insn_branch(func, &temp_534);
+					jit_insn_label(func, &temp_533);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_421);
+					jit_insn_label(func, &temp_534);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -2712,330 +2713,330 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 			switch(((inst) >> (0x15)) & (0x1f)) {
 				case 0x0: {
 					/* MFCzanonymous_10 */
-					jit_label_t temp_422 = jit_label_undefined, temp_423 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_422);
+					jit_label_t temp_535 = jit_label_undefined, temp_536 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_535);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_423);
-					jit_insn_label(func, &temp_422);
+					jit_insn_branch(func, &temp_536);
+					jit_insn_label(func, &temp_535);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_423);
+					jit_insn_label(func, &temp_536);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					RES(rt);
-					do_lds(func);
-					if((rt) != (0x0)) { defer_set(func, rt, call_read_copreg(func, cop, rd)); }
+					DO_LDS();
+					defer_set(func, rt, call_read_copreg(func, cop, rd));
 					return(true);
 					break;
 				}
 				case 0x2: {
 					/* CFCzanonymous_10 */
-					jit_label_t temp_424 = jit_label_undefined, temp_425 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_424);
+					jit_label_t temp_537 = jit_label_undefined, temp_538 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_537);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_425);
-					jit_insn_label(func, &temp_424);
+					jit_insn_branch(func, &temp_538);
+					jit_insn_label(func, &temp_537);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_425);
+					jit_insn_label(func, &temp_538);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					RES(rt);
-					do_lds(func);
+					DO_LDS();
 					WGPR(rt, call_read_copcreg(func, cop, rd));
 					return(true);
 					break;
 				}
 				case 0x4: {
 					/* MTCzanonymous_10 */
-					jit_label_t temp_426 = jit_label_undefined, temp_427 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_426);
+					jit_label_t temp_539 = jit_label_undefined, temp_540 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_539);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_427);
-					jit_insn_label(func, &temp_426);
+					jit_insn_branch(func, &temp_540);
+					jit_insn_label(func, &temp_539);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_427);
+					jit_insn_label(func, &temp_540);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					DEP(rt);
-					TGPR(temp_91, rt);
-					do_lds(func);
-					call_write_copreg(func, cop, rd, temp_91);
+					TGPR(temp_204, rt);
+					DO_LDS();
+					call_write_copreg(func, cop, rd, temp_204);
 					return(true);
 					break;
 				}
 				case 0x6: {
 					/* CTCzanonymous_10 */
-					jit_label_t temp_428 = jit_label_undefined, temp_429 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_428);
+					jit_label_t temp_541 = jit_label_undefined, temp_542 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_541);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_429);
-					jit_insn_label(func, &temp_428);
+					jit_insn_branch(func, &temp_542);
+					jit_insn_label(func, &temp_541);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_429);
+					jit_insn_label(func, &temp_542);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					DEP(rt);
-					TGPR(temp_92, rt);
-					do_lds(func);
-					call_write_copcreg(func, cop, rd, temp_92);
+					TGPR(temp_205, rt);
+					DO_LDS();
+					call_write_copcreg(func, cop, rd, temp_205);
 					return(true);
 					break;
 				}
 				case 0x10: {
 					/* COPzanonymous_12anonymous_10 */
-					jit_label_t temp_430 = jit_label_undefined, temp_431 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_430);
+					jit_label_t temp_543 = jit_label_undefined, temp_544 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_543);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_431);
-					jit_insn_label(func, &temp_430);
+					jit_insn_branch(func, &temp_544);
+					jit_insn_label(func, &temp_543);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_431);
+					jit_insn_label(func, &temp_544);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
 				case 0x11: {
 					/* COPzanonymous_13anonymous_10 */
-					jit_label_t temp_432 = jit_label_undefined, temp_433 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_432);
+					jit_label_t temp_545 = jit_label_undefined, temp_546 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_545);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_433);
-					jit_insn_label(func, &temp_432);
+					jit_insn_branch(func, &temp_546);
+					jit_insn_label(func, &temp_545);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_433);
+					jit_insn_label(func, &temp_546);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
 				case 0x12: {
 					/* COPzanonymous_14anonymous_10 */
-					jit_label_t temp_434 = jit_label_undefined, temp_435 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_434);
+					jit_label_t temp_547 = jit_label_undefined, temp_548 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_547);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_435);
-					jit_insn_label(func, &temp_434);
+					jit_insn_branch(func, &temp_548);
+					jit_insn_label(func, &temp_547);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_435);
+					jit_insn_label(func, &temp_548);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
 				case 0x13: {
 					/* COPzanonymous_15anonymous_10 */
-					jit_label_t temp_436 = jit_label_undefined, temp_437 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_436);
+					jit_label_t temp_549 = jit_label_undefined, temp_550 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_549);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_437);
-					jit_insn_label(func, &temp_436);
+					jit_insn_branch(func, &temp_550);
+					jit_insn_label(func, &temp_549);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_437);
+					jit_insn_label(func, &temp_550);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
 				case 0x14: {
 					/* COPzanonymous_16anonymous_10 */
-					jit_label_t temp_438 = jit_label_undefined, temp_439 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_438);
+					jit_label_t temp_551 = jit_label_undefined, temp_552 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_551);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_439);
-					jit_insn_label(func, &temp_438);
+					jit_insn_branch(func, &temp_552);
+					jit_insn_label(func, &temp_551);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_439);
+					jit_insn_label(func, &temp_552);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
 				case 0x15: {
 					/* COPzanonymous_17anonymous_10 */
-					jit_label_t temp_440 = jit_label_undefined, temp_441 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_440);
+					jit_label_t temp_553 = jit_label_undefined, temp_554 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_553);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_441);
-					jit_insn_label(func, &temp_440);
+					jit_insn_branch(func, &temp_554);
+					jit_insn_label(func, &temp_553);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_441);
+					jit_insn_label(func, &temp_554);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
 				case 0x16: {
 					/* COPzanonymous_18anonymous_10 */
-					jit_label_t temp_442 = jit_label_undefined, temp_443 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_442);
+					jit_label_t temp_555 = jit_label_undefined, temp_556 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_555);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_443);
-					jit_insn_label(func, &temp_442);
+					jit_insn_branch(func, &temp_556);
+					jit_insn_label(func, &temp_555);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_443);
+					jit_insn_label(func, &temp_556);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
 				case 0x17: {
 					/* COPzanonymous_19anonymous_10 */
-					jit_label_t temp_444 = jit_label_undefined, temp_445 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_444);
+					jit_label_t temp_557 = jit_label_undefined, temp_558 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_557);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_445);
-					jit_insn_label(func, &temp_444);
+					jit_insn_branch(func, &temp_558);
+					jit_insn_label(func, &temp_557);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_445);
+					jit_insn_label(func, &temp_558);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
 				case 0x18: {
 					/* COPzanonymous_20anonymous_10 */
-					jit_label_t temp_446 = jit_label_undefined, temp_447 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_446);
+					jit_label_t temp_559 = jit_label_undefined, temp_560 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_559);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_447);
-					jit_insn_label(func, &temp_446);
+					jit_insn_branch(func, &temp_560);
+					jit_insn_label(func, &temp_559);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_447);
+					jit_insn_label(func, &temp_560);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
 				case 0x19: {
 					/* COPzanonymous_21anonymous_10 */
-					jit_label_t temp_448 = jit_label_undefined, temp_449 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_448);
+					jit_label_t temp_561 = jit_label_undefined, temp_562 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_561);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_449);
-					jit_insn_label(func, &temp_448);
+					jit_insn_branch(func, &temp_562);
+					jit_insn_label(func, &temp_561);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_449);
+					jit_insn_label(func, &temp_562);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
 				case 0x1a: {
 					/* COPzanonymous_22anonymous_10 */
-					jit_label_t temp_450 = jit_label_undefined, temp_451 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_450);
+					jit_label_t temp_563 = jit_label_undefined, temp_564 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_563);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_451);
-					jit_insn_label(func, &temp_450);
+					jit_insn_branch(func, &temp_564);
+					jit_insn_label(func, &temp_563);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_451);
+					jit_insn_label(func, &temp_564);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
 				case 0x1b: {
 					/* COPzanonymous_23anonymous_10 */
-					jit_label_t temp_452 = jit_label_undefined, temp_453 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_452);
+					jit_label_t temp_565 = jit_label_undefined, temp_566 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_565);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_453);
-					jit_insn_label(func, &temp_452);
+					jit_insn_branch(func, &temp_566);
+					jit_insn_label(func, &temp_565);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_453);
+					jit_insn_label(func, &temp_566);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
 				case 0x1c: {
 					/* COPzanonymous_24anonymous_10 */
-					jit_label_t temp_454 = jit_label_undefined, temp_455 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_454);
+					jit_label_t temp_567 = jit_label_undefined, temp_568 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_567);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_455);
-					jit_insn_label(func, &temp_454);
+					jit_insn_branch(func, &temp_568);
+					jit_insn_label(func, &temp_567);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_455);
+					jit_insn_label(func, &temp_568);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
 				case 0x1d: {
 					/* COPzanonymous_25anonymous_10 */
-					jit_label_t temp_456 = jit_label_undefined, temp_457 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_456);
+					jit_label_t temp_569 = jit_label_undefined, temp_570 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_569);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_457);
-					jit_insn_label(func, &temp_456);
+					jit_insn_branch(func, &temp_570);
+					jit_insn_label(func, &temp_569);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_457);
+					jit_insn_label(func, &temp_570);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
 				case 0x1e: {
 					/* COPzanonymous_26anonymous_10 */
-					jit_label_t temp_458 = jit_label_undefined, temp_459 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_458);
+					jit_label_t temp_571 = jit_label_undefined, temp_572 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_571);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_459);
-					jit_insn_label(func, &temp_458);
+					jit_insn_branch(func, &temp_572);
+					jit_insn_label(func, &temp_571);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_459);
+					jit_insn_label(func, &temp_572);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
 				case 0x1f: {
 					/* COPzanonymous_27anonymous_10 */
-					jit_label_t temp_460 = jit_label_undefined, temp_461 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_460);
+					jit_label_t temp_573 = jit_label_undefined, temp_574 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_573);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_461);
-					jit_insn_label(func, &temp_460);
+					jit_insn_branch(func, &temp_574);
+					jit_insn_label(func, &temp_573);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_461);
+					jit_insn_label(func, &temp_574);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -3047,330 +3048,330 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 			switch(((inst) >> (0x15)) & (0x1f)) {
 				case 0x0: {
 					/* MFCzanonymous_11 */
-					jit_label_t temp_462 = jit_label_undefined, temp_463 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_462);
+					jit_label_t temp_575 = jit_label_undefined, temp_576 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_575);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_463);
-					jit_insn_label(func, &temp_462);
+					jit_insn_branch(func, &temp_576);
+					jit_insn_label(func, &temp_575);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_463);
+					jit_insn_label(func, &temp_576);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					RES(rt);
-					do_lds(func);
-					if((rt) != (0x0)) { defer_set(func, rt, call_read_copreg(func, cop, rd)); }
+					DO_LDS();
+					defer_set(func, rt, call_read_copreg(func, cop, rd));
 					return(true);
 					break;
 				}
 				case 0x2: {
 					/* CFCzanonymous_11 */
-					jit_label_t temp_464 = jit_label_undefined, temp_465 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_464);
+					jit_label_t temp_577 = jit_label_undefined, temp_578 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_577);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_465);
-					jit_insn_label(func, &temp_464);
+					jit_insn_branch(func, &temp_578);
+					jit_insn_label(func, &temp_577);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_465);
+					jit_insn_label(func, &temp_578);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					RES(rt);
-					do_lds(func);
+					DO_LDS();
 					WGPR(rt, call_read_copcreg(func, cop, rd));
 					return(true);
 					break;
 				}
 				case 0x4: {
 					/* MTCzanonymous_11 */
-					jit_label_t temp_466 = jit_label_undefined, temp_467 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_466);
+					jit_label_t temp_579 = jit_label_undefined, temp_580 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_579);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_467);
-					jit_insn_label(func, &temp_466);
+					jit_insn_branch(func, &temp_580);
+					jit_insn_label(func, &temp_579);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_467);
+					jit_insn_label(func, &temp_580);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					DEP(rt);
-					TGPR(temp_93, rt);
-					do_lds(func);
-					call_write_copreg(func, cop, rd, temp_93);
+					TGPR(temp_206, rt);
+					DO_LDS();
+					call_write_copreg(func, cop, rd, temp_206);
 					return(true);
 					break;
 				}
 				case 0x6: {
 					/* CTCzanonymous_11 */
-					jit_label_t temp_468 = jit_label_undefined, temp_469 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_468);
+					jit_label_t temp_581 = jit_label_undefined, temp_582 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_581);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_469);
-					jit_insn_label(func, &temp_468);
+					jit_insn_branch(func, &temp_582);
+					jit_insn_label(func, &temp_581);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_469);
+					jit_insn_label(func, &temp_582);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					DEP(rt);
-					TGPR(temp_94, rt);
-					do_lds(func);
-					call_write_copcreg(func, cop, rd, temp_94);
+					TGPR(temp_207, rt);
+					DO_LDS();
+					call_write_copcreg(func, cop, rd, temp_207);
 					return(true);
 					break;
 				}
 				case 0x10: {
 					/* COPzanonymous_12anonymous_11 */
-					jit_label_t temp_470 = jit_label_undefined, temp_471 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_470);
+					jit_label_t temp_583 = jit_label_undefined, temp_584 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_583);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_471);
-					jit_insn_label(func, &temp_470);
+					jit_insn_branch(func, &temp_584);
+					jit_insn_label(func, &temp_583);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_471);
+					jit_insn_label(func, &temp_584);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
 				case 0x11: {
 					/* COPzanonymous_13anonymous_11 */
-					jit_label_t temp_472 = jit_label_undefined, temp_473 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_472);
+					jit_label_t temp_585 = jit_label_undefined, temp_586 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_585);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_473);
-					jit_insn_label(func, &temp_472);
+					jit_insn_branch(func, &temp_586);
+					jit_insn_label(func, &temp_585);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_473);
+					jit_insn_label(func, &temp_586);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
 				case 0x12: {
 					/* COPzanonymous_14anonymous_11 */
-					jit_label_t temp_474 = jit_label_undefined, temp_475 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_474);
+					jit_label_t temp_587 = jit_label_undefined, temp_588 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_587);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_475);
-					jit_insn_label(func, &temp_474);
+					jit_insn_branch(func, &temp_588);
+					jit_insn_label(func, &temp_587);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_475);
+					jit_insn_label(func, &temp_588);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
 				case 0x13: {
 					/* COPzanonymous_15anonymous_11 */
-					jit_label_t temp_476 = jit_label_undefined, temp_477 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_476);
+					jit_label_t temp_589 = jit_label_undefined, temp_590 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_589);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_477);
-					jit_insn_label(func, &temp_476);
+					jit_insn_branch(func, &temp_590);
+					jit_insn_label(func, &temp_589);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_477);
+					jit_insn_label(func, &temp_590);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
 				case 0x14: {
 					/* COPzanonymous_16anonymous_11 */
-					jit_label_t temp_478 = jit_label_undefined, temp_479 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_478);
+					jit_label_t temp_591 = jit_label_undefined, temp_592 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_591);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_479);
-					jit_insn_label(func, &temp_478);
+					jit_insn_branch(func, &temp_592);
+					jit_insn_label(func, &temp_591);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_479);
+					jit_insn_label(func, &temp_592);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
 				case 0x15: {
 					/* COPzanonymous_17anonymous_11 */
-					jit_label_t temp_480 = jit_label_undefined, temp_481 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_480);
+					jit_label_t temp_593 = jit_label_undefined, temp_594 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_593);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_481);
-					jit_insn_label(func, &temp_480);
+					jit_insn_branch(func, &temp_594);
+					jit_insn_label(func, &temp_593);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_481);
+					jit_insn_label(func, &temp_594);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
 				case 0x16: {
 					/* COPzanonymous_18anonymous_11 */
-					jit_label_t temp_482 = jit_label_undefined, temp_483 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_482);
+					jit_label_t temp_595 = jit_label_undefined, temp_596 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_595);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_483);
-					jit_insn_label(func, &temp_482);
+					jit_insn_branch(func, &temp_596);
+					jit_insn_label(func, &temp_595);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_483);
+					jit_insn_label(func, &temp_596);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
 				case 0x17: {
 					/* COPzanonymous_19anonymous_11 */
-					jit_label_t temp_484 = jit_label_undefined, temp_485 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_484);
+					jit_label_t temp_597 = jit_label_undefined, temp_598 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_597);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_485);
-					jit_insn_label(func, &temp_484);
+					jit_insn_branch(func, &temp_598);
+					jit_insn_label(func, &temp_597);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_485);
+					jit_insn_label(func, &temp_598);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
 				case 0x18: {
 					/* COPzanonymous_20anonymous_11 */
-					jit_label_t temp_486 = jit_label_undefined, temp_487 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_486);
+					jit_label_t temp_599 = jit_label_undefined, temp_600 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_599);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_487);
-					jit_insn_label(func, &temp_486);
+					jit_insn_branch(func, &temp_600);
+					jit_insn_label(func, &temp_599);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_487);
+					jit_insn_label(func, &temp_600);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
 				case 0x19: {
 					/* COPzanonymous_21anonymous_11 */
-					jit_label_t temp_488 = jit_label_undefined, temp_489 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_488);
+					jit_label_t temp_601 = jit_label_undefined, temp_602 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_601);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_489);
-					jit_insn_label(func, &temp_488);
+					jit_insn_branch(func, &temp_602);
+					jit_insn_label(func, &temp_601);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_489);
+					jit_insn_label(func, &temp_602);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
 				case 0x1a: {
 					/* COPzanonymous_22anonymous_11 */
-					jit_label_t temp_490 = jit_label_undefined, temp_491 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_490);
+					jit_label_t temp_603 = jit_label_undefined, temp_604 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_603);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_491);
-					jit_insn_label(func, &temp_490);
+					jit_insn_branch(func, &temp_604);
+					jit_insn_label(func, &temp_603);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_491);
+					jit_insn_label(func, &temp_604);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
 				case 0x1b: {
 					/* COPzanonymous_23anonymous_11 */
-					jit_label_t temp_492 = jit_label_undefined, temp_493 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_492);
+					jit_label_t temp_605 = jit_label_undefined, temp_606 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_605);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_493);
-					jit_insn_label(func, &temp_492);
+					jit_insn_branch(func, &temp_606);
+					jit_insn_label(func, &temp_605);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_493);
+					jit_insn_label(func, &temp_606);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
 				case 0x1c: {
 					/* COPzanonymous_24anonymous_11 */
-					jit_label_t temp_494 = jit_label_undefined, temp_495 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_494);
+					jit_label_t temp_607 = jit_label_undefined, temp_608 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_607);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_495);
-					jit_insn_label(func, &temp_494);
+					jit_insn_branch(func, &temp_608);
+					jit_insn_label(func, &temp_607);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_495);
+					jit_insn_label(func, &temp_608);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
 				case 0x1d: {
 					/* COPzanonymous_25anonymous_11 */
-					jit_label_t temp_496 = jit_label_undefined, temp_497 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_496);
+					jit_label_t temp_609 = jit_label_undefined, temp_610 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_609);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_497);
-					jit_insn_label(func, &temp_496);
+					jit_insn_branch(func, &temp_610);
+					jit_insn_label(func, &temp_609);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_497);
+					jit_insn_label(func, &temp_610);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
 				case 0x1e: {
 					/* COPzanonymous_26anonymous_11 */
-					jit_label_t temp_498 = jit_label_undefined, temp_499 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_498);
+					jit_label_t temp_611 = jit_label_undefined, temp_612 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_611);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_499);
-					jit_insn_label(func, &temp_498);
+					jit_insn_branch(func, &temp_612);
+					jit_insn_label(func, &temp_611);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_499);
+					jit_insn_label(func, &temp_612);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
 				}
 				case 0x1f: {
 					/* COPzanonymous_27anonymous_11 */
-					jit_label_t temp_500 = jit_label_undefined, temp_501 = jit_label_undefined;
-					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_500);
+					jit_label_t temp_613 = jit_label_undefined, temp_614 = jit_label_undefined;
+					jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_613);
 					STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-					jit_insn_branch(func, &temp_501);
-					jit_insn_label(func, &temp_500);
+					jit_insn_branch(func, &temp_614);
+					jit_insn_label(func, &temp_613);
 					call_timestamp_inc(func, 1);
-					jit_insn_label(func, &temp_501);
+					jit_insn_label(func, &temp_614);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					do_lds(func);
+					DO_LDS();
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -3380,404 +3381,380 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 		}
 		case 0x20: {
 			/* LB */
-			jit_label_t temp_502 = jit_label_undefined, temp_503 = jit_label_undefined;
-			jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_502);
+			jit_label_t temp_615 = jit_label_undefined, temp_616 = jit_label_undefined;
+			jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_615);
 			STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-			jit_insn_branch(func, &temp_503);
-			jit_insn_label(func, &temp_502);
+			jit_insn_branch(func, &temp_616);
+			jit_insn_label(func, &temp_615);
 			call_timestamp_inc(func, 1);
-			jit_insn_label(func, &temp_503);
+			jit_insn_label(func, &temp_616);
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
 			DEP(rs);
 			RES(rt);
-			TGPR(temp_95, rs);
-			do_lds(func);
+			TGPR(temp_208, rs);
+			DO_LDS();
 			uint32_t offset = signext(0x10, imm);
-			if((rt) != (0x0)) { defer_set(func, rt, call_signext(func, 8, call_load_memory(func, 8, jit_insn_add(func, temp_95, make_uint(offset)), pc))); }
+			defer_set(func, rt, call_signext(func, 8, call_load_memory(func, 8, jit_insn_add(func, temp_208, make_uint(offset)), pc)));
 			return(true);
 			break;
 		}
 		case 0x21: {
 			/* LH */
-			jit_label_t temp_504 = jit_label_undefined, temp_505 = jit_label_undefined;
-			jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_504);
+			jit_label_t temp_617 = jit_label_undefined, temp_618 = jit_label_undefined;
+			jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_617);
 			STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-			jit_insn_branch(func, &temp_505);
-			jit_insn_label(func, &temp_504);
+			jit_insn_branch(func, &temp_618);
+			jit_insn_label(func, &temp_617);
 			call_timestamp_inc(func, 1);
-			jit_insn_label(func, &temp_505);
+			jit_insn_label(func, &temp_618);
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
 			DEP(rs);
 			RES(rt);
-			TGPR(temp_96, rs);
-			do_lds(func);
+			TGPR(temp_209, rs);
+			DO_LDS();
 			uint32_t offset = signext(0x10, imm);
-			if((rt) != (0x0)) { defer_set(func, rt, call_signext(func, 16, call_load_memory(func, 16, jit_insn_add(func, temp_96, make_uint(offset)), pc))); }
+			defer_set(func, rt, call_signext(func, 16, call_load_memory(func, 16, jit_insn_add(func, temp_209, make_uint(offset)), pc)));
 			return(true);
 			break;
 		}
 		case 0x22: {
 			/* LWL */
-			jit_label_t temp_506 = jit_label_undefined, temp_507 = jit_label_undefined;
-			jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_506);
+			jit_label_t temp_619 = jit_label_undefined, temp_620 = jit_label_undefined;
+			jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_619);
 			STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-			jit_insn_branch(func, &temp_507);
-			jit_insn_label(func, &temp_506);
+			jit_insn_branch(func, &temp_620);
+			jit_insn_label(func, &temp_619);
 			call_timestamp_inc(func, 1);
-			jit_insn_label(func, &temp_507);
+			jit_insn_label(func, &temp_620);
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
 			DEP(rs);
 			RES(rt);
-			TGPR(temp_97, rs);
-			do_lds(func);
+			TGPR(temp_210, rs);
+			DO_LDS();
 			uint32_t simm = signext(0x10, imm);
-			jit_value_t offset = jit_insn_add(func, temp_97, make_uint(simm));
+			jit_value_t offset = jit_insn_add(func, temp_210, make_uint(simm));
 			jit_value_t bottom = jit_insn_and(func, offset, make_uint(0x3));
 			jit_value_t moffset = jit_insn_and(func, offset, make_uint(0xfffffffc));
-			jit_label_t temp_508 = jit_label_undefined, temp_509 = jit_label_undefined;
-			jit_insn_branch_if(func, jit_insn_eq(func, bottom, make_uint(0x0)), &temp_508);
-			jit_label_t temp_510 = jit_label_undefined, temp_511 = jit_label_undefined;
-			jit_insn_branch_if(func, jit_insn_eq(func, bottom, make_uint(0x1)), &temp_510);
-			jit_label_t temp_512 = jit_label_undefined, temp_513 = jit_label_undefined;
-			jit_insn_branch_if(func, jit_insn_eq(func, bottom, make_uint(0x2)), &temp_512);
-			jit_label_t temp_514 = jit_label_undefined;
-			jit_insn_branch_if_not(func, jit_insn_ne(func, make_uint(rt), make_uint(0x0)), &temp_514);
+			jit_label_t temp_621 = jit_label_undefined, temp_622 = jit_label_undefined;
+			jit_insn_branch_if(func, jit_insn_eq(func, bottom, make_uint(0x0)), &temp_621);
+			jit_label_t temp_623 = jit_label_undefined, temp_624 = jit_label_undefined;
+			jit_insn_branch_if(func, jit_insn_eq(func, bottom, make_uint(0x1)), &temp_623);
+			jit_label_t temp_625 = jit_label_undefined, temp_626 = jit_label_undefined;
+			jit_insn_branch_if(func, jit_insn_eq(func, bottom, make_uint(0x2)), &temp_625);
 			defer_set(func, rt, call_load_memory(func, 32, moffset, pc));
-			jit_insn_label(func, &temp_514);
-			jit_insn_branch(func, &temp_513);
-			jit_insn_label(func, &temp_512);
-			jit_label_t temp_515 = jit_label_undefined;
-			jit_insn_branch_if_not(func, jit_insn_ne(func, make_uint(rt), make_uint(0x0)), &temp_515);
+			jit_insn_branch(func, &temp_626);
+			jit_insn_label(func, &temp_625);
 			defer_set(func, rt, jit_insn_or(func, jit_insn_and(func, RGPR(rt), make_uint(0xff)), jit_insn_shl(func, call_load_memory(func, 24, moffset, pc), make_uint(0x8))));
-			jit_insn_label(func, &temp_515);
-			jit_insn_label(func, &temp_513);
-			jit_insn_branch(func, &temp_511);
-			jit_insn_label(func, &temp_510);
-			jit_label_t temp_516 = jit_label_undefined;
-			jit_insn_branch_if_not(func, jit_insn_ne(func, make_uint(rt), make_uint(0x0)), &temp_516);
+			jit_insn_label(func, &temp_626);
+			jit_insn_branch(func, &temp_624);
+			jit_insn_label(func, &temp_623);
 			defer_set(func, rt, jit_insn_or(func, jit_insn_and(func, RGPR(rt), make_uint(0xffff)), jit_insn_shl(func, call_load_memory(func, 16, moffset, pc), make_uint(0x10))));
-			jit_insn_label(func, &temp_516);
-			jit_insn_label(func, &temp_511);
-			jit_insn_branch(func, &temp_509);
-			jit_insn_label(func, &temp_508);
-			jit_label_t temp_517 = jit_label_undefined;
-			jit_insn_branch_if_not(func, jit_insn_ne(func, make_uint(rt), make_uint(0x0)), &temp_517);
+			jit_insn_label(func, &temp_624);
+			jit_insn_branch(func, &temp_622);
+			jit_insn_label(func, &temp_621);
 			defer_set(func, rt, jit_insn_or(func, jit_insn_and(func, RGPR(rt), make_uint(0xffffff)), jit_insn_shl(func, call_load_memory(func, 8, moffset, pc), make_uint(0x18))));
-			jit_insn_label(func, &temp_517);
-			jit_insn_label(func, &temp_509);
+			jit_insn_label(func, &temp_622);
 			return(true);
 			break;
 		}
 		case 0x23: {
 			/* LW */
-			jit_label_t temp_518 = jit_label_undefined, temp_519 = jit_label_undefined;
-			jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_518);
+			jit_label_t temp_627 = jit_label_undefined, temp_628 = jit_label_undefined;
+			jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_627);
 			STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-			jit_insn_branch(func, &temp_519);
-			jit_insn_label(func, &temp_518);
+			jit_insn_branch(func, &temp_628);
+			jit_insn_label(func, &temp_627);
 			call_timestamp_inc(func, 1);
-			jit_insn_label(func, &temp_519);
+			jit_insn_label(func, &temp_628);
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
 			DEP(rs);
 			RES(rt);
-			TGPR(temp_98, rs);
-			do_lds(func);
+			TGPR(temp_211, rs);
+			DO_LDS();
 			uint32_t offset = signext(0x10, imm);
-			if((rt) != (0x0)) { defer_set(func, rt, call_load_memory(func, 32, jit_insn_add(func, temp_98, make_uint(offset)), pc)); }
+			defer_set(func, rt, call_load_memory(func, 32, jit_insn_add(func, temp_211, make_uint(offset)), pc));
 			return(true);
 			break;
 		}
 		case 0x24: {
 			/* LBU */
-			jit_label_t temp_520 = jit_label_undefined, temp_521 = jit_label_undefined;
-			jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_520);
+			jit_label_t temp_629 = jit_label_undefined, temp_630 = jit_label_undefined;
+			jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_629);
 			STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-			jit_insn_branch(func, &temp_521);
-			jit_insn_label(func, &temp_520);
+			jit_insn_branch(func, &temp_630);
+			jit_insn_label(func, &temp_629);
 			call_timestamp_inc(func, 1);
-			jit_insn_label(func, &temp_521);
+			jit_insn_label(func, &temp_630);
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
 			DEP(rs);
 			RES(rt);
-			TGPR(temp_99, rs);
-			do_lds(func);
+			TGPR(temp_212, rs);
+			DO_LDS();
 			uint32_t offset = signext(0x10, imm);
-			if((rt) != (0x0)) { defer_set(func, rt, call_load_memory(func, 8, jit_insn_add(func, temp_99, make_uint(offset)), pc)); }
+			defer_set(func, rt, call_load_memory(func, 8, jit_insn_add(func, temp_212, make_uint(offset)), pc));
 			return(true);
 			break;
 		}
 		case 0x25: {
 			/* LHU */
-			jit_label_t temp_522 = jit_label_undefined, temp_523 = jit_label_undefined;
-			jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_522);
+			jit_label_t temp_631 = jit_label_undefined, temp_632 = jit_label_undefined;
+			jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_631);
 			STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-			jit_insn_branch(func, &temp_523);
-			jit_insn_label(func, &temp_522);
+			jit_insn_branch(func, &temp_632);
+			jit_insn_label(func, &temp_631);
 			call_timestamp_inc(func, 1);
-			jit_insn_label(func, &temp_523);
+			jit_insn_label(func, &temp_632);
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
 			DEP(rs);
 			RES(rt);
-			TGPR(temp_100, rs);
-			do_lds(func);
+			TGPR(temp_213, rs);
+			DO_LDS();
 			uint32_t offset = signext(0x10, imm);
-			if((rt) != (0x0)) { defer_set(func, rt, call_load_memory(func, 16, jit_insn_add(func, temp_100, make_uint(offset)), pc)); }
+			defer_set(func, rt, call_load_memory(func, 16, jit_insn_add(func, temp_213, make_uint(offset)), pc));
 			return(true);
 			break;
 		}
 		case 0x26: {
 			/* LWR */
-			jit_label_t temp_524 = jit_label_undefined, temp_525 = jit_label_undefined;
-			jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_524);
+			jit_label_t temp_633 = jit_label_undefined, temp_634 = jit_label_undefined;
+			jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_633);
 			STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-			jit_insn_branch(func, &temp_525);
-			jit_insn_label(func, &temp_524);
+			jit_insn_branch(func, &temp_634);
+			jit_insn_label(func, &temp_633);
 			call_timestamp_inc(func, 1);
-			jit_insn_label(func, &temp_525);
+			jit_insn_label(func, &temp_634);
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
 			DEP(rs);
 			RES(rt);
-			TGPR(temp_101, rs);
-			do_lds(func);
+			TGPR(temp_214, rs);
+			DO_LDS();
 			uint32_t simm = signext(0x10, imm);
-			jit_value_t offset = jit_insn_add(func, temp_101, make_uint(simm));
+			jit_value_t offset = jit_insn_add(func, temp_214, make_uint(simm));
 			jit_value_t bottom = jit_insn_and(func, offset, make_uint(0x3));
-			jit_label_t temp_526 = jit_label_undefined, temp_527 = jit_label_undefined;
-			jit_insn_branch_if(func, jit_insn_eq(func, bottom, make_uint(0x0)), &temp_526);
-			jit_label_t temp_528 = jit_label_undefined, temp_529 = jit_label_undefined;
-			jit_insn_branch_if(func, jit_insn_eq(func, bottom, make_uint(0x1)), &temp_528);
-			jit_label_t temp_530 = jit_label_undefined, temp_531 = jit_label_undefined;
-			jit_insn_branch_if(func, jit_insn_eq(func, bottom, make_uint(0x2)), &temp_530);
-			jit_label_t temp_532 = jit_label_undefined;
-			jit_insn_branch_if_not(func, jit_insn_ne(func, make_uint(rt), make_uint(0x0)), &temp_532);
+			jit_label_t temp_635 = jit_label_undefined, temp_636 = jit_label_undefined;
+			jit_insn_branch_if(func, jit_insn_eq(func, bottom, make_uint(0x0)), &temp_635);
+			jit_label_t temp_637 = jit_label_undefined, temp_638 = jit_label_undefined;
+			jit_insn_branch_if(func, jit_insn_eq(func, bottom, make_uint(0x1)), &temp_637);
+			jit_label_t temp_639 = jit_label_undefined, temp_640 = jit_label_undefined;
+			jit_insn_branch_if(func, jit_insn_eq(func, bottom, make_uint(0x2)), &temp_639);
 			defer_set(func, rt, jit_insn_or(func, jit_insn_and(func, RGPR(rt), make_uint(0xffffff00)), call_load_memory(func, 8, offset, pc)));
-			jit_insn_label(func, &temp_532);
-			jit_insn_branch(func, &temp_531);
-			jit_insn_label(func, &temp_530);
-			jit_label_t temp_533 = jit_label_undefined;
-			jit_insn_branch_if_not(func, jit_insn_ne(func, make_uint(rt), make_uint(0x0)), &temp_533);
+			jit_insn_branch(func, &temp_640);
+			jit_insn_label(func, &temp_639);
 			defer_set(func, rt, jit_insn_or(func, jit_insn_and(func, RGPR(rt), make_uint(0xffff0000)), call_load_memory(func, 16, offset, pc)));
-			jit_insn_label(func, &temp_533);
-			jit_insn_label(func, &temp_531);
-			jit_insn_branch(func, &temp_529);
-			jit_insn_label(func, &temp_528);
-			jit_label_t temp_534 = jit_label_undefined;
-			jit_insn_branch_if_not(func, jit_insn_ne(func, make_uint(rt), make_uint(0x0)), &temp_534);
+			jit_insn_label(func, &temp_640);
+			jit_insn_branch(func, &temp_638);
+			jit_insn_label(func, &temp_637);
 			defer_set(func, rt, jit_insn_or(func, jit_insn_and(func, RGPR(rt), make_uint(0xff000000)), call_load_memory(func, 24, offset, pc)));
-			jit_insn_label(func, &temp_534);
-			jit_insn_label(func, &temp_529);
-			jit_insn_branch(func, &temp_527);
-			jit_insn_label(func, &temp_526);
-			jit_label_t temp_535 = jit_label_undefined;
-			jit_insn_branch_if_not(func, jit_insn_ne(func, make_uint(rt), make_uint(0x0)), &temp_535);
+			jit_insn_label(func, &temp_638);
+			jit_insn_branch(func, &temp_636);
+			jit_insn_label(func, &temp_635);
 			defer_set(func, rt, call_load_memory(func, 32, offset, pc));
-			jit_insn_label(func, &temp_535);
-			jit_insn_label(func, &temp_527);
+			jit_insn_label(func, &temp_636);
 			return(true);
 			break;
 		}
 		case 0x28: {
 			/* SB */
-			jit_label_t temp_536 = jit_label_undefined, temp_537 = jit_label_undefined;
-			jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_536);
+			jit_label_t temp_641 = jit_label_undefined, temp_642 = jit_label_undefined;
+			jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_641);
 			STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-			jit_insn_branch(func, &temp_537);
-			jit_insn_label(func, &temp_536);
+			jit_insn_branch(func, &temp_642);
+			jit_insn_label(func, &temp_641);
 			call_timestamp_inc(func, 1);
-			jit_insn_label(func, &temp_537);
+			jit_insn_label(func, &temp_642);
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
 			DEP(rs);
 			DEP(rt);
-			TGPR(temp_102, rs);
-			TGPR(temp_103, rt);
-			do_lds(func);
+			TGPR(temp_215, rs);
+			TGPR(temp_216, rt);
+			DO_LDS();
 			uint32_t offset = signext(0x10, imm);
-			call_store_memory(func, 8, jit_insn_add(func, temp_102, make_uint(offset)), temp_103, pc);
+			call_store_memory(func, 8, jit_insn_add(func, temp_215, make_uint(offset)), temp_216, pc);
 			return(true);
 			break;
 		}
 		case 0x29: {
 			/* SH */
-			jit_label_t temp_538 = jit_label_undefined, temp_539 = jit_label_undefined;
-			jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_538);
+			jit_label_t temp_643 = jit_label_undefined, temp_644 = jit_label_undefined;
+			jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_643);
 			STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-			jit_insn_branch(func, &temp_539);
-			jit_insn_label(func, &temp_538);
+			jit_insn_branch(func, &temp_644);
+			jit_insn_label(func, &temp_643);
 			call_timestamp_inc(func, 1);
-			jit_insn_label(func, &temp_539);
+			jit_insn_label(func, &temp_644);
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
 			DEP(rs);
 			DEP(rt);
-			TGPR(temp_104, rs);
-			TGPR(temp_105, rt);
-			do_lds(func);
+			TGPR(temp_217, rs);
+			TGPR(temp_218, rt);
+			DO_LDS();
 			uint32_t offset = signext(0x10, imm);
-			call_store_memory(func, 16, jit_insn_add(func, temp_104, make_uint(offset)), temp_105, pc);
+			call_store_memory(func, 16, jit_insn_add(func, temp_217, make_uint(offset)), temp_218, pc);
 			return(true);
 			break;
 		}
 		case 0x2a: {
 			/* SWL */
-			jit_label_t temp_540 = jit_label_undefined, temp_541 = jit_label_undefined;
-			jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_540);
+			jit_label_t temp_645 = jit_label_undefined, temp_646 = jit_label_undefined;
+			jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_645);
 			STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-			jit_insn_branch(func, &temp_541);
-			jit_insn_label(func, &temp_540);
+			jit_insn_branch(func, &temp_646);
+			jit_insn_label(func, &temp_645);
 			call_timestamp_inc(func, 1);
-			jit_insn_label(func, &temp_541);
+			jit_insn_label(func, &temp_646);
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
 			DEP(rs);
 			DEP(rt);
-			TGPR(temp_106, rs);
-			TGPR(temp_107, rt);
-			do_lds(func);
+			TGPR(temp_219, rs);
+			TGPR(temp_220, rt);
+			DO_LDS();
 			uint32_t simm = signext(0x10, imm);
-			jit_value_t offset = jit_insn_add(func, temp_106, make_uint(simm));
+			jit_value_t offset = jit_insn_add(func, temp_219, make_uint(simm));
 			jit_value_t bottom = jit_insn_and(func, offset, make_uint(0x3));
 			jit_value_t moffset = jit_insn_and(func, offset, make_uint(0xfffffffc));
-			jit_label_t temp_542 = jit_label_undefined, temp_543 = jit_label_undefined;
-			jit_insn_branch_if(func, jit_insn_eq(func, bottom, make_uint(0x0)), &temp_542);
-			jit_label_t temp_544 = jit_label_undefined, temp_545 = jit_label_undefined;
-			jit_insn_branch_if(func, jit_insn_eq(func, bottom, make_uint(0x1)), &temp_544);
-			jit_label_t temp_546 = jit_label_undefined, temp_547 = jit_label_undefined;
-			jit_insn_branch_if(func, jit_insn_eq(func, bottom, make_uint(0x2)), &temp_546);
-			call_store_memory(func, 32, moffset, temp_107, pc);
-			jit_insn_branch(func, &temp_547);
-			jit_insn_label(func, &temp_546);
-			call_store_memory(func, 24, moffset, jit_insn_ushr(func, temp_107, make_uint(0x8)), pc);
-			jit_insn_label(func, &temp_547);
-			jit_insn_branch(func, &temp_545);
-			jit_insn_label(func, &temp_544);
-			call_store_memory(func, 16, moffset, jit_insn_ushr(func, temp_107, make_uint(0x10)), pc);
-			jit_insn_label(func, &temp_545);
-			jit_insn_branch(func, &temp_543);
-			jit_insn_label(func, &temp_542);
-			call_store_memory(func, 8, moffset, jit_insn_ushr(func, temp_107, make_uint(0x18)), pc);
-			jit_insn_label(func, &temp_543);
+			jit_label_t temp_647 = jit_label_undefined, temp_648 = jit_label_undefined;
+			jit_insn_branch_if(func, jit_insn_eq(func, bottom, make_uint(0x0)), &temp_647);
+			jit_label_t temp_649 = jit_label_undefined, temp_650 = jit_label_undefined;
+			jit_insn_branch_if(func, jit_insn_eq(func, bottom, make_uint(0x1)), &temp_649);
+			jit_label_t temp_651 = jit_label_undefined, temp_652 = jit_label_undefined;
+			jit_insn_branch_if(func, jit_insn_eq(func, bottom, make_uint(0x2)), &temp_651);
+			call_store_memory(func, 32, moffset, temp_220, pc);
+			jit_insn_branch(func, &temp_652);
+			jit_insn_label(func, &temp_651);
+			call_store_memory(func, 24, moffset, jit_insn_ushr(func, temp_220, make_uint(0x8)), pc);
+			jit_insn_label(func, &temp_652);
+			jit_insn_branch(func, &temp_650);
+			jit_insn_label(func, &temp_649);
+			call_store_memory(func, 16, moffset, jit_insn_ushr(func, temp_220, make_uint(0x10)), pc);
+			jit_insn_label(func, &temp_650);
+			jit_insn_branch(func, &temp_648);
+			jit_insn_label(func, &temp_647);
+			call_store_memory(func, 8, moffset, jit_insn_ushr(func, temp_220, make_uint(0x18)), pc);
+			jit_insn_label(func, &temp_648);
 			return(true);
 			break;
 		}
 		case 0x2b: {
 			/* SW */
-			jit_label_t temp_548 = jit_label_undefined, temp_549 = jit_label_undefined;
-			jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_548);
+			jit_label_t temp_653 = jit_label_undefined, temp_654 = jit_label_undefined;
+			jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_653);
 			STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-			jit_insn_branch(func, &temp_549);
-			jit_insn_label(func, &temp_548);
+			jit_insn_branch(func, &temp_654);
+			jit_insn_label(func, &temp_653);
 			call_timestamp_inc(func, 1);
-			jit_insn_label(func, &temp_549);
+			jit_insn_label(func, &temp_654);
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
 			DEP(rs);
 			DEP(rt);
-			TGPR(temp_108, rs);
-			TGPR(temp_109, rt);
-			do_lds(func);
+			TGPR(temp_221, rs);
+			TGPR(temp_222, rt);
+			DO_LDS();
 			uint32_t offset = signext(0x10, imm);
-			call_store_memory(func, 32, jit_insn_add(func, temp_108, make_uint(offset)), temp_109, pc);
+			call_store_memory(func, 32, jit_insn_add(func, temp_221, make_uint(offset)), temp_222, pc);
 			return(true);
 			break;
 		}
 		case 0x2e: {
 			/* SWR */
-			jit_label_t temp_550 = jit_label_undefined, temp_551 = jit_label_undefined;
-			jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_550);
+			jit_label_t temp_655 = jit_label_undefined, temp_656 = jit_label_undefined;
+			jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_655);
 			STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-			jit_insn_branch(func, &temp_551);
-			jit_insn_label(func, &temp_550);
+			jit_insn_branch(func, &temp_656);
+			jit_insn_label(func, &temp_655);
 			call_timestamp_inc(func, 1);
-			jit_insn_label(func, &temp_551);
+			jit_insn_label(func, &temp_656);
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
 			DEP(rs);
 			DEP(rt);
-			TGPR(temp_110, rs);
-			TGPR(temp_111, rt);
-			do_lds(func);
+			TGPR(temp_223, rs);
+			TGPR(temp_224, rt);
+			DO_LDS();
 			uint32_t simm = signext(0x10, imm);
-			jit_value_t offset = jit_insn_add(func, temp_110, make_uint(simm));
+			jit_value_t offset = jit_insn_add(func, temp_223, make_uint(simm));
 			jit_value_t bottom = jit_insn_and(func, offset, make_uint(0x3));
-			jit_label_t temp_552 = jit_label_undefined, temp_553 = jit_label_undefined;
-			jit_insn_branch_if(func, jit_insn_eq(func, bottom, make_uint(0x0)), &temp_552);
-			jit_label_t temp_554 = jit_label_undefined, temp_555 = jit_label_undefined;
-			jit_insn_branch_if(func, jit_insn_eq(func, bottom, make_uint(0x1)), &temp_554);
-			jit_label_t temp_556 = jit_label_undefined, temp_557 = jit_label_undefined;
-			jit_insn_branch_if(func, jit_insn_eq(func, bottom, make_uint(0x2)), &temp_556);
-			call_store_memory(func, 8, offset, temp_111, pc);
-			jit_insn_branch(func, &temp_557);
-			jit_insn_label(func, &temp_556);
-			call_store_memory(func, 16, offset, temp_111, pc);
-			jit_insn_label(func, &temp_557);
-			jit_insn_branch(func, &temp_555);
-			jit_insn_label(func, &temp_554);
-			call_store_memory(func, 24, offset, temp_111, pc);
-			jit_insn_label(func, &temp_555);
-			jit_insn_branch(func, &temp_553);
-			jit_insn_label(func, &temp_552);
-			call_store_memory(func, 32, offset, temp_111, pc);
-			jit_insn_label(func, &temp_553);
+			jit_label_t temp_657 = jit_label_undefined, temp_658 = jit_label_undefined;
+			jit_insn_branch_if(func, jit_insn_eq(func, bottom, make_uint(0x0)), &temp_657);
+			jit_label_t temp_659 = jit_label_undefined, temp_660 = jit_label_undefined;
+			jit_insn_branch_if(func, jit_insn_eq(func, bottom, make_uint(0x1)), &temp_659);
+			jit_label_t temp_661 = jit_label_undefined, temp_662 = jit_label_undefined;
+			jit_insn_branch_if(func, jit_insn_eq(func, bottom, make_uint(0x2)), &temp_661);
+			call_store_memory(func, 8, offset, temp_224, pc);
+			jit_insn_branch(func, &temp_662);
+			jit_insn_label(func, &temp_661);
+			call_store_memory(func, 16, offset, temp_224, pc);
+			jit_insn_label(func, &temp_662);
+			jit_insn_branch(func, &temp_660);
+			jit_insn_label(func, &temp_659);
+			call_store_memory(func, 24, offset, temp_224, pc);
+			jit_insn_label(func, &temp_660);
+			jit_insn_branch(func, &temp_658);
+			jit_insn_label(func, &temp_657);
+			call_store_memory(func, 32, offset, temp_224, pc);
+			jit_insn_label(func, &temp_658);
 			return(true);
 			break;
 		}
 		case 0x32: {
 			/* LWC2 */
-			jit_label_t temp_558 = jit_label_undefined, temp_559 = jit_label_undefined;
-			jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_558);
+			jit_label_t temp_663 = jit_label_undefined, temp_664 = jit_label_undefined;
+			jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_663);
 			STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-			jit_insn_branch(func, &temp_559);
-			jit_insn_label(func, &temp_558);
+			jit_insn_branch(func, &temp_664);
+			jit_insn_label(func, &temp_663);
 			call_timestamp_inc(func, 1);
-			jit_insn_label(func, &temp_559);
+			jit_insn_label(func, &temp_664);
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
 			DEP(rs);
-			TGPR(temp_112, rs);
-			do_lds(func);
+			TGPR(temp_225, rs);
+			DO_LDS();
 			uint32_t offset = signext(0x10, imm);
-			call_write_copreg(func, 0x2, rt, call_load_memory(func, 32, jit_insn_add(func, temp_112, make_uint(offset)), pc));
+			call_write_copreg(func, 0x2, rt, call_load_memory(func, 32, jit_insn_add(func, temp_225, make_uint(offset)), pc));
 			return(true);
 			break;
 		}
 		case 0x3a: {
 			/* SWC2 */
-			jit_label_t temp_560 = jit_label_undefined, temp_561 = jit_label_undefined;
-			jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_560);
+			jit_label_t temp_665 = jit_label_undefined, temp_666 = jit_label_undefined;
+			jit_insn_branch_if(func, jit_insn_eq(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(0x0)), &temp_665);
 			STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));
-			jit_insn_branch(func, &temp_561);
-			jit_insn_label(func, &temp_560);
+			jit_insn_branch(func, &temp_666);
+			jit_insn_label(func, &temp_665);
 			call_timestamp_inc(func, 1);
-			jit_insn_label(func, &temp_561);
+			jit_insn_label(func, &temp_666);
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
 			DEP(rs);
-			TGPR(temp_113, rs);
-			do_lds(func);
+			TGPR(temp_226, rs);
+			DO_LDS();
 			uint32_t offset = signext(0x10, imm);
-			call_store_memory(func, 32, jit_insn_add(func, temp_113, make_uint(offset)), call_read_copreg(func, 0x2, rt), pc);
+			call_store_memory(func, 32, jit_insn_add(func, temp_226, make_uint(offset)), call_read_copreg(func, 0x2, rt), pc);
 			return(true);
 			break;
 		}

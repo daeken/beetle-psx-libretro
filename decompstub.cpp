@@ -53,6 +53,7 @@ void do_lds(jit_function_t func) {
 	STORE(_ReadAbsorbWhich, CAST(jit_insn_or(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), jit_insn_and(func, ldw, make_uint(0x1F))), jit_type_ubyte));
 	STORE(LDWhich, make_uint(35));
 }
+#define DO_LDS() do_lds(func)
 
 void defer_set(jit_function_t func, int reg, jit_value_t val) {
     STORE(LDWhich, make_uint(reg));
