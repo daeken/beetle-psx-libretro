@@ -735,8 +735,6 @@ void PS_CPU::InvalidateBlocks(uint32_t addr) {
    if(BlockPages[page] == NULL || BlockPages[page]->empty())
       return;
 
-   printf("Invalidating %08x\n", addr);
-
    for(list<block_t *>::iterator iter = BlockPages[page]->begin(); iter != BlockPages[page]->end(); ++iter) {
       block_t *block = *iter;
       // XXX: This should delete the jit_function_t and closure
@@ -767,6 +765,8 @@ int32_t PS_CPU::RunReal(int32_t timestamp_in)
    if(temp != 0)
       PC = temp;
 
+   //gdebug = true;
+
    do {
       while(MDFN_LIKELY(gtimestamp < next_event_ts)) {
          if(Halted) {
@@ -793,6 +793,11 @@ int32_t PS_CPU::RunReal(int32_t timestamp_in)
                   uint32_t instr;
                   uint32_t opf;
                   uint32_t startstamp = gtimestamp;
+
+                  if((PC & 0x3) != 0) {
+                     PC = Exception(EXCEPTION_ADEL, PC, PC, 0xFF, 0);
+                     continue;
+                  }
 
                   instr = ICache[(PC & 0xFFC) >> 2].Data;
 
