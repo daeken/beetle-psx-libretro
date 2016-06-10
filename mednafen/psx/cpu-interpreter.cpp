@@ -53,20 +53,7 @@ int32_t PS_CPU_Interpreter::RunReal(int32_t timestamp_in)
 
    do {
       while(MDFN_LIKELY(gtimestamp < next_event_ts)) {
-         if(Halted) {
-            gtimestamp = next_event_ts;
-            break;
-         }
-
-         if(IPCache != 0 && (CP0.SR & 1) != 0) {
-            PC = Exception(EXCEPTION_INT, PC, PC, 0xFF, 0);
-         }
-
          uint32_t instr;
-
-         if((PC & 0x3) != 0) {
-            PC = Exception(EXCEPTION_ADEL, PC, PC, 0xFF, 0);
-         }
 
          instr = ICache[(PC & 0xFFC) >> 2].Data;
 
@@ -132,7 +119,27 @@ int32_t PS_CPU_Interpreter::RunReal(int32_t timestamp_in)
             }
          }
 
-         GPR[32] = PC;
+         if(ReadAbsorb[ReadAbsorbWhich])
+            ReadAbsorb[ReadAbsorbWhich]--;
+         else
+            gtimestamp++;
+
+         if(IPCache != 0) {
+            if(!Halted) {
+               if((CP0.SR & 1) != 0) {
+                  GPR[LDWhich] = LDValue;
+                  ReadAbsorb[LDWhich] = LDAbsorb;
+                  ReadFudge = LDWhich;
+                  ReadAbsorbWhich |= (LDWhich != 35) ? (LDWhich & 0x1F) : 0;
+                  LDWhich = 35;
+                  PC = Exception(EXCEPTION_INT, PC, PC, 0xFF, 0);
+                  continue;
+               }
+            } else {
+               continue;
+            }
+         }
+
          //printf("running %08x\n", PC);
          branch_to = -1;
 
@@ -141,7 +148,7 @@ int32_t PS_CPU_Interpreter::RunReal(int32_t timestamp_in)
             exit(0); // XXX: Handle this properly...
          }
 
-         PC = GPR[32] + 4; // We don't set PC after instructions
+         PC += 4;
 
          if(branch_to != -1) {
             //printf("branching to %08x\n", branch_to);

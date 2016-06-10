@@ -284,7 +284,7 @@ int32_t PS_CPU_Recompiler::RunReal(int32_t timestamp_in)
                      }
                   }
 
-                  //call_timestamp_inc(func, gtimestamp - startstamp);
+                  call_timestamp_inc(func, gtimestamp - startstamp);
                   gtimestamp = startstamp;
 
                   if(branched) {

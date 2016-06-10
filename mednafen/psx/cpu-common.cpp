@@ -55,11 +55,11 @@ void absorb_muldiv_delay() {
 }
 
 void ps_syscall(int code, uint32_t pc, uint32_t instr) {
-   //cpu->Interrupt(cpu->Exception(EXCEPTION_SYSCALL, pc, pc + 4, 0xFF, instr));
+   cpu->Interrupt(cpu->Exception(EXCEPTION_SYSCALL, pc, pc + 4, 0xFF, instr));
 }
 
 void break_(int code, uint32_t pc, uint32_t instr) {
-   //cpu->Interrupt(cpu->Exception(EXCEPTION_BP, pc, pc + 4, 0xFF, instr));
+   cpu->Interrupt(cpu->Exception(EXCEPTION_BP, pc, pc + 4, 0xFF, instr));
 }
 
 void overflow(uint32_t a, uint32_t b, int dir, uint32_t pc, uint32_t instr) {
@@ -72,4 +72,10 @@ void overflow(uint32_t a, uint32_t b, int dir, uint32_t pc, uint32_t instr) {
       if((((a ^ b)) & (a ^ r)) & 0x80000000)
          cpu->Interrupt(cpu->Exception(EXCEPTION_OV, pc, pc, 0xFF, instr));
    }
+}
+
+void alignment(uint32_t addr, int size, int store, uint32_t pc) {
+	if((size == 16 && (addr & 1) != 0) || (size == 32 && (addr & 3) != 0)) {
+		cpu->Interrupt(cpu->Exception(store ? EXCEPTION_ADES : EXCEPTION_ADEL, pc, pc, 0xFF, 0));
+	}
 }

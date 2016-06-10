@@ -261,11 +261,13 @@ def _emitter(sexp, storing=False, locals=None):
 			_, lvalue, rvalue = sexp[0]
 			lvalue = emitter(lvalue)
 			vdef = ['jit_value_t %s = %s;' % (lvalue, emitter(rvalue))]
-			sub = emitter(sexp[1], _locals=locals + [lvalue])
-			if isinstance(sub, list):
-				return vdef + sub
-			else:
-				return vdef + [sub]
+			for elem in sexp[1:]:
+				sub = emitter(elem, _locals=locals + [lvalue])
+				if isinstance(sub, list):
+					vdef += sub
+				else:
+					vdef += [sub]
+			return vdef
 
 	if isinstance(sexp, str) or isinstance(sexp, unicode):
 		return sexp.replace('$', '')
@@ -366,6 +368,8 @@ def _emitter(sexp, storing=False, locals=None):
 			return 'call_overflow(func, %s, %s, 1, pc, inst);' % (to_val(emitter(sexp[1][1])), to_val(emitter(sexp[1][2])))
 		else:
 			return 'call_overflow(func, %s, %s, -1, pc, inst);' % (to_val(emitter(sexp[1][1])), to_val(emitter(sexp[1][2])))
+	elif op == 'alignment':
+		return 'call_alignment(func, %s, %i, %i, pc);' % (to_val(emitter(sexp[1])), sexp[2], sexp[3])
 	elif op == 'zeroext':
 		return emitter(sexp[2])
 	elif op == 'signext':
@@ -419,8 +423,6 @@ def genCommon(iname, type, dag, decomp):
 	#code += [('emit', ('check_irq', ))] # per-instruction irq checking
 	if decomp:
 		code += [('emit', ('read_absorb', ))]
-	else:
-		code += [('READ_ABSORB', )]
 	vars = []
 	decoder(code, vars, type, dag)
 
@@ -506,6 +508,10 @@ def genInterp((iname, type, dasm, dag)):
 				return [('overflow', subgen(dag[1][1]), subgen(dag[1][2]), 1, 'pc', 'inst')]
 			else:
 				return [('overflow', subgen(dag[1][1]), subgen(dag[1][2]), -1, 'pc', 'inst')]
+		elif op == 'check_store_alignment':
+			return [('alignment', subgen(dag[1]), dag[2], 1, 'pc')]
+		elif op == 'check_load_alignment':
+			return [('alignment', subgen(dag[1]), dag[2], 0, 'pc')]
 		elif op == 'break':
 			return [('break_', dag[1], subgen(dag[2]), subgen(dag[3]))]
 		elif op == 'syscall':
@@ -600,6 +606,10 @@ def genDecomp((iname, type, dasm, dag)):
 			return ('signed', subgen(dag[1]))
 		elif op == 'check_overflow':
 			return [('emit', ('overflow', subgen(dag[1])))]
+		elif op == 'check_store_alignment':
+			return [('emit', ('alignment', subgen(dag[1]), dag[2], 1))]
+		elif op == 'check_load_alignment':
+			return [('emit', ('alignment', subgen(dag[1]), dag[2], 0))]
 		elif op == 'raise':
 			return [('emit', ('raise', dag[1]))]
 		elif op == 'break':

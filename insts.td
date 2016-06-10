@@ -33,6 +33,8 @@ def gpr : DagOp;
 def hi : DagOp;
 def lo : DagOp;
 def check_overflow : DagOp;
+def check_store_alignment : DagOp;
+def check_load_alignment : DagOp;
 def pcd : DagOp;
 def raise : DagOp;
 def load : DagOp;
@@ -157,8 +159,10 @@ def ANDI : IType<0b001100, "andi %$rt, %$rs, $eimm",
 
 def BEQ : IType<0b000100, "beq %$rs, %$rt, $target", 
 	(let $target, (add (pcd), (shl (signext 16, $imm), 2)), 
-		(if (eq (unsigned (gpr $rs)), (unsigned (gpr $rt))), 
-			(branch $target), 
+		(if (eq (gpr $rs), (gpr $rt)), 
+			(block
+				(check_load_alignment $target, 32), 
+				(branch $target)), 
 			(branch_default)))
 >;
 
@@ -178,16 +182,20 @@ multiclass BHack<bits<6> op, bits<5> funct, string disasm, dag eval> {
 defm BGEZ : BHack<0b000001, 0b00001, "bgez %$rs, $target", 
 	(let $target, (add (pcd), (shl (signext 16, $imm), 2)), 
 		(if (ge (signed (gpr $rs)), 0), 
-			(branch $target), 
+			(block
+				(check_load_alignment $target, 32), 
+				(branch $target)), 
 			(branch_default)))
 >;
 
 defm BGEZAL : BHack<0b000001, 0b10001, "bgezal %$rs, $target", 
 	(block
-		(set (gpr 31), (pcd)), 
+		(set (gpr 31), (add (pcd), 4)), 
 		(let $target, (add (pcd), (shl (signext 16, $imm), 2)), 
 			(if (ge (signed (gpr $rs)), 0), 
-				(branch $target), 
+				(block
+					(check_load_alignment $target, 32), 
+					(branch $target)), 
 				(branch_default))))
 >;
 
@@ -195,7 +203,9 @@ defm BGEZAL : BHack<0b000001, 0b10001, "bgezal %$rs, $target",
 def BGTZ : RIType<0b000111, 0b00000, "bgtz %$rs, $target", 
 	(let $target, (add (pcd), (shl (signext 16, $imm), 2)), 
 		(if (gt (signed (gpr $rs)), 0), 
-			(branch $target), 
+			(block
+				(check_load_alignment $target, 32), 
+				(branch $target)), 
 			(branch_default)))
 >;
 
@@ -203,30 +213,38 @@ def BGTZ : RIType<0b000111, 0b00000, "bgtz %$rs, $target",
 def BLEZ : RIType<0b000110, 0b00000, "blez %$rs, $target", 
 	(let $target, (add (pcd), (shl (signext 16, $imm), 2)), 
 		(if (le (signed (gpr $rs)), 0), 
-			(branch $target), 
+			(block
+				(check_load_alignment $target, 32), 
+				(branch $target)), 
 			(branch_default)))
 >;
 
 defm BLTZ : BHack<0b000001, 0b00000, "bltz %$rs, $target", 
 	(let $target, (add (pcd), (shl (signext 16, $imm), 2)), 
 		(if (lt (signed (gpr $rs)), 0), 
-			(branch $target), 
+			(block
+				(check_load_alignment $target, 32), 
+				(branch $target)), 
 			(branch_default)))
 >;
 
 defm BLTZAL : BHack<0b000001, 0b10000, "bltzal %$rs, $target", 
 	(block
-		(set (gpr 31), (pcd)), 
+		(set (gpr 31), (add (pcd), 4)), 
 		(let $target, (add (pcd), (shl (signext 16, $imm), 2)), 
 			(if (lt (signed (gpr $rs)), 0), 
-				(branch $target), 
+				(block
+					(check_load_alignment $target, 32), 
+					(branch $target)), 
 				(branch_default))))
 >;
 
 def BNE : IType<0b000101, "bne %$rs, %$rt, $target", 
 	(let $target, (add (pcd), (shl (signext 16, $imm), 2)),  
 		(if (neq (gpr $rs), (gpr $rt)), 
-			(branch $target), 
+			(block
+				(check_load_alignment $target, 32), 
+				(branch $target)), 
 			(branch_default)))
 >;
 
@@ -297,6 +315,7 @@ def DIVU : RType<0b011011, "divu %$rs, %$rt",
 
 def J : JType<0b000010, "j $target", 
 	(let $target, (add (and (pcd), 0xF0000000), (zeroext 28, (shl $imm, 2))),  
+		(check_load_alignment $target, 32), 
 		(branch $target))
 >;
 
@@ -304,37 +323,45 @@ def JAL : JType<0b000011, "jal $target",
 	(block
 		(set (gpr 31), (add (pcd), 4)), 
 		(let $target, (add (and (pcd), 0xF0000000), (zeroext 28, (shl $imm, 2))),  
+			(check_load_alignment $target, 32), 
 			(branch $target)))
 >;
 
 def JALR : RType<0b001001, "jalr %$rd, %$rs", 
 	(block
 		(set (gpr $rd), (add (pcd), 4)), 
-		(branch (unsigned (gpr $rs))))
+		(check_load_alignment (gpr $rs), 32), 
+		(branch (gpr $rs)))
 >;
 
 def JR : RType<0b001000, "jr %$rs", 
-	(branch (unsigned (gpr $rs)))
+	(block
+		(check_load_alignment (gpr $rs), 32), 
+		(branch (gpr $rs)))
 >;
 
 def LB : IType<0b100000, "lb %$rt, $offset(%$rs)", 
 	(let $offset, (signext 16, $imm), 
-		(defer_set (gpr $rt), (signext 8, (load 8, (unsigned (add (gpr $rs), $offset))))))
+		(defer_set (gpr $rt), (signext 8, (load 8, (add (gpr $rs), $offset)))))
 >;
 
 def LBU : IType<0b100100, "lbu %$rt, $offset(%$rs)", 
 	(let $offset, (signext 16, $imm), 
-		(defer_set (gpr $rt), (zeroext 8, (load 8, (unsigned (add (gpr $rs), $offset))))))
+		(defer_set (gpr $rt), (zeroext 8, (load 8, (add (gpr $rs), $offset)))))
 >;
 
 def LH : IType<0b100001, "lh %$rt, $offset(%$rs)", 
 	(let $offset, (signext 16, $imm), 
-		(defer_set (gpr $rt), (signext 16, (load 16, (unsigned (add (gpr $rs), $offset))))))
+		(rlet $addr, (add (gpr $rs), $offset), 
+			(check_load_alignment $addr, 16), 
+			(defer_set (gpr $rt), (signext 16, (load 16, $addr)))))
 >;
 
 def LHU : IType<0b100101, "lhu %$rt, $offset(%$rs)", 
 	(let $offset, (signext 16, $imm), 
-		(defer_set (gpr $rt), (zeroext 16, (load 16, (add (gpr $rs), $offset)))))
+		(rlet $addr, (add (gpr $rs), $offset), 
+			(check_load_alignment $addr, 16), 
+			(defer_set (gpr $rt), (zeroext 16, (load 16, $addr)))))
 >;
 
 def LUI : IType<0b001111, "lui %$rt, $imm", 
@@ -343,7 +370,9 @@ def LUI : IType<0b001111, "lui %$rt, $imm",
 
 def LW : IType<0b100011, "lw %$rt, $offset(%$rs)", 
 	(let $offset, (signext 16, $imm), 
-		(defer_set (gpr $rt), (load 32, (unsigned (add (gpr $rs), $offset)))))
+		(rlet $addr, (add (gpr $rs), $offset), 
+			(check_load_alignment $addr, 32), 
+			(defer_set (gpr $rt), (load 32, $addr))))
 >;
 
 def LWL : IType<0b100010, "lwl %$rt, $offset(%$rs)", 
@@ -374,7 +403,9 @@ def LWR : IType<0b100110, "lwr %$rt, $offset(%$rs)",
 
 def LWC2: IType<0b110010, "lwc2 %$rt, $offset(%$rs)", 
 	(let $offset, (signext 16, $imm), 
-		(set (copreg 2, $rt), (load 32, (unsigned (add (gpr $rs), $offset)))))
+		(rlet $addr, (add (gpr $rs), $offset), 
+			(check_load_alignment $addr, 32), 
+			(set (copreg 2, $rt), (load 32, (add (gpr $rs), $offset)))))
 >;
 
 defm MFCz : CFDef<0b010000, 0b00000, "mfc$cop %$rt, $rd", 
@@ -413,7 +444,7 @@ def MULT : RType<0b011000, "mult %$rs, %$rt",
 >;
 
 def MULTU : RType<0b011001, "multu %$rs, %$rt", 
-	(rlet $_t, (umul64 (unsigned (gpr $rs)), (unsigned (gpr $rt))), 
+	(rlet $_t, (umul64 (gpr $rs), (gpr $rt)), 
 		(set (lo), (cast 32, $_t)), 
 		(set (hi), (cast 32, (shrl $_t, 32))), 
 		(muldiv_delay (gpr $rs), (gpr $rt)))
@@ -434,12 +465,14 @@ def ORI : IType<0b001101, "ori %$rt, %$rs, $eimm",
 
 def SB : IType<0b101000, "sb %$rt, $offset(%$rs)", 
 	(let $offset, (signext 16, $imm), 
-		(store 8, (unsigned (add (gpr $rs), $offset)), (gpr $rt)))
+		(store 8, (add (gpr $rs), $offset), (gpr $rt)))
 >;
 
 def SH : IType<0b101001, "sh %$rt, $offset(%$rs)", 
 	(let $offset, (signext 16, $imm), 
-		(store 16, (unsigned (add (gpr $rs), $offset)), (gpr $rt)))
+		(rlet $addr, (add (gpr $rs), $offset), 
+			(check_store_alignment $addr, 16), 
+			(store 16, $addr, (gpr $rt))))
 >;
 
 def SLL : RType<0b000000, "sll %$rd, %$rt, $shamt", 
@@ -456,7 +489,7 @@ def SLT : RType<0b101010, "slt %$rd, %$rs, %$rt",
 
 def SLTI : IType<0b001010, "slti %$rt, %$rs, $eimm", 
 	(let $eimm, (signext 16, $imm), 
-		(set (gpr $rt), (lt (signed (gpr $rs)), $eimm)))
+		(set (gpr $rt), (lt (signed (gpr $rs)), (signed $eimm))))
 >;
 
 def SLTIU : IType<0b001011, "sltiu %$rt, %$rs, $eimm", 
@@ -496,12 +529,16 @@ def SUBU : RType<0b100011, "subu %$rd, %$rs, %$rt",
 
 def SW : IType<0b101011, "sw %$rt, $offset(%$rs)", 
 	(let $offset, (signext 16, $imm), 
-		(store 32, (unsigned (add (gpr $rs), $offset)), (gpr $rt)))
+		(rlet $addr, (add (gpr $rs), $offset), 
+			(check_store_alignment $addr, 32), 
+			(store 32, $addr, (gpr $rt))))
 >;
 
 def SWC2: IType<0b111010, "swc2 %$rt, $offset(%$rs)", 
 	(let $offset, (signext 16, $imm), 
-		(store 32, (unsigned (add (gpr $rs), $offset)), (copreg 2, $rt)))
+		(rlet $addr, (add (gpr $rs), $offset), 
+			(check_store_alignment $addr, 32), 
+			(store 32, $addr, (copreg 2, $rt))))
 >;
 
 def SWL : IType<0b101010, "swl %$rt, $offset(%$rs)", 

@@ -544,6 +544,8 @@ void PS_CPU::PokeMem32(uint32 A, uint32 V)
  PokeMemory<uint32>(A, V);
 }
 
+extern bool gdebug;
+
 uint32_t load_memory(int size, uint32_t ptr, uint32_t pc) {
    // Enable full debugging in SOTN
    if(ptr == 0x80032AB0)
@@ -563,15 +565,15 @@ uint32_t load_memory(int size, uint32_t ptr, uint32_t pc) {
          val = cpu->ReadMemory<uint32_t>(ptr);
    }
 
-   //if(gdebug)
-   //   printf("Loading %i bits of memory from %08x <-- %08x\n", size, ptr, val);
+   if(gdebug)
+      printf("Loading %i bits of memory from %08x <-- %08x\n", size, ptr, val);
 
    return val;
 }
 
 void store_memory(int size, uint32_t ptr, uint32_t val, uint32_t pc) {
-   //if(gdebug)
-   //   printf("Storing %i bits of memory to %08x <-- %08x @ %08x\n", size, ptr, val, pc);
+   if(gdebug)
+      printf("Storing %i bits of memory to %08x <-- %08x @ %08x\n", size, ptr, val, pc);
 
    switch(size) {
       case 8:

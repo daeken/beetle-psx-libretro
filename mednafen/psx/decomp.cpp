@@ -47,11 +47,14 @@ jit_value_t state, _ReadAbsorb, _ReadAbsorbWhich, _ReadFudge, LDWhich, LDValue, 
 #define WRA(idx, val) jit_insn_store_relative(func, jit_insn_add(func, _ReadAbsorb, idx), 0, (val))
 
 void do_lds(jit_function_t func) {
-	jit_value_t ldw = LOAD(LDWhich, jit_type_uint);
+	jit_value_t ldw = LOAD(LDWhich, jit_type_uint), raw = LOAD(_ReadAbsorbWhich, jit_type_ubyte);
 	WGPR_VAL(ldw, LOAD(LDValue, jit_type_uint));
 	WRA(ldw, jit_insn_load(func, LDAbsorb));
 	STORE(_ReadFudge, CAST(ldw, jit_type_ubyte));
-	STORE(_ReadAbsorbWhich, CAST(jit_insn_or(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), jit_insn_and(func, ldw, make_uint(0x1F))), jit_type_ubyte));
+	jit_label_t label = jit_label_undefined;
+	jit_insn_branch_if(func, jit_insn_eq(func, raw, make_uint(35)), &label);
+	STORE(_ReadAbsorbWhich, CAST(jit_insn_or(func, raw, jit_insn_and(func, ldw, make_uint(0x1F))), jit_type_ubyte));
+	jit_insn_label(func, &label);
 	STORE(LDWhich, make_uint(35));
 }
 #define DO_LDS() do_lds(func)
@@ -129,6 +132,11 @@ void call_branch_block(jit_function_t func, block_t *block) {
 void call_overflow(jit_function_t func, jit_value_t a, jit_value_t b, int dir, uint32_t pc, uint32_t inst) {
 	jit_value_t args[] = {a, b, make_uint(dir), make_uint(pc), make_uint(inst)};
 	jit_insn_call_native(func, 0, (void *) overflow, sig_5, args, 5, 0);
+}
+
+void call_alignment(jit_function_t func, jit_value_t addr, int size, int store, uint32_t pc) {
+	jit_value_t args[] = {addr, make_uint(size), make_uint(store), make_uint(pc)};
+	jit_insn_call_native(func, 0, (void *) alignment, sig_4, args, 4, 0);
 }
 
 void call_timestamp_inc(jit_function_t func, uint32_t amount) {
@@ -370,6 +378,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					DEP(rs);
 					TGPR(temp_123, rs);
 					DO_LDS();
+					call_alignment(func, temp_123, 32, 0, pc);
 					call_branch(func, temp_123);
 					branched = true;
 					return(true);
@@ -391,6 +400,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					TGPR(temp_124, rs);
 					DO_LDS();
 					WGPR(rd, jit_insn_add(func, jit_insn_add(func, make_uint(pc), make_uint(0x4)), make_uint(0x4)));
+					call_alignment(func, temp_124, 32, 0, pc);
 					call_branch(func, temp_124);
 					branched = true;
 					return(true);
@@ -516,6 +526,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					DO_LDS();
 					jit_value_t _t = jit_insn_mul(func, jit_insn_convert(func, temp_127, jit_type_long, 0), jit_insn_convert(func, temp_128, jit_type_long, 0));
 					WLO(jit_insn_convert(func, _t, jit_type_uint, 0))
+					WHI(jit_insn_convert(func, jit_insn_ushr(func, _t, make_uint(0x20)), jit_type_uint, 0))
+					call_muldiv_delay(func, temp_127, temp_128);
 					return(true);
 					break;
 				}
@@ -537,6 +549,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					DO_LDS();
 					jit_value_t _t = jit_insn_mul(func, jit_insn_convert(func, temp_129, jit_type_ulong, 0), jit_insn_convert(func, temp_130, jit_type_ulong, 0));
 					WLO(jit_insn_convert(func, _t, jit_type_uint, 0))
+					WHI(jit_insn_convert(func, jit_insn_ushr(func, _t, make_uint(0x20)), jit_type_uint, 0))
+					call_muldiv_delay(func, temp_129, temp_130);
 					return(true);
 					break;
 				}
@@ -858,6 +872,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_294);
 					jit_insn_label(func, &temp_293);
+					call_alignment(func, make_uint(target), 32, 0, pc);
 					call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_294);
 					branched = true;
@@ -884,6 +899,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_298);
 					jit_insn_label(func, &temp_297);
+					call_alignment(func, make_uint(target), 32, 0, pc);
 					call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_298);
 					branched = true;
@@ -910,6 +926,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_302);
 					jit_insn_label(func, &temp_301);
+					call_alignment(func, make_uint(target), 32, 0, pc);
 					call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_302);
 					branched = true;
@@ -936,6 +953,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_306);
 					jit_insn_label(func, &temp_305);
+					call_alignment(func, make_uint(target), 32, 0, pc);
 					call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_306);
 					branched = true;
@@ -962,6 +980,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_310);
 					jit_insn_label(func, &temp_309);
+					call_alignment(func, make_uint(target), 32, 0, pc);
 					call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_310);
 					branched = true;
@@ -988,6 +1007,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_314);
 					jit_insn_label(func, &temp_313);
+					call_alignment(func, make_uint(target), 32, 0, pc);
 					call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_314);
 					branched = true;
@@ -1014,6 +1034,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_318);
 					jit_insn_label(func, &temp_317);
+					call_alignment(func, make_uint(target), 32, 0, pc);
 					call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_318);
 					branched = true;
@@ -1040,6 +1061,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_322);
 					jit_insn_label(func, &temp_321);
+					call_alignment(func, make_uint(target), 32, 0, pc);
 					call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_322);
 					branched = true;
@@ -1066,6 +1088,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_326);
 					jit_insn_label(func, &temp_325);
+					call_alignment(func, make_uint(target), 32, 0, pc);
 					call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_326);
 					branched = true;
@@ -1092,6 +1115,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_330);
 					jit_insn_label(func, &temp_329);
+					call_alignment(func, make_uint(target), 32, 0, pc);
 					call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_330);
 					branched = true;
@@ -1118,6 +1142,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_334);
 					jit_insn_label(func, &temp_333);
+					call_alignment(func, make_uint(target), 32, 0, pc);
 					call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_334);
 					branched = true;
@@ -1144,6 +1169,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_338);
 					jit_insn_label(func, &temp_337);
+					call_alignment(func, make_uint(target), 32, 0, pc);
 					call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_338);
 					branched = true;
@@ -1170,6 +1196,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_342);
 					jit_insn_label(func, &temp_341);
+					call_alignment(func, make_uint(target), 32, 0, pc);
 					call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_342);
 					branched = true;
@@ -1196,6 +1223,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_346);
 					jit_insn_label(func, &temp_345);
+					call_alignment(func, make_uint(target), 32, 0, pc);
 					call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_346);
 					branched = true;
@@ -1222,6 +1250,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_350);
 					jit_insn_label(func, &temp_349);
+					call_alignment(func, make_uint(target), 32, 0, pc);
 					call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_350);
 					branched = true;
@@ -1248,6 +1277,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_354);
 					jit_insn_label(func, &temp_353);
+					call_alignment(func, make_uint(target), 32, 0, pc);
 					call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_354);
 					branched = true;
@@ -1269,13 +1299,14 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					RES(0x1f);
 					TGPR(temp_171, rs);
 					DO_LDS();
-					WGPR(0x1f, jit_insn_add(func, make_uint(pc), make_uint(0x4)));
+					WGPR(0x1f, jit_insn_add(func, jit_insn_add(func, make_uint(pc), make_uint(0x4)), make_uint(0x4)));
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					jit_label_t temp_357 = jit_label_undefined, temp_358 = jit_label_undefined;
 					jit_insn_branch_if(func, jit_insn_lt(func, jit_insn_convert(func, temp_171, jit_type_int, 0), make_uint(0x0)), &temp_357);
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_358);
 					jit_insn_label(func, &temp_357);
+					call_alignment(func, make_uint(target), 32, 0, pc);
 					call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_358);
 					branched = true;
@@ -1297,13 +1328,14 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					RES(0x1f);
 					TGPR(temp_172, rs);
 					DO_LDS();
-					WGPR(0x1f, jit_insn_add(func, make_uint(pc), make_uint(0x4)));
+					WGPR(0x1f, jit_insn_add(func, jit_insn_add(func, make_uint(pc), make_uint(0x4)), make_uint(0x4)));
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					jit_label_t temp_361 = jit_label_undefined, temp_362 = jit_label_undefined;
 					jit_insn_branch_if(func, jit_insn_ge(func, jit_insn_convert(func, temp_172, jit_type_int, 0), make_uint(0x0)), &temp_361);
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_362);
 					jit_insn_label(func, &temp_361);
+					call_alignment(func, make_uint(target), 32, 0, pc);
 					call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_362);
 					branched = true;
@@ -1325,13 +1357,14 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					RES(0x1f);
 					TGPR(temp_173, rs);
 					DO_LDS();
-					WGPR(0x1f, jit_insn_add(func, make_uint(pc), make_uint(0x4)));
+					WGPR(0x1f, jit_insn_add(func, jit_insn_add(func, make_uint(pc), make_uint(0x4)), make_uint(0x4)));
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					jit_label_t temp_365 = jit_label_undefined, temp_366 = jit_label_undefined;
 					jit_insn_branch_if(func, jit_insn_lt(func, jit_insn_convert(func, temp_173, jit_type_int, 0), make_uint(0x0)), &temp_365);
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_366);
 					jit_insn_label(func, &temp_365);
+					call_alignment(func, make_uint(target), 32, 0, pc);
 					call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_366);
 					branched = true;
@@ -1353,13 +1386,14 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					RES(0x1f);
 					TGPR(temp_174, rs);
 					DO_LDS();
-					WGPR(0x1f, jit_insn_add(func, make_uint(pc), make_uint(0x4)));
+					WGPR(0x1f, jit_insn_add(func, jit_insn_add(func, make_uint(pc), make_uint(0x4)), make_uint(0x4)));
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					jit_label_t temp_369 = jit_label_undefined, temp_370 = jit_label_undefined;
 					jit_insn_branch_if(func, jit_insn_ge(func, jit_insn_convert(func, temp_174, jit_type_int, 0), make_uint(0x0)), &temp_369);
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_370);
 					jit_insn_label(func, &temp_369);
+					call_alignment(func, make_uint(target), 32, 0, pc);
 					call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_370);
 					branched = true;
@@ -1381,13 +1415,14 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					RES(0x1f);
 					TGPR(temp_175, rs);
 					DO_LDS();
-					WGPR(0x1f, jit_insn_add(func, make_uint(pc), make_uint(0x4)));
+					WGPR(0x1f, jit_insn_add(func, jit_insn_add(func, make_uint(pc), make_uint(0x4)), make_uint(0x4)));
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					jit_label_t temp_373 = jit_label_undefined, temp_374 = jit_label_undefined;
 					jit_insn_branch_if(func, jit_insn_lt(func, jit_insn_convert(func, temp_175, jit_type_int, 0), make_uint(0x0)), &temp_373);
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_374);
 					jit_insn_label(func, &temp_373);
+					call_alignment(func, make_uint(target), 32, 0, pc);
 					call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_374);
 					branched = true;
@@ -1409,13 +1444,14 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					RES(0x1f);
 					TGPR(temp_176, rs);
 					DO_LDS();
-					WGPR(0x1f, jit_insn_add(func, make_uint(pc), make_uint(0x4)));
+					WGPR(0x1f, jit_insn_add(func, jit_insn_add(func, make_uint(pc), make_uint(0x4)), make_uint(0x4)));
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					jit_label_t temp_377 = jit_label_undefined, temp_378 = jit_label_undefined;
 					jit_insn_branch_if(func, jit_insn_ge(func, jit_insn_convert(func, temp_176, jit_type_int, 0), make_uint(0x0)), &temp_377);
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_378);
 					jit_insn_label(func, &temp_377);
+					call_alignment(func, make_uint(target), 32, 0, pc);
 					call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_378);
 					branched = true;
@@ -1437,13 +1473,14 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					RES(0x1f);
 					TGPR(temp_177, rs);
 					DO_LDS();
-					WGPR(0x1f, jit_insn_add(func, make_uint(pc), make_uint(0x4)));
+					WGPR(0x1f, jit_insn_add(func, jit_insn_add(func, make_uint(pc), make_uint(0x4)), make_uint(0x4)));
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					jit_label_t temp_381 = jit_label_undefined, temp_382 = jit_label_undefined;
 					jit_insn_branch_if(func, jit_insn_lt(func, jit_insn_convert(func, temp_177, jit_type_int, 0), make_uint(0x0)), &temp_381);
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_382);
 					jit_insn_label(func, &temp_381);
+					call_alignment(func, make_uint(target), 32, 0, pc);
 					call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_382);
 					branched = true;
@@ -1465,13 +1502,14 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					RES(0x1f);
 					TGPR(temp_178, rs);
 					DO_LDS();
-					WGPR(0x1f, jit_insn_add(func, make_uint(pc), make_uint(0x4)));
+					WGPR(0x1f, jit_insn_add(func, jit_insn_add(func, make_uint(pc), make_uint(0x4)), make_uint(0x4)));
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					jit_label_t temp_385 = jit_label_undefined, temp_386 = jit_label_undefined;
 					jit_insn_branch_if(func, jit_insn_ge(func, jit_insn_convert(func, temp_178, jit_type_int, 0), make_uint(0x0)), &temp_385);
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_386);
 					jit_insn_label(func, &temp_385);
+					call_alignment(func, make_uint(target), 32, 0, pc);
 					call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_386);
 					branched = true;
@@ -1493,13 +1531,14 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					RES(0x1f);
 					TGPR(temp_179, rs);
 					DO_LDS();
-					WGPR(0x1f, jit_insn_add(func, make_uint(pc), make_uint(0x4)));
+					WGPR(0x1f, jit_insn_add(func, jit_insn_add(func, make_uint(pc), make_uint(0x4)), make_uint(0x4)));
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					jit_label_t temp_389 = jit_label_undefined, temp_390 = jit_label_undefined;
 					jit_insn_branch_if(func, jit_insn_lt(func, jit_insn_convert(func, temp_179, jit_type_int, 0), make_uint(0x0)), &temp_389);
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_390);
 					jit_insn_label(func, &temp_389);
+					call_alignment(func, make_uint(target), 32, 0, pc);
 					call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_390);
 					branched = true;
@@ -1521,13 +1560,14 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					RES(0x1f);
 					TGPR(temp_180, rs);
 					DO_LDS();
-					WGPR(0x1f, jit_insn_add(func, make_uint(pc), make_uint(0x4)));
+					WGPR(0x1f, jit_insn_add(func, jit_insn_add(func, make_uint(pc), make_uint(0x4)), make_uint(0x4)));
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					jit_label_t temp_393 = jit_label_undefined, temp_394 = jit_label_undefined;
 					jit_insn_branch_if(func, jit_insn_ge(func, jit_insn_convert(func, temp_180, jit_type_int, 0), make_uint(0x0)), &temp_393);
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_394);
 					jit_insn_label(func, &temp_393);
+					call_alignment(func, make_uint(target), 32, 0, pc);
 					call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_394);
 					branched = true;
@@ -1549,13 +1589,14 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					RES(0x1f);
 					TGPR(temp_181, rs);
 					DO_LDS();
-					WGPR(0x1f, jit_insn_add(func, make_uint(pc), make_uint(0x4)));
+					WGPR(0x1f, jit_insn_add(func, jit_insn_add(func, make_uint(pc), make_uint(0x4)), make_uint(0x4)));
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					jit_label_t temp_397 = jit_label_undefined, temp_398 = jit_label_undefined;
 					jit_insn_branch_if(func, jit_insn_lt(func, jit_insn_convert(func, temp_181, jit_type_int, 0), make_uint(0x0)), &temp_397);
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_398);
 					jit_insn_label(func, &temp_397);
+					call_alignment(func, make_uint(target), 32, 0, pc);
 					call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_398);
 					branched = true;
@@ -1577,13 +1618,14 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					RES(0x1f);
 					TGPR(temp_182, rs);
 					DO_LDS();
-					WGPR(0x1f, jit_insn_add(func, make_uint(pc), make_uint(0x4)));
+					WGPR(0x1f, jit_insn_add(func, jit_insn_add(func, make_uint(pc), make_uint(0x4)), make_uint(0x4)));
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					jit_label_t temp_401 = jit_label_undefined, temp_402 = jit_label_undefined;
 					jit_insn_branch_if(func, jit_insn_ge(func, jit_insn_convert(func, temp_182, jit_type_int, 0), make_uint(0x0)), &temp_401);
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_402);
 					jit_insn_label(func, &temp_401);
+					call_alignment(func, make_uint(target), 32, 0, pc);
 					call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_402);
 					branched = true;
@@ -1605,13 +1647,14 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					RES(0x1f);
 					TGPR(temp_183, rs);
 					DO_LDS();
-					WGPR(0x1f, jit_insn_add(func, make_uint(pc), make_uint(0x4)));
+					WGPR(0x1f, jit_insn_add(func, jit_insn_add(func, make_uint(pc), make_uint(0x4)), make_uint(0x4)));
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					jit_label_t temp_405 = jit_label_undefined, temp_406 = jit_label_undefined;
 					jit_insn_branch_if(func, jit_insn_lt(func, jit_insn_convert(func, temp_183, jit_type_int, 0), make_uint(0x0)), &temp_405);
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_406);
 					jit_insn_label(func, &temp_405);
+					call_alignment(func, make_uint(target), 32, 0, pc);
 					call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_406);
 					branched = true;
@@ -1633,13 +1676,14 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					RES(0x1f);
 					TGPR(temp_184, rs);
 					DO_LDS();
-					WGPR(0x1f, jit_insn_add(func, make_uint(pc), make_uint(0x4)));
+					WGPR(0x1f, jit_insn_add(func, jit_insn_add(func, make_uint(pc), make_uint(0x4)), make_uint(0x4)));
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					jit_label_t temp_409 = jit_label_undefined, temp_410 = jit_label_undefined;
 					jit_insn_branch_if(func, jit_insn_ge(func, jit_insn_convert(func, temp_184, jit_type_int, 0), make_uint(0x0)), &temp_409);
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_410);
 					jit_insn_label(func, &temp_409);
+					call_alignment(func, make_uint(target), 32, 0, pc);
 					call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_410);
 					branched = true;
@@ -1661,13 +1705,14 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					RES(0x1f);
 					TGPR(temp_185, rs);
 					DO_LDS();
-					WGPR(0x1f, jit_insn_add(func, make_uint(pc), make_uint(0x4)));
+					WGPR(0x1f, jit_insn_add(func, jit_insn_add(func, make_uint(pc), make_uint(0x4)), make_uint(0x4)));
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					jit_label_t temp_413 = jit_label_undefined, temp_414 = jit_label_undefined;
 					jit_insn_branch_if(func, jit_insn_lt(func, jit_insn_convert(func, temp_185, jit_type_int, 0), make_uint(0x0)), &temp_413);
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_414);
 					jit_insn_label(func, &temp_413);
+					call_alignment(func, make_uint(target), 32, 0, pc);
 					call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_414);
 					branched = true;
@@ -1689,13 +1734,14 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					RES(0x1f);
 					TGPR(temp_186, rs);
 					DO_LDS();
-					WGPR(0x1f, jit_insn_add(func, make_uint(pc), make_uint(0x4)));
+					WGPR(0x1f, jit_insn_add(func, jit_insn_add(func, make_uint(pc), make_uint(0x4)), make_uint(0x4)));
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					jit_label_t temp_417 = jit_label_undefined, temp_418 = jit_label_undefined;
 					jit_insn_branch_if(func, jit_insn_ge(func, jit_insn_convert(func, temp_186, jit_type_int, 0), make_uint(0x0)), &temp_417);
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_418);
 					jit_insn_label(func, &temp_417);
+					call_alignment(func, make_uint(target), 32, 0, pc);
 					call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_418);
 					branched = true;
@@ -1717,6 +1763,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 			uint32_t imm = (inst) & (0x3ffffff);
 			DO_LDS();
 			uint32_t target = (((pc) + (0x4)) & (0xf0000000)) + ((imm) << (0x2));
+			call_alignment(func, make_uint(target), 32, 0, pc);
 			call_branch_block(func, rcpu->GetBlockReference(target));
 			branched = true;
 			return(true);
@@ -1736,6 +1783,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 			DO_LDS();
 			WGPR(0x1f, jit_insn_add(func, jit_insn_add(func, make_uint(pc), make_uint(0x4)), make_uint(0x4)));
 			uint32_t target = (((pc) + (0x4)) & (0xf0000000)) + ((imm) << (0x2));
+			call_alignment(func, make_uint(target), 32, 0, pc);
 			call_branch_block(func, rcpu->GetBlockReference(target));
 			branched = true;
 			return(true);
@@ -1764,6 +1812,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 			call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 			jit_insn_branch(func, &temp_426);
 			jit_insn_label(func, &temp_425);
+			call_alignment(func, make_uint(target), 32, 0, pc);
 			call_branch_block(func, rcpu->GetBlockReference(target));
 			jit_insn_label(func, &temp_426);
 			branched = true;
@@ -1793,6 +1842,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 			call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 			jit_insn_branch(func, &temp_430);
 			jit_insn_label(func, &temp_429);
+			call_alignment(func, make_uint(target), 32, 0, pc);
 			call_branch_block(func, rcpu->GetBlockReference(target));
 			jit_insn_label(func, &temp_430);
 			branched = true;
@@ -1821,6 +1871,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_434);
 					jit_insn_label(func, &temp_433);
+					call_alignment(func, make_uint(target), 32, 0, pc);
 					call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_434);
 					branched = true;
@@ -1852,6 +1903,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_438);
 					jit_insn_label(func, &temp_437);
+					call_alignment(func, make_uint(target), 32, 0, pc);
 					call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_438);
 					branched = true;
@@ -1921,7 +1973,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 			TGPR(temp_195, rs);
 			DO_LDS();
 			uint32_t eimm = signext(0x10, imm);
-			WGPR(rt, jit_insn_lt(func, jit_insn_convert(func, temp_195, jit_type_int, 0), make_uint(eimm)));
+			WGPR(rt, jit_insn_lt(func, jit_insn_convert(func, temp_195, jit_type_int, 0), jit_insn_convert(func, make_uint(eimm), jit_type_int, 0)));
 			return(true);
 			break;
 		}
@@ -3404,7 +3456,9 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 			TGPR(temp_209, rs);
 			DO_LDS();
 			uint32_t offset = signext(0x10, imm);
-			defer_set(func, rt, call_signext(func, 16, call_load_memory(func, 16, jit_insn_add(func, temp_209, make_uint(offset)), pc)));
+			jit_value_t addr = jit_insn_add(func, temp_209, make_uint(offset));
+			call_alignment(func, addr, 16, 0, pc);
+			defer_set(func, rt, call_signext(func, 16, call_load_memory(func, 16, addr, pc)));
 			return(true);
 			break;
 		}
@@ -3467,7 +3521,9 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 			TGPR(temp_211, rs);
 			DO_LDS();
 			uint32_t offset = signext(0x10, imm);
-			defer_set(func, rt, call_load_memory(func, 32, jit_insn_add(func, temp_211, make_uint(offset)), pc));
+			jit_value_t addr = jit_insn_add(func, temp_211, make_uint(offset));
+			call_alignment(func, addr, 32, 0, pc);
+			defer_set(func, rt, call_load_memory(func, 32, addr, pc));
 			return(true);
 			break;
 		}
@@ -3509,7 +3565,9 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 			TGPR(temp_213, rs);
 			DO_LDS();
 			uint32_t offset = signext(0x10, imm);
-			defer_set(func, rt, call_load_memory(func, 16, jit_insn_add(func, temp_213, make_uint(offset)), pc));
+			jit_value_t addr = jit_insn_add(func, temp_213, make_uint(offset));
+			call_alignment(func, addr, 16, 0, pc);
+			defer_set(func, rt, call_load_memory(func, 16, addr, pc));
 			return(true);
 			break;
 		}
@@ -3594,7 +3652,9 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 			TGPR(temp_218, rt);
 			DO_LDS();
 			uint32_t offset = signext(0x10, imm);
-			call_store_memory(func, 16, jit_insn_add(func, temp_217, make_uint(offset)), temp_218, pc);
+			jit_value_t addr = jit_insn_add(func, temp_217, make_uint(offset));
+			call_alignment(func, addr, 16, 1, pc);
+			call_store_memory(func, 16, addr, temp_218, pc);
 			return(true);
 			break;
 		}
@@ -3659,7 +3719,9 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 			TGPR(temp_222, rt);
 			DO_LDS();
 			uint32_t offset = signext(0x10, imm);
-			call_store_memory(func, 32, jit_insn_add(func, temp_221, make_uint(offset)), temp_222, pc);
+			jit_value_t addr = jit_insn_add(func, temp_221, make_uint(offset));
+			call_alignment(func, addr, 32, 1, pc);
+			call_store_memory(func, 32, addr, temp_222, pc);
 			return(true);
 			break;
 		}
@@ -3721,6 +3783,8 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 			TGPR(temp_225, rs);
 			DO_LDS();
 			uint32_t offset = signext(0x10, imm);
+			jit_value_t addr = jit_insn_add(func, temp_225, make_uint(offset));
+			call_alignment(func, addr, 32, 0, pc);
 			call_write_copreg(func, 0x2, rt, call_load_memory(func, 32, jit_insn_add(func, temp_225, make_uint(offset)), pc));
 			return(true);
 			break;
@@ -3741,7 +3805,9 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 			TGPR(temp_226, rs);
 			DO_LDS();
 			uint32_t offset = signext(0x10, imm);
-			call_store_memory(func, 32, jit_insn_add(func, temp_226, make_uint(offset)), call_read_copreg(func, 0x2, rt), pc);
+			jit_value_t addr = jit_insn_add(func, temp_226, make_uint(offset));
+			call_alignment(func, addr, 32, 1, pc);
+			call_store_memory(func, 32, addr, call_read_copreg(func, 0x2, rt), pc);
 			return(true);
 			break;
 		}

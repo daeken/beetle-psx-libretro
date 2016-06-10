@@ -46,11 +46,14 @@ jit_value_t state, _ReadAbsorb, _ReadAbsorbWhich, _ReadFudge, LDWhich, LDValue, 
 #define WRA(idx, val) jit_insn_store_relative(func, jit_insn_add(func, _ReadAbsorb, idx), 0, (val))
 
 void do_lds(jit_function_t func) {
-	jit_value_t ldw = LOAD(LDWhich, jit_type_uint);
+	jit_value_t ldw = LOAD(LDWhich, jit_type_uint), raw = LOAD(_ReadAbsorbWhich, jit_type_ubyte);
 	WGPR_VAL(ldw, LOAD(LDValue, jit_type_uint));
 	WRA(ldw, jit_insn_load(func, LDAbsorb));
 	STORE(_ReadFudge, CAST(ldw, jit_type_ubyte));
-	STORE(_ReadAbsorbWhich, CAST(jit_insn_or(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), jit_insn_and(func, ldw, make_uint(0x1F))), jit_type_ubyte));
+	jit_label_t label = jit_label_undefined;
+	jit_insn_branch_if(func, jit_insn_eq(func, raw, make_uint(35)), &label);
+	STORE(_ReadAbsorbWhich, CAST(jit_insn_or(func, raw, jit_insn_and(func, ldw, make_uint(0x1F))), jit_type_ubyte));
+	jit_insn_label(func, &label);
 	STORE(LDWhich, make_uint(35));
 }
 #define DO_LDS() do_lds(func)
@@ -128,6 +131,11 @@ void call_branch_block(jit_function_t func, block_t *block) {
 void call_overflow(jit_function_t func, jit_value_t a, jit_value_t b, int dir, uint32_t pc, uint32_t inst) {
 	jit_value_t args[] = {a, b, make_uint(dir), make_uint(pc), make_uint(inst)};
 	jit_insn_call_native(func, 0, (void *) overflow, sig_5, args, 5, 0);
+}
+
+void call_alignment(jit_function_t func, jit_value_t addr, int size, int store, uint32_t pc) {
+	jit_value_t args[] = {addr, make_uint(size), make_uint(store), make_uint(pc)};
+	jit_insn_call_native(func, 0, (void *) alignment, sig_4, args, 4, 0);
 }
 
 void call_timestamp_inc(jit_function_t func, uint32_t amount) {

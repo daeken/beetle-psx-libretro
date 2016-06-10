@@ -9,18 +9,17 @@
 #define DEP(gpr) do { if(gpr != 0) cpu->ReadAbsorb[gpr] = 0; } while(0)
 #define RES(gpr) do { if(gpr != 0) cpu->ReadAbsorb[gpr] = 0; } while(0)
 
-#define READ_ABSORB() do { if(cpu->ReadAbsorb[cpu->ReadAbsorbWhich]) cpu->ReadAbsorb[cpu->ReadAbsorbWhich]--; else gtimestamp++; } while(0)
 #define DO_LDS() do { \
 	state[cpu->LDWhich] = cpu->LDValue; \
 	cpu->ReadAbsorb[cpu->LDWhich] = cpu->LDAbsorb; \
 	cpu->ReadFudge = cpu->LDWhich; \
-	cpu->ReadAbsorbWhich |= cpu->LDWhich & 0x1F; \
+	cpu->ReadAbsorbWhich |= (cpu->LDWhich != 35) ? (cpu->LDWhich & 0x1F) : 0; \
 	cpu->LDWhich = 35; \
 } while(0)
 
 #define DEFER_SET(gpr, val) do { cpu->LDWhich = gpr; cpu->LDValue = val; } while(0)
 
-#define branch_default() do { branch_to = pc + 8; } while(0)
+#define branch_default() do { } while(0)
 
 #define INSNLOG(mnem) printf(#mnem " [%08x]\n", pc);
 
@@ -30,7 +29,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 			switch((inst) & (0x3f)) {
 				case 0x0: {
 					/* SLL */
-					READ_ABSORB();
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					uint32_t shamt = ((inst) >> (0x6)) & (0x1f);
@@ -44,7 +42,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x2: {
 					/* SRL */
-					READ_ABSORB();
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					uint32_t shamt = ((inst) >> (0x6)) & (0x1f);
@@ -58,7 +55,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x3: {
 					/* SRA */
-					READ_ABSORB();
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					uint32_t shamt = ((inst) >> (0x6)) & (0x1f);
@@ -72,7 +68,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x4: {
 					/* SLLV */
-					READ_ABSORB();
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
@@ -88,7 +83,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x6: {
 					/* SRLV */
-					READ_ABSORB();
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
@@ -104,7 +98,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x7: {
 					/* SRAV */
-					READ_ABSORB();
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
@@ -120,18 +113,17 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x8: {
 					/* JR */
-					READ_ABSORB();
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					DEP(rs);
 					TGPR(temp_10, rs);
 					DO_LDS();
+					alignment(temp_10, 0x20, 0x0, pc);
 					branch_to = temp_10;
 					return(true);
 					break;
 				}
 				case 0x9: {
 					/* JALR */
-					READ_ABSORB();
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					DEP(rs);
@@ -139,13 +131,13 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 					TGPR(temp_11, rs);
 					DO_LDS();
 					if((rd) != (0x0)) { REG(rd) = ((pc) + (0x4)) + (0x4); }
+					alignment(temp_11, 0x20, 0x0, pc);
 					branch_to = temp_11;
 					return(true);
 					break;
 				}
 				case 0xc: {
 					/* SYSCALL */
-					READ_ABSORB();
 					uint32_t code = ((inst) >> (0x6)) & (0xfffff);
 					DO_LDS();
 					ps_syscall(code, pc, inst);
@@ -154,7 +146,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0xd: {
 					/* BREAK */
-					READ_ABSORB();
 					uint32_t code = ((inst) >> (0x6)) & (0xfffff);
 					DO_LDS();
 					break_(code, pc, inst);
@@ -163,7 +154,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x10: {
 					/* MFHI */
-					READ_ABSORB();
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					RES(rd);
 					DO_LDS();
@@ -174,7 +164,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x11: {
 					/* MTHI */
-					READ_ABSORB();
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					DEP(rd);
 					TGPR(temp_12, rd);
@@ -185,7 +174,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x12: {
 					/* MFLO */
-					READ_ABSORB();
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					RES(rd);
 					DO_LDS();
@@ -196,7 +184,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x13: {
 					/* MTLO */
-					READ_ABSORB();
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					DEP(rd);
 					TGPR(temp_13, rd);
@@ -207,7 +194,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x18: {
 					/* MULT */
-					READ_ABSORB();
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					DEP(rs);
@@ -224,7 +210,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x19: {
 					/* MULTU */
-					READ_ABSORB();
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					DEP(rs);
@@ -241,7 +226,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x1a: {
 					/* DIV */
-					READ_ABSORB();
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					DEP(rs);
@@ -271,7 +255,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x1b: {
 					/* DIVU */
-					READ_ABSORB();
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					DEP(rs);
@@ -292,7 +275,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x20: {
 					/* ADD */
-					READ_ABSORB();
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
@@ -309,7 +291,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x21: {
 					/* ADDU */
-					READ_ABSORB();
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
@@ -325,7 +306,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x22: {
 					/* SUB */
-					READ_ABSORB();
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
@@ -342,7 +322,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x23: {
 					/* SUBU */
-					READ_ABSORB();
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
@@ -358,7 +337,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x24: {
 					/* AND */
-					READ_ABSORB();
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
@@ -374,7 +352,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x25: {
 					/* OR */
-					READ_ABSORB();
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
@@ -390,7 +367,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x26: {
 					/* XOR */
-					READ_ABSORB();
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
@@ -406,7 +382,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x27: {
 					/* NOR */
-					READ_ABSORB();
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
@@ -422,7 +397,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x2a: {
 					/* SLT */
-					READ_ABSORB();
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
@@ -438,7 +412,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x2b: {
 					/* SLTU */
-					READ_ABSORB();
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
@@ -459,7 +432,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 			switch(((inst) >> (0x10)) & (0x1f)) {
 				case 0x0: {
 					/* BLTZanonymous_0 */
-					READ_ABSORB();
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
@@ -467,6 +439,7 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 					DO_LDS();
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_42)) < (0x0)) {
+						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -476,7 +449,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x1: {
 					/* BGEZanonymous_0 */
-					READ_ABSORB();
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
@@ -484,6 +456,7 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 					DO_LDS();
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_43)) >= (0x0)) {
+						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -493,7 +466,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x2: {
 					/* BLTZanonymous_1 */
-					READ_ABSORB();
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
@@ -501,6 +473,7 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 					DO_LDS();
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_44)) < (0x0)) {
+						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -510,7 +483,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x3: {
 					/* BGEZanonymous_1 */
-					READ_ABSORB();
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
@@ -518,6 +490,7 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 					DO_LDS();
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_45)) >= (0x0)) {
+						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -527,7 +500,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x4: {
 					/* BLTZanonymous_2 */
-					READ_ABSORB();
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
@@ -535,6 +507,7 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 					DO_LDS();
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_46)) < (0x0)) {
+						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -544,7 +517,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x5: {
 					/* BGEZanonymous_2 */
-					READ_ABSORB();
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
@@ -552,6 +524,7 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 					DO_LDS();
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_47)) >= (0x0)) {
+						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -561,7 +534,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x6: {
 					/* BLTZanonymous_3 */
-					READ_ABSORB();
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
@@ -569,6 +541,7 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 					DO_LDS();
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_48)) < (0x0)) {
+						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -578,7 +551,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x7: {
 					/* BGEZanonymous_3 */
-					READ_ABSORB();
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
@@ -586,6 +558,7 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 					DO_LDS();
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_49)) >= (0x0)) {
+						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -595,7 +568,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x8: {
 					/* BLTZanonymous_4 */
-					READ_ABSORB();
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
@@ -603,6 +575,7 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 					DO_LDS();
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_50)) < (0x0)) {
+						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -612,7 +585,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x9: {
 					/* BGEZanonymous_4 */
-					READ_ABSORB();
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
@@ -620,6 +592,7 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 					DO_LDS();
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_51)) >= (0x0)) {
+						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -629,7 +602,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0xa: {
 					/* BLTZanonymous_5 */
-					READ_ABSORB();
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
@@ -637,6 +609,7 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 					DO_LDS();
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_52)) < (0x0)) {
+						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -646,7 +619,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0xb: {
 					/* BGEZanonymous_5 */
-					READ_ABSORB();
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
@@ -654,6 +626,7 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 					DO_LDS();
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_53)) >= (0x0)) {
+						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -663,7 +636,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0xc: {
 					/* BLTZanonymous_6 */
-					READ_ABSORB();
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
@@ -671,6 +643,7 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 					DO_LDS();
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_54)) < (0x0)) {
+						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -680,7 +653,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0xd: {
 					/* BGEZanonymous_6 */
-					READ_ABSORB();
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
@@ -688,6 +660,7 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 					DO_LDS();
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_55)) >= (0x0)) {
+						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -697,7 +670,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0xe: {
 					/* BLTZanonymous_7 */
-					READ_ABSORB();
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
@@ -705,6 +677,7 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 					DO_LDS();
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_56)) < (0x0)) {
+						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -714,7 +687,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0xf: {
 					/* BGEZanonymous_7 */
-					READ_ABSORB();
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
@@ -722,6 +694,7 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 					DO_LDS();
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_57)) >= (0x0)) {
+						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -731,16 +704,16 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x10: {
 					/* BLTZALanonymous_0 */
-					READ_ABSORB();
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
 					RES(0x1f);
 					TGPR(temp_58, rs);
 					DO_LDS();
-					if((0x1f) != (0x0)) { REG(0x1f) = (pc) + (0x4); }
+					if((0x1f) != (0x0)) { REG(0x1f) = ((pc) + (0x4)) + (0x4); }
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_58)) < (0x0)) {
+						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -750,16 +723,16 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x11: {
 					/* BGEZALanonymous_0 */
-					READ_ABSORB();
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
 					RES(0x1f);
 					TGPR(temp_59, rs);
 					DO_LDS();
-					if((0x1f) != (0x0)) { REG(0x1f) = (pc) + (0x4); }
+					if((0x1f) != (0x0)) { REG(0x1f) = ((pc) + (0x4)) + (0x4); }
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_59)) >= (0x0)) {
+						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -769,16 +742,16 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x12: {
 					/* BLTZALanonymous_1 */
-					READ_ABSORB();
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
 					RES(0x1f);
 					TGPR(temp_60, rs);
 					DO_LDS();
-					if((0x1f) != (0x0)) { REG(0x1f) = (pc) + (0x4); }
+					if((0x1f) != (0x0)) { REG(0x1f) = ((pc) + (0x4)) + (0x4); }
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_60)) < (0x0)) {
+						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -788,16 +761,16 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x13: {
 					/* BGEZALanonymous_1 */
-					READ_ABSORB();
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
 					RES(0x1f);
 					TGPR(temp_61, rs);
 					DO_LDS();
-					if((0x1f) != (0x0)) { REG(0x1f) = (pc) + (0x4); }
+					if((0x1f) != (0x0)) { REG(0x1f) = ((pc) + (0x4)) + (0x4); }
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_61)) >= (0x0)) {
+						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -807,16 +780,16 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x14: {
 					/* BLTZALanonymous_2 */
-					READ_ABSORB();
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
 					RES(0x1f);
 					TGPR(temp_62, rs);
 					DO_LDS();
-					if((0x1f) != (0x0)) { REG(0x1f) = (pc) + (0x4); }
+					if((0x1f) != (0x0)) { REG(0x1f) = ((pc) + (0x4)) + (0x4); }
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_62)) < (0x0)) {
+						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -826,16 +799,16 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x15: {
 					/* BGEZALanonymous_2 */
-					READ_ABSORB();
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
 					RES(0x1f);
 					TGPR(temp_63, rs);
 					DO_LDS();
-					if((0x1f) != (0x0)) { REG(0x1f) = (pc) + (0x4); }
+					if((0x1f) != (0x0)) { REG(0x1f) = ((pc) + (0x4)) + (0x4); }
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_63)) >= (0x0)) {
+						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -845,16 +818,16 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x16: {
 					/* BLTZALanonymous_3 */
-					READ_ABSORB();
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
 					RES(0x1f);
 					TGPR(temp_64, rs);
 					DO_LDS();
-					if((0x1f) != (0x0)) { REG(0x1f) = (pc) + (0x4); }
+					if((0x1f) != (0x0)) { REG(0x1f) = ((pc) + (0x4)) + (0x4); }
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_64)) < (0x0)) {
+						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -864,16 +837,16 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x17: {
 					/* BGEZALanonymous_3 */
-					READ_ABSORB();
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
 					RES(0x1f);
 					TGPR(temp_65, rs);
 					DO_LDS();
-					if((0x1f) != (0x0)) { REG(0x1f) = (pc) + (0x4); }
+					if((0x1f) != (0x0)) { REG(0x1f) = ((pc) + (0x4)) + (0x4); }
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_65)) >= (0x0)) {
+						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -883,16 +856,16 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x18: {
 					/* BLTZALanonymous_4 */
-					READ_ABSORB();
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
 					RES(0x1f);
 					TGPR(temp_66, rs);
 					DO_LDS();
-					if((0x1f) != (0x0)) { REG(0x1f) = (pc) + (0x4); }
+					if((0x1f) != (0x0)) { REG(0x1f) = ((pc) + (0x4)) + (0x4); }
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_66)) < (0x0)) {
+						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -902,16 +875,16 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x19: {
 					/* BGEZALanonymous_4 */
-					READ_ABSORB();
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
 					RES(0x1f);
 					TGPR(temp_67, rs);
 					DO_LDS();
-					if((0x1f) != (0x0)) { REG(0x1f) = (pc) + (0x4); }
+					if((0x1f) != (0x0)) { REG(0x1f) = ((pc) + (0x4)) + (0x4); }
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_67)) >= (0x0)) {
+						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -921,16 +894,16 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x1a: {
 					/* BLTZALanonymous_5 */
-					READ_ABSORB();
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
 					RES(0x1f);
 					TGPR(temp_68, rs);
 					DO_LDS();
-					if((0x1f) != (0x0)) { REG(0x1f) = (pc) + (0x4); }
+					if((0x1f) != (0x0)) { REG(0x1f) = ((pc) + (0x4)) + (0x4); }
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_68)) < (0x0)) {
+						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -940,16 +913,16 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x1b: {
 					/* BGEZALanonymous_5 */
-					READ_ABSORB();
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
 					RES(0x1f);
 					TGPR(temp_69, rs);
 					DO_LDS();
-					if((0x1f) != (0x0)) { REG(0x1f) = (pc) + (0x4); }
+					if((0x1f) != (0x0)) { REG(0x1f) = ((pc) + (0x4)) + (0x4); }
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_69)) >= (0x0)) {
+						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -959,16 +932,16 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x1c: {
 					/* BLTZALanonymous_6 */
-					READ_ABSORB();
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
 					RES(0x1f);
 					TGPR(temp_70, rs);
 					DO_LDS();
-					if((0x1f) != (0x0)) { REG(0x1f) = (pc) + (0x4); }
+					if((0x1f) != (0x0)) { REG(0x1f) = ((pc) + (0x4)) + (0x4); }
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_70)) < (0x0)) {
+						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -978,16 +951,16 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x1d: {
 					/* BGEZALanonymous_6 */
-					READ_ABSORB();
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
 					RES(0x1f);
 					TGPR(temp_71, rs);
 					DO_LDS();
-					if((0x1f) != (0x0)) { REG(0x1f) = (pc) + (0x4); }
+					if((0x1f) != (0x0)) { REG(0x1f) = ((pc) + (0x4)) + (0x4); }
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_71)) >= (0x0)) {
+						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -997,16 +970,16 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x1e: {
 					/* BLTZALanonymous_7 */
-					READ_ABSORB();
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
 					RES(0x1f);
 					TGPR(temp_72, rs);
 					DO_LDS();
-					if((0x1f) != (0x0)) { REG(0x1f) = (pc) + (0x4); }
+					if((0x1f) != (0x0)) { REG(0x1f) = ((pc) + (0x4)) + (0x4); }
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_72)) < (0x0)) {
+						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -1016,16 +989,16 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x1f: {
 					/* BGEZALanonymous_7 */
-					READ_ABSORB();
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
 					RES(0x1f);
 					TGPR(temp_73, rs);
 					DO_LDS();
-					if((0x1f) != (0x0)) { REG(0x1f) = (pc) + (0x4); }
+					if((0x1f) != (0x0)) { REG(0x1f) = ((pc) + (0x4)) + (0x4); }
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_73)) >= (0x0)) {
+						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -1038,29 +1011,28 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 		}
 		case 0x2: {
 			/* J */
-			READ_ABSORB();
 			uint32_t imm = (inst) & (0x3ffffff);
 			DO_LDS();
 			uint32_t target = (((pc) + (0x4)) & (0xf0000000)) + ((imm) << (0x2));
+			alignment(target, 0x20, 0x0, pc);
 			branch_to = target;
 			return(true);
 			break;
 		}
 		case 0x3: {
 			/* JAL */
-			READ_ABSORB();
 			uint32_t imm = (inst) & (0x3ffffff);
 			RES(0x1f);
 			DO_LDS();
 			if((0x1f) != (0x0)) { REG(0x1f) = ((pc) + (0x4)) + (0x4); }
 			uint32_t target = (((pc) + (0x4)) & (0xf0000000)) + ((imm) << (0x2));
+			alignment(target, 0x20, 0x0, pc);
 			branch_to = target;
 			return(true);
 			break;
 		}
 		case 0x4: {
 			/* BEQ */
-			READ_ABSORB();
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
@@ -1071,6 +1043,7 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 			DO_LDS();
 			uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 			if((temp_74) == (temp_75)) {
+				alignment(target, 0x20, 0x0, pc);
 				branch_to = target;
 			} else {
 				branch_default();
@@ -1080,7 +1053,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 		}
 		case 0x5: {
 			/* BNE */
-			READ_ABSORB();
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
@@ -1091,6 +1063,7 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 			DO_LDS();
 			uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 			if((temp_76) != (temp_77)) {
+				alignment(target, 0x20, 0x0, pc);
 				branch_to = target;
 			} else {
 				branch_default();
@@ -1102,7 +1075,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 			switch(((inst) >> (0x10)) & (0x1f)) {
 				case 0x0: {
 					/* BLEZ */
-					READ_ABSORB();
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
@@ -1110,6 +1082,7 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 					DO_LDS();
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_78)) <= (0x0)) {
+						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -1124,7 +1097,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 			switch(((inst) >> (0x10)) & (0x1f)) {
 				case 0x0: {
 					/* BGTZ */
-					READ_ABSORB();
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
@@ -1132,6 +1104,7 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 					DO_LDS();
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_79)) > (0x0)) {
+						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -1144,7 +1117,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 		}
 		case 0x8: {
 			/* ADDI */
-			READ_ABSORB();
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
@@ -1160,7 +1132,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 		}
 		case 0x9: {
 			/* ADDIU */
-			READ_ABSORB();
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
@@ -1175,7 +1146,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 		}
 		case 0xa: {
 			/* SLTI */
-			READ_ABSORB();
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
@@ -1184,13 +1154,12 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 			TGPR(temp_82, rs);
 			DO_LDS();
 			uint32_t eimm = signext(0x10, imm);
-			if((rt) != (0x0)) { REG(rt) = ((int32_t) (temp_82)) < (eimm); }
+			if((rt) != (0x0)) { REG(rt) = ((int32_t) (temp_82)) < ((int32_t) (eimm)); }
 			return(true);
 			break;
 		}
 		case 0xb: {
 			/* SLTIU */
-			READ_ABSORB();
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
@@ -1205,7 +1174,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 		}
 		case 0xc: {
 			/* ANDI */
-			READ_ABSORB();
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
@@ -1220,7 +1188,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 		}
 		case 0xd: {
 			/* ORI */
-			READ_ABSORB();
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
@@ -1235,7 +1202,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 		}
 		case 0xe: {
 			/* XORI */
-			READ_ABSORB();
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
@@ -1250,7 +1216,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 		}
 		case 0xf: {
 			/* LUI */
-			READ_ABSORB();
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
 			RES(rt);
@@ -1263,7 +1228,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 			switch(((inst) >> (0x15)) & (0x1f)) {
 				case 0x0: {
 					/* MFCzanonymous_8 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
@@ -1275,7 +1239,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x2: {
 					/* CFCzanonymous_8 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
@@ -1287,7 +1250,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x4: {
 					/* MTCzanonymous_8 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
@@ -1300,7 +1262,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x6: {
 					/* CTCzanonymous_8 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
@@ -1313,7 +1274,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x10: {
 					/* COPzanonymous_12anonymous_8 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -1323,7 +1283,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x11: {
 					/* COPzanonymous_13anonymous_8 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -1333,7 +1292,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x12: {
 					/* COPzanonymous_14anonymous_8 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -1343,7 +1301,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x13: {
 					/* COPzanonymous_15anonymous_8 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -1353,7 +1310,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x14: {
 					/* COPzanonymous_16anonymous_8 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -1363,7 +1319,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x15: {
 					/* COPzanonymous_17anonymous_8 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -1373,7 +1328,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x16: {
 					/* COPzanonymous_18anonymous_8 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -1383,7 +1337,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x17: {
 					/* COPzanonymous_19anonymous_8 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -1393,7 +1346,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x18: {
 					/* COPzanonymous_20anonymous_8 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -1403,7 +1355,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x19: {
 					/* COPzanonymous_21anonymous_8 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -1413,7 +1364,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x1a: {
 					/* COPzanonymous_22anonymous_8 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -1423,7 +1373,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x1b: {
 					/* COPzanonymous_23anonymous_8 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -1433,7 +1382,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x1c: {
 					/* COPzanonymous_24anonymous_8 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -1443,7 +1391,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x1d: {
 					/* COPzanonymous_25anonymous_8 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -1453,7 +1400,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x1e: {
 					/* COPzanonymous_26anonymous_8 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -1463,7 +1409,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x1f: {
 					/* COPzanonymous_27anonymous_8 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -1478,7 +1423,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 			switch(((inst) >> (0x15)) & (0x1f)) {
 				case 0x0: {
 					/* MFCzanonymous_9 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
@@ -1490,7 +1434,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x2: {
 					/* CFCzanonymous_9 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
@@ -1502,7 +1445,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x4: {
 					/* MTCzanonymous_9 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
@@ -1515,7 +1457,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x6: {
 					/* CTCzanonymous_9 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
@@ -1528,7 +1469,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x10: {
 					/* COPzanonymous_12anonymous_9 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -1538,7 +1478,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x11: {
 					/* COPzanonymous_13anonymous_9 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -1548,7 +1487,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x12: {
 					/* COPzanonymous_14anonymous_9 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -1558,7 +1496,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x13: {
 					/* COPzanonymous_15anonymous_9 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -1568,7 +1505,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x14: {
 					/* COPzanonymous_16anonymous_9 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -1578,7 +1514,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x15: {
 					/* COPzanonymous_17anonymous_9 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -1588,7 +1523,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x16: {
 					/* COPzanonymous_18anonymous_9 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -1598,7 +1532,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x17: {
 					/* COPzanonymous_19anonymous_9 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -1608,7 +1541,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x18: {
 					/* COPzanonymous_20anonymous_9 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -1618,7 +1550,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x19: {
 					/* COPzanonymous_21anonymous_9 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -1628,7 +1559,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x1a: {
 					/* COPzanonymous_22anonymous_9 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -1638,7 +1568,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x1b: {
 					/* COPzanonymous_23anonymous_9 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -1648,7 +1577,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x1c: {
 					/* COPzanonymous_24anonymous_9 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -1658,7 +1586,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x1d: {
 					/* COPzanonymous_25anonymous_9 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -1668,7 +1595,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x1e: {
 					/* COPzanonymous_26anonymous_9 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -1678,7 +1604,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x1f: {
 					/* COPzanonymous_27anonymous_9 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -1693,7 +1618,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 			switch(((inst) >> (0x15)) & (0x1f)) {
 				case 0x0: {
 					/* MFCzanonymous_10 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
@@ -1705,7 +1629,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x2: {
 					/* CFCzanonymous_10 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
@@ -1717,7 +1640,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x4: {
 					/* MTCzanonymous_10 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
@@ -1730,7 +1652,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x6: {
 					/* CTCzanonymous_10 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
@@ -1743,7 +1664,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x10: {
 					/* COPzanonymous_12anonymous_10 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -1753,7 +1673,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x11: {
 					/* COPzanonymous_13anonymous_10 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -1763,7 +1682,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x12: {
 					/* COPzanonymous_14anonymous_10 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -1773,7 +1691,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x13: {
 					/* COPzanonymous_15anonymous_10 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -1783,7 +1700,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x14: {
 					/* COPzanonymous_16anonymous_10 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -1793,7 +1709,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x15: {
 					/* COPzanonymous_17anonymous_10 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -1803,7 +1718,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x16: {
 					/* COPzanonymous_18anonymous_10 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -1813,7 +1727,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x17: {
 					/* COPzanonymous_19anonymous_10 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -1823,7 +1736,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x18: {
 					/* COPzanonymous_20anonymous_10 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -1833,7 +1745,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x19: {
 					/* COPzanonymous_21anonymous_10 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -1843,7 +1754,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x1a: {
 					/* COPzanonymous_22anonymous_10 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -1853,7 +1763,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x1b: {
 					/* COPzanonymous_23anonymous_10 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -1863,7 +1772,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x1c: {
 					/* COPzanonymous_24anonymous_10 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -1873,7 +1781,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x1d: {
 					/* COPzanonymous_25anonymous_10 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -1883,7 +1790,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x1e: {
 					/* COPzanonymous_26anonymous_10 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -1893,7 +1799,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x1f: {
 					/* COPzanonymous_27anonymous_10 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -1908,7 +1813,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 			switch(((inst) >> (0x15)) & (0x1f)) {
 				case 0x0: {
 					/* MFCzanonymous_11 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
@@ -1920,7 +1824,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x2: {
 					/* CFCzanonymous_11 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
@@ -1932,7 +1835,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x4: {
 					/* MTCzanonymous_11 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
@@ -1945,7 +1847,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x6: {
 					/* CTCzanonymous_11 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
@@ -1958,7 +1859,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x10: {
 					/* COPzanonymous_12anonymous_11 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -1968,7 +1868,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x11: {
 					/* COPzanonymous_13anonymous_11 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -1978,7 +1877,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x12: {
 					/* COPzanonymous_14anonymous_11 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -1988,7 +1886,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x13: {
 					/* COPzanonymous_15anonymous_11 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -1998,7 +1895,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x14: {
 					/* COPzanonymous_16anonymous_11 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -2008,7 +1904,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x15: {
 					/* COPzanonymous_17anonymous_11 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -2018,7 +1913,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x16: {
 					/* COPzanonymous_18anonymous_11 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -2028,7 +1922,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x17: {
 					/* COPzanonymous_19anonymous_11 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -2038,7 +1931,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x18: {
 					/* COPzanonymous_20anonymous_11 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -2048,7 +1940,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x19: {
 					/* COPzanonymous_21anonymous_11 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -2058,7 +1949,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x1a: {
 					/* COPzanonymous_22anonymous_11 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -2068,7 +1958,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x1b: {
 					/* COPzanonymous_23anonymous_11 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -2078,7 +1967,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x1c: {
 					/* COPzanonymous_24anonymous_11 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -2088,7 +1976,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x1d: {
 					/* COPzanonymous_25anonymous_11 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -2098,7 +1985,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x1e: {
 					/* COPzanonymous_26anonymous_11 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -2108,7 +1994,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 				}
 				case 0x1f: {
 					/* COPzanonymous_27anonymous_11 */
-					READ_ABSORB();
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
 					DO_LDS();
@@ -2121,7 +2006,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 		}
 		case 0x20: {
 			/* LB */
-			READ_ABSORB();
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
@@ -2136,7 +2020,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 		}
 		case 0x21: {
 			/* LH */
-			READ_ABSORB();
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
@@ -2145,13 +2028,14 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 			TGPR(temp_96, rs);
 			DO_LDS();
 			uint32_t offset = signext(0x10, imm);
-			if((rt) != (0x0)) { DEFER_SET(rt, signext(0x10, load_memory(0x10, (temp_96) + (offset), pc))); }
+			uint32_t addr = (temp_96) + (offset);
+			alignment(addr, 0x10, 0x0, pc);
+			if((rt) != (0x0)) { DEFER_SET(rt, signext(0x10, load_memory(0x10, addr, pc))); }
 			return(true);
 			break;
 		}
 		case 0x22: {
 			/* LWL */
-			READ_ABSORB();
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
@@ -2181,7 +2065,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 		}
 		case 0x23: {
 			/* LW */
-			READ_ABSORB();
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
@@ -2190,13 +2073,14 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 			TGPR(temp_98, rs);
 			DO_LDS();
 			uint32_t offset = signext(0x10, imm);
-			if((rt) != (0x0)) { DEFER_SET(rt, load_memory(0x20, (temp_98) + (offset), pc)); }
+			uint32_t addr = (temp_98) + (offset);
+			alignment(addr, 0x20, 0x0, pc);
+			if((rt) != (0x0)) { DEFER_SET(rt, load_memory(0x20, addr, pc)); }
 			return(true);
 			break;
 		}
 		case 0x24: {
 			/* LBU */
-			READ_ABSORB();
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
@@ -2211,7 +2095,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 		}
 		case 0x25: {
 			/* LHU */
-			READ_ABSORB();
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
@@ -2220,13 +2103,14 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 			TGPR(temp_100, rs);
 			DO_LDS();
 			uint32_t offset = signext(0x10, imm);
-			if((rt) != (0x0)) { DEFER_SET(rt, load_memory(0x10, (temp_100) + (offset), pc)); }
+			uint32_t addr = (temp_100) + (offset);
+			alignment(addr, 0x10, 0x0, pc);
+			if((rt) != (0x0)) { DEFER_SET(rt, load_memory(0x10, addr, pc)); }
 			return(true);
 			break;
 		}
 		case 0x26: {
 			/* LWR */
-			READ_ABSORB();
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
@@ -2255,7 +2139,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 		}
 		case 0x28: {
 			/* SB */
-			READ_ABSORB();
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
@@ -2271,7 +2154,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 		}
 		case 0x29: {
 			/* SH */
-			READ_ABSORB();
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
@@ -2281,13 +2163,14 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 			TGPR(temp_105, rt);
 			DO_LDS();
 			uint32_t offset = signext(0x10, imm);
-			store_memory(0x10, (temp_104) + (offset), temp_105, pc);
+			uint32_t addr = (temp_104) + (offset);
+			alignment(addr, 0x10, 0x1, pc);
+			store_memory(0x10, addr, temp_105, pc);
 			return(true);
 			break;
 		}
 		case 0x2a: {
 			/* SWL */
-			READ_ABSORB();
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
@@ -2318,7 +2201,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 		}
 		case 0x2b: {
 			/* SW */
-			READ_ABSORB();
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
@@ -2328,13 +2210,14 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 			TGPR(temp_109, rt);
 			DO_LDS();
 			uint32_t offset = signext(0x10, imm);
-			store_memory(0x20, (temp_108) + (offset), temp_109, pc);
+			uint32_t addr = (temp_108) + (offset);
+			alignment(addr, 0x20, 0x1, pc);
+			store_memory(0x20, addr, temp_109, pc);
 			return(true);
 			break;
 		}
 		case 0x2e: {
 			/* SWR */
-			READ_ABSORB();
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
@@ -2364,7 +2247,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 		}
 		case 0x32: {
 			/* LWC2 */
-			READ_ABSORB();
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
@@ -2372,13 +2254,14 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 			TGPR(temp_112, rs);
 			DO_LDS();
 			uint32_t offset = signext(0x10, imm);
+			uint32_t addr = (temp_112) + (offset);
+			alignment(addr, 0x20, 0x0, pc);
 			write_copreg(0x2, rt, load_memory(0x20, (temp_112) + (offset), pc));
 			return(true);
 			break;
 		}
 		case 0x3a: {
 			/* SWC2 */
-			READ_ABSORB();
 			uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
@@ -2386,7 +2269,9 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 			TGPR(temp_113, rs);
 			DO_LDS();
 			uint32_t offset = signext(0x10, imm);
-			store_memory(0x20, (temp_113) + (offset), read_copreg(0x2, rt), pc);
+			uint32_t addr = (temp_113) + (offset);
+			alignment(addr, 0x20, 0x1, pc);
+			store_memory(0x20, addr, read_copreg(0x2, rt), pc);
 			return(true);
 			break;
 		}
