@@ -87,6 +87,7 @@ uint32_t PSX_GetRandU32(uint32_t mina, uint32_t maxa);
 #include "dis.h"
 #include "cpu.h"
 #include "cpu-recompiler.h"
+#include "cpu-interpreter.h"
 #include "irq.h"
 #include "gpu.h"
 #include "dma.h"

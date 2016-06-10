@@ -88,7 +88,7 @@ def output(expr, top=True):
 		lval = output(expr[1], top=False)
 		rval = output(expr[2], top=False)
 		type = ''
-		if lval != 'branched' and lval != 'no_delay' and '(' not in lval:
+		if lval != 'branched' and lval != 'no_delay' and lval != 'branch_to' and '(' not in lval:
 			if '*' in rval:
 				type = 'uint64_t '
 			else:
@@ -509,9 +509,9 @@ def genInterp((iname, type, dasm, dag)):
 		elif op == 'break':
 			return [('break_', dag[1], subgen(dag[2]), subgen(dag[3]))]
 		elif op == 'syscall':
-			return [('syscall', subgen(dag[1]), subgen(dag[2]), subgen(dag[3]))]
+			return [('ps_syscall', subgen(dag[1]), subgen(dag[2]), subgen(dag[3]))]
 		elif op == 'branch':
-			return [('branch', subgen(dag[1]))]
+			return [('=', 'branch_to', subgen(dag[1]))]
 		elif op == 'branch_default':
 			return [('branch_default', )]
 		elif op == 'load':

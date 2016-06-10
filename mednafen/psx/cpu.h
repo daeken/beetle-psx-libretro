@@ -45,6 +45,7 @@
 #define GSREG_EPC            39
 
 extern volatile int32_t gtimestamp;
+extern volatile uint32_t branch_to;
 
 #define BACKING_TO_ACTIVE        \
    PC = BACKED_PC;            \
@@ -171,21 +172,12 @@ class PS_CPU
       uint32_t Exception(uint32_t code, uint32_t PC, const uint32_t NP, const uint32_t NPM, const uint32_t instr) MDFN_WARN_UNUSED_RESULT;
 
       virtual int32_t RunReal(int32_t timestamp_in) = 0;
+      virtual void Interrupt(uint32_t addr) = 0;
 
       template<typename T> T PeekMemory(uint32_t address) MDFN_COLD;
       template<typename T> void PokeMemory(uint32 address, T value) MDFN_COLD;
       template<typename T> T ReadMemory(uint32_t address, bool DS24 = false, bool LWC_timing = false);
       template<typename T> void WriteMemory(uint32_t address, uint32_t value, bool DS24 = false);
-
-      // Required to get around the template stuff.  Thanks C++
-      uint8_t ReadMemory8(uint32_t address);
-      uint16_t ReadMemory16(uint32_t address);
-      uint32_t ReadMemory24(uint32_t address);
-      uint32_t ReadMemory32(uint32_t address);
-      void WriteMemory8(uint32_t address, uint8_t val);
-      void WriteMemory16(uint32_t address, uint16_t val);
-      void WriteMemory24(uint32_t address, uint32_t val);
-      void WriteMemory32(uint32_t address, uint32_t val);
 
       // Mednafen debugger stuff follows:
    public:

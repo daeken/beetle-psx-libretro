@@ -56,6 +56,4 @@ void write_copreg(int cop, int reg, uint32_t val);
 uint32_t read_copcreg(int cop, int reg);
 void write_copcreg(int cop, int reg, uint32_t val);
 
-#include "psx.h"
-
 #endif

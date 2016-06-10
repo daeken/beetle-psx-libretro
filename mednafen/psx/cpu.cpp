@@ -36,6 +36,7 @@ extern bool psx_cpu_overclock;
 						// Does lock mode prevent the actual data payload from being modified, while allowing tags to be modified/updated???
 
 volatile int32_t gtimestamp;
+volatile uint32_t branch_to;
 PS_CPU *cpu;
 
 PS_CPU::PS_CPU()
@@ -120,7 +121,7 @@ void PS_CPU::Power(void)
    BACKED_new_PC = 4;
    BACKED_new_PC_mask = ~0U;
 
-   BACKED_LDWhich = 0x20;
+   BACKED_LDWhich = 35;
    BACKED_LDValue = 0;
    LDAbsorb = 0;
    memset(ReadAbsorb, 0, sizeof(ReadAbsorb));
@@ -272,15 +273,6 @@ void PS_CPU::PokeMemory(uint32 address, T value)
    else
       PSX_MemPoke32(address, value);
 }
-
-uint8_t PS_CPU::ReadMemory8(uint32_t address) { return ReadMemory<uint8_t>(address); }
-uint16_t PS_CPU::ReadMemory16(uint32_t address) { return ReadMemory<uint16_t>(address); }
-uint32_t PS_CPU::ReadMemory24(uint32_t address) { return ReadMemory<uint32_t>(address, true); }
-uint32_t PS_CPU::ReadMemory32(uint32_t address) { return ReadMemory<uint32_t>(address); }
-void PS_CPU::WriteMemory8 (uint32_t address, uint8_t val ) { return WriteMemory<uint8_t> (address, val); }
-void PS_CPU::WriteMemory16(uint32_t address, uint16_t val) { return WriteMemory<uint16_t>(address, val); }
-void PS_CPU::WriteMemory24(uint32_t address, uint32_t val) { return WriteMemory<uint32_t>(address, val, true); }
-void PS_CPU::WriteMemory32(uint32_t address, uint32_t val) { return WriteMemory<uint32_t>(address, val); }
 
 template<typename T>
 INLINE T PS_CPU::ReadMemory(uint32_t address, bool DS24, bool LWC_timing)
@@ -552,15 +544,46 @@ void PS_CPU::PokeMem32(uint32 A, uint32 V)
  PokeMemory<uint32>(A, V);
 }
 
-int32_t signext(int size, uint32_t imm) {
-   if(size == 8)
-      return (int8_t) ((uint8_t) imm);
-   else if(size == 16)
-      return (int16_t) ((uint16_t) imm);
-   else if(size == 32)
-      return (int32_t) imm;
-   else if(imm & (1 << (size - 1)))
-      return (int32_t) imm - (1 << size);
-   else
-      return (int32_t) imm;
+uint32_t load_memory(int size, uint32_t ptr, uint32_t pc) {
+   // Enable full debugging in SOTN
+   if(ptr == 0x80032AB0)
+      return 1;
+   uint32_t val;
+   switch(size) {
+      case 8:
+         val = (uint32_t) cpu->ReadMemory<uint8_t>(ptr);
+         break;
+      case 16:
+         val = (uint32_t) cpu->ReadMemory<uint16_t>(ptr);
+         break;
+      case 24:
+         val = cpu->ReadMemory<uint32_t>(ptr, true);
+         break;
+      default:
+         val = cpu->ReadMemory<uint32_t>(ptr);
+   }
+
+   //if(gdebug)
+   //   printf("Loading %i bits of memory from %08x <-- %08x\n", size, ptr, val);
+
+   return val;
+}
+
+void store_memory(int size, uint32_t ptr, uint32_t val, uint32_t pc) {
+   //if(gdebug)
+   //   printf("Storing %i bits of memory to %08x <-- %08x @ %08x\n", size, ptr, val, pc);
+
+   switch(size) {
+      case 8:
+         cpu->WriteMemory<uint8_t>(ptr, val);
+         break;
+      case 16:
+         cpu->WriteMemory<uint16_t>(ptr, val);
+         break;
+      case 24:
+         cpu->WriteMemory<uint32_t>(ptr, val, true);
+      case 32:
+         cpu->WriteMemory<uint32_t>(ptr, val);
+         break;
+   }
 }

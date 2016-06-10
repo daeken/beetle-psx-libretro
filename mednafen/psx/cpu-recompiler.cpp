@@ -22,112 +22,17 @@ extern bool psx_cpu_overclock;
 
 bool gdebug = false;
 jmp_buf excjmpenv;
-PS_CPU_Recompiler *rcpu;
+PS_CPU_Recompiler *rcpu = NULL;
 
 void timestamp_inc(int amt) {
    gtimestamp += amt;
 }
 
-void muldiv_delay(uint32_t a, uint32_t b) {
-   if(a == 0 && b == 0)
-      rcpu->muldiv_ts_done = gtimestamp + 37;
-   else
-      rcpu->muldiv_ts_done = gtimestamp + rcpu->MULT_Tab24[MDFN_lzcount32((a ^ ((int32_t) b >> 31)) | 0x400)];
-}
-
-void absorb_muldiv_delay() {
-   if(gtimestamp < rcpu->muldiv_ts_done) {
-      if(gtimestamp == rcpu->muldiv_ts_done - 1)
-         rcpu->muldiv_ts_done--;
-      else
-         do {
-            if(rcpu->ReadAbsorb[rcpu->ReadAbsorbWhich])
-               rcpu->ReadAbsorb[rcpu->ReadAbsorbWhich]--;
-            gtimestamp++;
-         } while(gtimestamp < rcpu->muldiv_ts_done);
-   }
-}
-
-uint32_t load_memory(int size, uint32_t ptr, uint32_t pc) {
-   // Enable full debugging in SOTN
-   if(ptr == 0x80032AB0)
-      return 1;
-   uint32_t val;
-   switch(size) {
-      case 8:
-         val = (uint32_t) rcpu->ReadMemory8(ptr);
-         break;
-      case 16:
-         //if((ptr & 0x1) != 0)
-         //   longjmp(excjmpenv, rcpu->Exception(EXCEPTION_ADEL, pc, pc, 0xFF, 0));
-         val = (uint32_t) rcpu->ReadMemory16(ptr);
-         break;
-      case 24:
-         //if((ptr & 0x3) != 0)
-         //   longjmp(excjmpenv, rcpu->Exception(EXCEPTION_ADEL, pc, pc, 0xFF, 0));
-         val = rcpu->ReadMemory24(ptr);
-         break;
-      default:
-         //if((ptr & 0x3) != 0)
-         //   longjmp(excjmpenv, rcpu->Exception(EXCEPTION_ADEL, pc, pc, 0xFF, 0));
-         val = rcpu->ReadMemory32(ptr);
-   }
-
-   if(gdebug)
-      printf("Loading %i bits of memory from %08x <-- %08x\n", size, ptr, val);
-
-   return val;
-}
-
-void store_memory(int size, uint32_t ptr, uint32_t val, uint32_t pc) {
-   if(gdebug)
-      printf("Storing %i bits of memory to %08x <-- %08x @ %08x\n", size, ptr, val, pc);
-
-   switch(size) {
-      case 8:
-         rcpu->WriteMemory8(ptr, val);
-         break;
-      case 16:
-         rcpu->WriteMemory16(ptr, val);
-         break;
-      case 24:
-         rcpu->WriteMemory24(ptr, val);
-      case 32:
-         rcpu->WriteMemory32(ptr, val);
-         break;
-   }
-}
-
-volatile uint32_t branch_to;
 volatile block_t *branch_to_block;
-void branch(uint32_t target) {
-   //printf("branching to (pc) %08x\n", target);
-   branch_to = target;
-}
 
 void branch_block(block_t *block) {
    //printf("branching to (bl) %08x\n", block->pc);
    branch_to_block = block;
-}
-
-void ps_syscall(int code, uint32_t pc, uint32_t instr) {
-   branch(rcpu->Exception(EXCEPTION_SYSCALL, pc, pc + 4, 0xFF, instr));
-}
-
-void break_(int code, uint32_t pc, uint32_t instr) {
-   branch(rcpu->Exception(EXCEPTION_BP, pc, pc + 4, 0xFF, instr));
-}
-
-void overflow(uint32_t a, uint32_t b, int dir, uint32_t pc, uint32_t instr) {
-   if(dir == 1) {
-      uint32_t r = a + b;
-      if(((~(a ^ b)) & (a ^ r)) & 0x80000000)
-         longjmp(excjmpenv, rcpu->Exception(EXCEPTION_OV, pc, pc, 0xFF, instr));
-   } else {
-      uint32_t r = a - b;
-      if((((a ^ b)) & (a ^ r)) & 0x80000000)
-         longjmp(excjmpenv, rcpu->Exception(EXCEPTION_OV, pc, pc, 0xFF, instr));
-   }
 }
 
 void check_irq(uint32_t pc) {
@@ -176,7 +81,8 @@ void PS_CPU_Recompiler::StashBlock(uint32_t pc, block_t *block) {
 
 // Exported for low-level memory invalidation
 void invalidate(uint32_t address) {
-   rcpu->InvalidateBlocks(address);
+   if(rcpu != NULL)
+      rcpu->InvalidateBlocks(address);
 }
 
 void PS_CPU_Recompiler::InvalidateBlocks(uint32_t addr) {
@@ -259,6 +165,10 @@ PS_CPU_Recompiler::PS_CPU_Recompiler() {
    rcpu = this;
 }
 
+void PS_CPU_Recompiler::Interrupt(uint32_t addr) {
+   longjmp(excjmpenv, addr);
+}
+
 int32_t PS_CPU_Recompiler::RunReal(int32_t timestamp_in)
 {
    uint32_t PC;
@@ -272,7 +182,7 @@ int32_t PS_CPU_Recompiler::RunReal(int32_t timestamp_in)
 
    gtimestamp = timestamp_in;
 
-   // Used for per-instruction irq checking
+   // Used for interrupts/exceptions
    uint32_t temp = setjmp(excjmpenv);
    if(temp != 0)
       PC = temp;
@@ -286,9 +196,9 @@ int32_t PS_CPU_Recompiler::RunReal(int32_t timestamp_in)
             break;
          }
 
-         if(IPCache != 0 && (CP0.SR & 1) != 0) {
+         /*if(IPCache != 0 && (CP0.SR & 1) != 0) {
             PC = Exception(EXCEPTION_INT, PC, PC, 0xFF, 0);
-         }
+         }*/
 
          uint32_t initPC = PC;
          block_t *block;
@@ -308,7 +218,6 @@ int32_t PS_CPU_Recompiler::RunReal(int32_t timestamp_in)
 
                   if((PC & 0x3) != 0) {
                      PC = Exception(EXCEPTION_ADEL, PC, PC, 0xFF, 0);
-                     continue;
                   }
 
                   instr = ICache[(PC & 0xFFC) >> 2].Data;
@@ -426,6 +335,10 @@ int32_t PS_CPU_Recompiler::RunReal(int32_t timestamp_in)
          if(gdebug)
             printf("Running %08x\n", initPC);
 
+         if(PC == 0xBFC02B68) {
+            printf("$6 = %08x\n", GPR[6]);
+         }
+
          block->block(
             GPR, ReadAbsorb, &ReadAbsorbWhich, &ReadFudge, 
             &LDWhich, &LDValue, &LDAbsorb
@@ -436,8 +349,10 @@ int32_t PS_CPU_Recompiler::RunReal(int32_t timestamp_in)
          if(branch_to != -1) {
             assert(branch_to_block == NULL);
             PC = branch_to;
+            printf("branching to %08x\n", branch_to);
          } else if(branch_to_block != NULL) {
             PC = branch_to_block->pc;
+            printf("branching to %08x\n", PC);
             LastBlock = (block_t *) branch_to_block;
          }
 

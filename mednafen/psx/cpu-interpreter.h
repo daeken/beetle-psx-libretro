@@ -1,11 +1,13 @@
-#ifndef __MDFN_PSX_CPU_RECOMPILER_H
-#define __MDFN_PSX_CPU_RECOMPILER_H
+#ifndef __MDFN_PSX_CPU_INTERPRETER_H
+#define __MDFN_PSX_CPU_INTERPRETER_H
 
 #include "decomp.h"
 
-class PS_CPU_Recompiler : public PS_CPU {
+bool interpret(uint32_t *state, uint32_t pc, uint32_t inst);
+
+class PS_CPU_Interpreter : public PS_CPU {
 public:
-   PS_CPU_Recompiler();
+   PS_CPU_Interpreter();
 
    int32_t RunReal(int32_t timestamp_in);
    void Interrupt(uint32_t addr);
@@ -20,6 +22,6 @@ public:
    block_t *LastBlock;
 };
 
-extern PS_CPU_Recompiler *rcpu;
+extern PS_CPU_Interpreter *icpu;
 
 #endif
