@@ -196,9 +196,9 @@ int32_t PS_CPU_Recompiler::RunReal(int32_t timestamp_in)
             break;
          }
 
-         /*if(IPCache != 0 && (CP0.SR & 1) != 0) {
+         if(IPCache != 0 && (CP0.SR & 1) != 0) {
             PC = Exception(EXCEPTION_INT, PC, PC, 0xFF, 0);
-         }*/
+         }
 
          uint32_t initPC = PC;
          block_t *block;
@@ -335,10 +335,6 @@ int32_t PS_CPU_Recompiler::RunReal(int32_t timestamp_in)
          if(gdebug)
             printf("Running %08x\n", initPC);
 
-         if(PC == 0xBFC02B68) {
-            printf("$6 = %08x\n", GPR[6]);
-         }
-
          block->block(
             GPR, ReadAbsorb, &ReadAbsorbWhich, &ReadFudge, 
             &LDWhich, &LDValue, &LDAbsorb
@@ -349,10 +345,8 @@ int32_t PS_CPU_Recompiler::RunReal(int32_t timestamp_in)
          if(branch_to != -1) {
             assert(branch_to_block == NULL);
             PC = branch_to;
-            printf("branching to %08x\n", branch_to);
          } else if(branch_to_block != NULL) {
             PC = branch_to_block->pc;
-            printf("branching to %08x\n", PC);
             LastBlock = (block_t *) branch_to_block;
          }
 
