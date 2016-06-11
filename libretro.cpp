@@ -31,6 +31,7 @@ static bool failed_init = false;
 static unsigned image_offset = 0;
 static unsigned image_crop = 0;
 static bool crop_overscan = false;
+static unsigned cpu_core = 0;
 
 // Sets how often (in number of output frames/retro_run invocations)
 // the internal framerace counter should be updated if
@@ -1341,10 +1342,10 @@ static void InitCommon(std::vector<CDIF *> *CDInterfaces, const bool EmulateMemc
       sle = tmp;
    }
 
-   if(0)
-      CPU = new PS_CPU_Interpreter();
-   else
+   if(cpu_core)
       CPU = new PS_CPU_Recompiler();
+   else
+      CPU = new PS_CPU_Interpreter();
    SPU = new PS_SPU();
    GPU = PS_GPU::Build(region == REGION_EU, sls, sle, psx_gpu_upscale_shift);
    CDC = new PS_CDC();
@@ -2486,6 +2487,16 @@ static void check_variables(bool startup)
             rsx_intf_set_type(RSX_OPENGL);
          else if (!strcmp(var.value, "opengl-rust"))
             rsx_intf_set_type(RSX_EXTERNAL_RUST);
+      }
+
+      var.key = "beetle_psx_cpu_core";
+
+      if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+      {
+         if (!strcmp(var.value, "interpreter"))
+            cpu_core = 0;
+         else if (!strcmp(var.value, "dynarec"))
+            cpu_core = 1;
       }
    }
 
@@ -3786,6 +3797,7 @@ void retro_set_environment(retro_environment_t cb)
    environ_cb = cb;
 
    static const struct retro_variable vars[] = {
+      { "beetle_psx_cpu_core", "CPU core (restart); interpreter|dynarec" },
       { "beetle_psx_renderer", "Renderer (restart); " FIRST_RENDERER EXT_RENDERER },
       { "beetle_psx_renderer_software_fb", "Software framebuffer; enabled|disabled" }, 
       { "beetle_psx_cdimagecache", "CD Image Cache (restart); disabled|enabled" },
