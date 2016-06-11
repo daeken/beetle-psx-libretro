@@ -133,6 +133,7 @@ ifneq ($(HAVE_GRIFFIN), 1)
 	$(CORE_EMU_DIR)/frontio.cpp \
 	$(CORE_EMU_DIR)/sio.cpp \
 	$(CORE_EMU_DIR)/cop.cpp \
+	$(CORE_EMU_DIR)/cputest.cpp \
 	$(CORE_EMU_DIR)/cpu.cpp \
 	$(CORE_EMU_DIR)/cpu-common.cpp \
 	$(CORE_EMU_DIR)/cpu-recompiler.cpp \

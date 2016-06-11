@@ -1341,7 +1341,7 @@ static void InitCommon(std::vector<CDIF *> *CDInterfaces, const bool EmulateMemc
       sle = tmp;
    }
 
-   if(1)
+   if(0)
       CPU = new PS_CPU_Interpreter();
    else
       CPU = new PS_CPU_Recompiler();
@@ -2511,10 +2511,10 @@ static void check_variables(bool startup)
       if (strcmp(var.value, "enabled") == 0)
          psx_cpu_overclock = true;
       else if (strcmp(var.value, "disabled") == 0)
-         psx_cpu_overclock = true;
+         psx_cpu_overclock = false;
    }
    else
-      psx_cpu_overclock = true;
+      psx_cpu_overclock = false;
    
    var.key = "beetle_psx_skipbios";
 

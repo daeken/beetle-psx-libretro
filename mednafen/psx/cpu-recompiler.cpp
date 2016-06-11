@@ -169,11 +169,21 @@ void PS_CPU_Recompiler::Interrupt(uint32_t addr) {
    longjmp(excjmpenv, addr);
 }
 
+//#define RUN_TESTS
+
 int32_t PS_CPU_Recompiler::RunReal(int32_t timestamp_in)
 {
    uint32_t PC;
    uint32_t new_PC;
    uint32_t new_PC_mask;
+
+#ifdef RUN_TESTS
+   static bool startedTest = false;
+   if(!startedTest) {
+      startedTest = true;
+      BACKED_PC = cpuTest();
+   }
+#endif
 
    gte_ts_done += timestamp_in;
    muldiv_ts_done += timestamp_in;
@@ -191,6 +201,11 @@ int32_t PS_CPU_Recompiler::RunReal(int32_t timestamp_in)
 
    do {
       while(MDFN_LIKELY(gtimestamp < next_event_ts)) {
+#ifdef RUN_TESTS
+         if((PC & 0x0FFFFFFF) == 0x0EADBEE0)
+            PC = cpuTest();
+#endif
+
          if(Halted) {
             gtimestamp = next_event_ts;
             break;
