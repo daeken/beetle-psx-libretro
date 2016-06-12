@@ -312,11 +312,11 @@ def _emitter(sexp, storing=False, locals=None):
 		return 'call_read_copcreg(func, %s, %s)' % (emitter(sexp[1]), emitter(sexp[2]))
 	elif op == 'branch':
 		if (isinstance(sexp[1], str) or isinstance(sexp[1], unicode)) and not sexp[1].startswith('temp_'):
-			return 'call_branch_block(func, rcpu->GetBlockReference(%s));' % emitter(sexp[1])
+			return 'if(!branched) call_branch_block(func, rcpu->GetBlockReference(%s));' % emitter(sexp[1])
 		else:
-			return 'call_branch(func, %s);' % (to_val(emitter(sexp[1])))
+			return 'if(!branched) call_branch(func, %s);' % (to_val(emitter(sexp[1])))
 	elif op == 'branch_default':
-		return 'call_branch_block(func, rcpu->GetBlockReference(pc + 8));'
+		return 'if(!branched) call_branch_block(func, rcpu->GetBlockReference(pc + 8));'
 	elif op == 'syscall':
 		return 'call_syscall(func, %s, %s, %s);' % (emitter(sexp[1]), emitter(sexp[2]), emitter(sexp[3]))
 	elif op == 'break_':

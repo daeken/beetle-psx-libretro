@@ -31,8 +31,6 @@ void PS_CPU_Interpreter::Interrupt(uint32_t addr) {
    longjmp(iexcjmpenv, addr);
 }
 
-//#define RUN_TESTS
-
 uint32_t defer_branch = -1;
 int32_t PS_CPU_Interpreter::RunReal(int32_t timestamp_in)
 {
@@ -165,7 +163,7 @@ int32_t PS_CPU_Interpreter::RunReal(int32_t timestamp_in)
 
          PC += 4;
 
-         if(branch_to != -1) {
+         if(branch_to != -1 && defer_branch == -1) {
             defer_branch = branch_to;
          } else if(defer_branch != -1) {
             PC = defer_branch;

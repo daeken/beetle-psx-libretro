@@ -505,7 +505,7 @@ def SRA : RType<0b000011, "sra %$rd, %$rt, $shamt",
 	(set (gpr $rd), (shra (gpr $rt), $shamt))
 >;
 
-def SRAV : RType<0b000111, "srav %$rd, %$rt, $shamt", 
+def SRAV : RType<0b000111, "srav %$rd, %$rt, $rs", 
 	(set (gpr $rd), (shra (gpr $rt), (gpr $rs)))
 >;
 
@@ -513,7 +513,7 @@ def SRL : RType<0b000010, "srl %$rd, %$rt, $shamt",
 	(set (gpr $rd), (shrl (gpr $rt), $shamt))
 >;
 
-def SRLV : RType<0b000110, "srlv %$rd, %$rt, $shamt", 
+def SRLV : RType<0b000110, "srlv %$rd, %$rt, $rs", 
 	(set (gpr $rd), (shrl (gpr $rt), (gpr $rs)))
 >;
 

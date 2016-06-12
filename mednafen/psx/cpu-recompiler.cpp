@@ -169,8 +169,6 @@ void PS_CPU_Recompiler::Interrupt(uint32_t addr) {
    longjmp(excjmpenv, addr);
 }
 
-//#define RUN_TESTS
-
 int32_t PS_CPU_Recompiler::RunReal(int32_t timestamp_in)
 {
    uint32_t PC;
@@ -304,7 +302,6 @@ int32_t PS_CPU_Recompiler::RunReal(int32_t timestamp_in)
 
                   if(branched) {
                      did_delay = true;
-                     branched = false;
                   }
 
                   if(!decompile(func, PC, instr, branched, no_delay)) {
@@ -314,7 +311,7 @@ int32_t PS_CPU_Recompiler::RunReal(int32_t timestamp_in)
 
                   //call_step(func, PC);
 
-                  assert(!branched || (!did_delay && branched)); // No branch in branch delay slot...
+                  //assert(!branched || (!did_delay && branched)); // No branch in branch delay slot...
 
                   if(branched && no_delay)
                      did_delay = true;
