@@ -34,7 +34,8 @@ void call_step(jit_function_t func, uint32_t arg);
 void call_timestamp_inc(jit_function_t func, uint32_t amount);
 void timestamp_inc(int amt);
 
-void muldiv_delay(uint32_t a, uint32_t b);
+void div_delay();
+void mul_delay(uint32_t a, uint32_t b, int signed);
 void absorb_muldiv_delay();
 
 void check_irq(uint32_t pc);

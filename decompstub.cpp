@@ -143,9 +143,13 @@ void call_timestamp_inc(jit_function_t func, uint32_t amount) {
 	jit_insn_call_native(func, 0, (void *) timestamp_inc, sig_1, args, 1, 0);
 }
 
-void call_muldiv_delay(jit_function_t func, jit_value_t a, jit_value_t b) {
-	jit_value_t args[] = {a, b};
-	jit_insn_call_native(func, 0, (void *) muldiv_delay, sig_2, args, 2, 0);
+void call_mul_delay(jit_function_t func, jit_value_t a, jit_value_t b, int is_signed) {
+	jit_value_t args[] = {a, b, make_uint(is_signed)};
+	jit_insn_call_native(func, 0, (void *) mul_delay, sig_3, args, 3, 0);
+}
+
+void call_div_delay(jit_function_t func) {
+	jit_insn_call_native(func, 0, (void *) div_delay, sig_0, NULL, 0, 0);
 }
 
 void call_absorb_muldiv_delay(jit_function_t func) {

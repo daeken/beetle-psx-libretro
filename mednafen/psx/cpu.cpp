@@ -35,7 +35,7 @@ extern bool psx_cpu_overclock;
 
 						// Does lock mode prevent the actual data payload from being modified, while allowing tags to be modified/updated???
 
-volatile int32_t gtimestamp;
+int32_t gtimestamp;
 volatile uint32_t branch_to;
 PS_CPU *cpu;
 
@@ -300,24 +300,23 @@ INLINE T PS_CPU::ReadMemory(uint32_t address, bool DS24, bool LWC_timing)
    int32_t lts = gtimestamp;
 
    if(sizeof(T) == 1)
-      ret = PSX_MemRead8(lts, address);
+      ret = PSX_MemRead8(gtimestamp, address);
    else if(sizeof(T) == 2)
-      ret = PSX_MemRead16(lts, address);
+      ret = PSX_MemRead16(gtimestamp, address);
    else
    {
       if(DS24)
-         ret = PSX_MemRead24(lts, address) & 0xFFFFFF;
+         ret = PSX_MemRead24(gtimestamp, address) & 0xFFFFFF;
       else
-         ret = PSX_MemRead32(lts, address);
+         ret = PSX_MemRead32(gtimestamp, address);
    }
 
    if(LWC_timing)
-      lts += 1;
+      gtimestamp += 1;
    else
-      lts += 2;
+      gtimestamp += 2;
 
-   LDAbsorb = (lts - gtimestamp);
-   gtimestamp = lts;
+   LDAbsorb = gtimestamp - lts;
 
    return(ret);
 }
@@ -548,8 +547,8 @@ extern bool gdebug;
 
 uint32_t load_memory(int size, uint32_t ptr, uint32_t pc) {
    // Enable full debugging in SOTN
-   if(ptr == 0x80032AB0)
-      return 1;
+   //if(ptr == 0x80032AB0)
+   //   return 1;
    uint32_t val;
    switch(size) {
       case 8:

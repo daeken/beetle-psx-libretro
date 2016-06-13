@@ -44,7 +44,7 @@
 #define GSREG_CAUSE          38
 #define GSREG_EPC            39
 
-extern volatile int32_t gtimestamp;
+extern int32_t gtimestamp;
 extern volatile uint32_t branch_to;
 
 #define BACKING_TO_ACTIVE        \

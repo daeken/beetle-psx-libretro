@@ -81,18 +81,33 @@ uint32_t cpuTest() {
 			testExpectEqual(GetGPR(3), 0);
 			testEnd();
 		
+			testStart("Load delay for COP");
+			cpu->Power();
+			SetGPR(2, 2148597760);
+			cpu->PokeMem32(2148597760, 3735928559);
+		
+			uint32_t blob_4[] = {0x8c430000, 0x4803c800, 0x10600004, 0x00000000, 0x20010001, 0x08040009, 0x00000000, 0x20010002, 0x08040009, 0x0bab6fb8, 0x00000000};
+			pc = loadBlob(0x80100000, 11, blob_4);
+			break;
+		}
+		
+		case 4: {
+			testExpectEqual(GetGPR(3), 0);
+			testExpectEqual(GetGPR(1), 1);
+			testEnd();
+		
 			testStart("Arithmetic/branching test");
 			cpu->Power();
 			SetGPR(2, 57005);
 			SetGPR(3, 0);
 			SetGPR(5, 1);
 		
-			uint32_t blob_4[] = {0x00451023, 0x24630001, 0x1c40fffd, 0x00000000, 0x0bab6fb8, 0x00000000};
-			pc = loadBlob(0x80100000, 6, blob_4);
+			uint32_t blob_5[] = {0x00451023, 0x24630001, 0x1c40fffd, 0x00000000, 0x0bab6fb8, 0x00000000};
+			pc = loadBlob(0x80100000, 6, blob_5);
 			break;
 		}
 		
-		case 4: {
+		case 5: {
 			testExpectEqual(GetGPR(2), 0);
 			testExpectEqual(GetGPR(3), 57005);
 			testExpectEqual(GetGPR(5), 1);
@@ -103,12 +118,12 @@ uint32_t cpuTest() {
 			cpu->PokeMem32(48864, 3735928559);
 			SetGPR(30, 48865);
 		
-			uint32_t blob_5[] = {0x83c10000, 0x93c20000, 0x0bab6fb8, 0x00000000};
-			pc = loadBlob(0x80100000, 4, blob_5);
+			uint32_t blob_6[] = {0x83c10000, 0x93c20000, 0x0bab6fb8, 0x00000000};
+			pc = loadBlob(0x80100000, 4, blob_6);
 			break;
 		}
 		
-		case 5: {
+		case 6: {
 			testExpectEqual(GetGPR(1), -66);
 			testExpectEqual(GetGPR(2), 190);
 			testExpectEqual(GetGPR(3), 0);
@@ -118,7 +133,7 @@ uint32_t cpuTest() {
 		}
 	}
 
-	if(testState == 6) {
+	if(testState == 7) {
 		if(failedAny)
 			exit(1);
 		exit(0);

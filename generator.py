@@ -134,7 +134,7 @@ gops = {
 	'nor' : lambda a, b: ('~', ('|', a, b)), 
 	'xor' : lambda a, b: ('^', a, b), 
 	'mul' : lambda a, b: ('*', a, b),
-	'mul64' : lambda a, b: ('*', ('signed', a, 64), ('signed', b, 64)),
+	'mul64' : lambda a, b: ('*', ('signed', ('signed', a, 32), 64), ('signed', ('signed', b, 32), 64)),
 	'umul64' : lambda a, b: ('*', ('cast', 64, a), ('cast', 64, b)),
 	'div' : lambda a, b: ('/', a, b), 
 	'mod' : lambda a, b: ('%', a, b), 
@@ -157,8 +157,8 @@ eops = {
 	'or' : lambda a, b: ('jit_insn_or', a, b), 
 	'nor' : lambda a, b: ('jit_insn_not', ('jit_insn_or', a, b)), 
 	'xor' : lambda a, b: ('jit_insn_xor', a, b), 
-	'mul' : lambda a, b: ('jit_insn_mul', a, b), # XXX: This needs to be a 64-bit mul!
-	'mul64' : lambda a, b: ('jit_insn_mul', ('cast-signed', 64, a), ('cast-signed', 64, b)),
+	'mul' : lambda a, b: ('jit_insn_mul', a, b), 
+	'mul64' : lambda a, b: ('jit_insn_mul', ('cast-signed', 64, ('cast-signed', 32, a)), ('cast-signed', 64, ('cast-signed', 32, b))),
 	'umul64' : lambda a, b: ('jit_insn_mul', ('cast', 64, a), ('cast', 64, b)),
 	'div' : lambda a, b: ('jit_insn_div', a, b), 
 	'mod' : lambda a, b: ('jit_insn_rem', a, b), 
@@ -374,8 +374,10 @@ def _emitter(sexp, storing=False, locals=None):
 		return emitter(sexp[2])
 	elif op == 'signext':
 		return 'call_signext(func, %i, %s)' % (sexp[1], emitter(sexp[2]))
-	elif op == 'muldiv_delay':
-		return 'call_muldiv_delay(func, %s, %s);' % (to_val(emitter(sexp[1])), to_val(emitter(sexp[2])))
+	elif op == 'mul_delay':
+		return 'call_mul_delay(func, %s, %s, %s);' % (to_val(emitter(sexp[1])), to_val(emitter(sexp[2])), emitter(sexp[3]))
+	elif op == 'div_delay':
+		return 'call_div_delay(func);'
 	elif op == 'read_absorb':
 		_else, _end = tempname(), tempname()
 		return [
@@ -420,8 +422,8 @@ def findDepres(dag):
 def genCommon(iname, type, dag, decomp):
 	code = [('comment', iname)]
 	#code += [('emit', ('=', ('pc', ), '$pc'))]
-	#code += [('emit', ('check_irq', ))] # per-instruction irq checking
 	if decomp:
+		#code += [('emit', ('check_irq', ))] # per-instruction irq checking
 		code += [('emit', ('read_absorb', ))]
 	vars = []
 	decoder(code, vars, type, dag)
@@ -528,8 +530,10 @@ def genInterp((iname, type, dasm, dag)):
 			return [('copfun', subgen(dag[1]), subgen(dag[2]), subgen(dag[3]))]
 		elif op == 'cast':
 			return [('cast', dag[1], subgen(dag[2]))]
-		elif op == 'muldiv_delay':
-			return [('muldiv_delay', subgen(dag[1]), subgen(dag[2]))]
+		elif op == 'mul_delay':
+			return [('mul_delay', subgen(dag[1]), subgen(dag[2]), subgen(dag[3]))]
+		elif op == 'div_delay':
+			return [('div_delay', )]
 		elif op == 'absorb_muldiv_delay':
 			return [('absorb_muldiv_delay', )]
 		else:
@@ -634,8 +638,10 @@ def genDecomp((iname, type, dasm, dag)):
 			return [('emit', ('copfun', subgen(dag[1]), subgen(dag[2]), subgen(dag[3])))]
 		elif op == 'cast':
 			return [('cast', dag[1], subgen(dag[2]))]
-		elif op == 'muldiv_delay':
-			return [('emit', ('muldiv_delay', subgen(dag[1]), subgen(dag[2])))]
+		elif op == 'mul_delay':
+			return [('emit', ('mul_delay', subgen(dag[1]), subgen(dag[2]), subgen(dag[3])))]
+		elif op == 'div_delay':
+			return [('emit', ('div_delay', ))]
 		elif op == 'absorb_muldiv_delay':
 			return [('call_absorb_muldiv_delay', 'func')]
 		else:

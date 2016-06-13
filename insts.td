@@ -55,7 +55,8 @@ def break : DagOp;
 def syscall : DagOp;
 def copfun : DagOp;
 
-def muldiv_delay : DagOp;
+def div_delay : DagOp;
+def mul_delay : DagOp;
 def absorb_muldiv_delay : DagOp;
 
 class Exception;
@@ -298,7 +299,7 @@ def DIV : RType<0b011010, "div %$rs, %$rt",
 			(block
 				(set (lo), (div (signed (gpr $rs)), (signed (gpr $rt)))), 
 				(set (hi), (mod (signed (gpr $rs)), (signed (gpr $rt)))), 
-				(muldiv_delay 0, 0))))
+				(div_delay))))
 >;
 
 def DIVU : RType<0b011011, "divu %$rs, %$rt", 
@@ -309,7 +310,7 @@ def DIVU : RType<0b011011, "divu %$rs, %$rt",
 		(block
 			(set (lo), (div (gpr $rs), (gpr $rt))), 
 			(set (hi), (mod (gpr $rs), (gpr $rt))), 
-			(muldiv_delay 0, 0)))
+			(div_delay)))
 >;
 
 
@@ -440,14 +441,14 @@ def MULT : RType<0b011000, "mult %$rs, %$rt",
 	(rlet $_t, (mul64 (gpr $rs), (gpr $rt)), 
 		(set (lo), (cast 32, $_t)), 
 		(set (hi), (cast 32, (shrl $_t, 32))), 
-		(muldiv_delay (gpr $rs), (gpr $rt)))
+		(mul_delay (gpr $rs), (gpr $rt), 1))
 >;
 
 def MULTU : RType<0b011001, "multu %$rs, %$rt", 
 	(rlet $_t, (umul64 (gpr $rs), (gpr $rt)), 
 		(set (lo), (cast 32, $_t)), 
 		(set (hi), (cast 32, (shrl $_t, 32))), 
-		(muldiv_delay (gpr $rs), (gpr $rt)))
+		(mul_delay (gpr $rs), (gpr $rt), 0))
 >;
 
 def NOR : RType<0b100111, "nor %$rd, %$rs, %$rt", 

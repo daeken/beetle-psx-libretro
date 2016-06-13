@@ -72,7 +72,7 @@ void PS_CPU_Recompiler::StashBlock(uint32_t pc, block_t *block) {
    if(pc == block->end)
       return;
 
-   for(uint32_t start = (pc & 0x1FFFFFFF) >> 12, end = (block->end & 0x1FFFFFFF) >> 12; start <= end; ++start) {
+   for(uint32_t start = (pc & 0x1FFFFFFF) >> 10, end = (block->end & 0x1FFFFFFF) >> 10; start <= end; ++start) {
       if(BlockPages[start] == NULL)
          BlockPages[start] = new list<block_t *>();
       BlockPages[start]->push_back(block);
@@ -86,20 +86,29 @@ void invalidate(uint32_t address) {
 }
 
 void PS_CPU_Recompiler::InvalidateBlocks(uint32_t addr) {
+   static uint32_t invali = 0;
    addr &= 0x1FFFFFFF;
-   uint32_t page = addr >> 12;
+   uint32_t page = addr >> 10;
+   if((addr == 0x80 || addr == 0xa0 || addr == 0xc0) && invali > 20)
+      return;
    if(BlockPages[page] == NULL || BlockPages[page]->empty())
       return;
 
-   for(list<block_t *>::iterator iter = BlockPages[page]->begin(); iter != BlockPages[page]->end(); ++iter) {
+   for(list<block_t *>::iterator iter = BlockPages[page]->begin(); iter != BlockPages[page]->end(); iter++) {
       block_t *block = *iter;
-      // XXX: This should delete the jit_function_t and closure
-      block->end = block->pc;
-      block->jit_func = NULL;
-      block->block = NULL;
+      if((block->pc & 0x1FFFFFFF) <= addr && (block->end & 0x1FFFFFFF) + 8 > addr) {
+         // XXX: This should delete the jit_function_t and closure
+         if(addr == 0x80 || addr == 0xa0 || addr == 0xc0)
+            printf("%08x [%08x-%08x] %i\n", addr, block->pc, block->end, ++invali);
+         block->end = block->pc;
+         block->jit_func = NULL;
+         block->block = NULL;
+         BlockPages[page]->erase(iter);
+         break; // Fair assumption that all writes will only affect one block?
+      }
    }
 
-   BlockPages[page]->clear();
+   //BlockPages[page]->clear();
 }
 
 void game_printf(char *fmt, uint32_t *GPR) {
@@ -205,8 +214,8 @@ int32_t PS_CPU_Recompiler::RunReal(int32_t timestamp_in)
 #endif
 
          if(Halted) {
-            gtimestamp = next_event_ts;
-            break;
+            gtimestamp += 6;
+            continue;
          }
 
          if(IPCache != 0 && (CP0.SR & 1) != 0) {
@@ -368,8 +377,10 @@ int32_t PS_CPU_Recompiler::RunReal(int32_t timestamp_in)
             uint32_t addr = GPR[4];
             while((*(at++) = PeekMem8(addr++)) != 0) {
             }
-            printf("Game log [at %08x]: ", initPC);
-            game_printf(fmt, GPR);
+            if(!(fmt[0] == 'c' && fmt[1] == 'o' && fmt[2] == 'm')) {
+               printf("Game log [at %08x]: ", initPC);
+               game_printf(fmt, GPR);
+            }
          }
          
          if(gdebug)

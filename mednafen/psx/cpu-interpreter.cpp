@@ -69,7 +69,7 @@ int32_t PS_CPU_Interpreter::RunReal(int32_t timestamp_in)
          uint32_t instr;
 
          instr = ICache[(PC & 0xFFC) >> 2].Data;
-
+         
          if(ICache[(PC & 0xFFC) >> 2].TV != PC)
          {
             ReadAbsorb[ReadAbsorbWhich] = 0;
@@ -139,17 +139,19 @@ int32_t PS_CPU_Interpreter::RunReal(int32_t timestamp_in)
 
          if(IPCache != 0) {
             if(!Halted) {
-               if((CP0.SR & 1) != 0) {
+               if(true || (CP0.SR & 1) != 0) {
+                  // Because DO_LDS() happens for interrupts in the old interp...
                   GPR[LDWhich] = LDValue;
                   ReadAbsorb[LDWhich] = LDAbsorb;
                   ReadFudge = LDWhich;
                   ReadAbsorbWhich |= (LDWhich != 35) ? (LDWhich & 0x1F) : 0;
                   LDWhich = 35;
-                  PC = Exception(EXCEPTION_INT, PC, PC, 0xFF, 0);
+                  PC = Exception(EXCEPTION_INT, PC, 4, 0xFF, instr);
                   continue;
                }
             } else {
-               continue;
+               gtimestamp = next_event_ts;
+               break;
             }
          }
 

@@ -34,11 +34,15 @@ int32_t signext(int size, uint32_t imm) {
       return (int32_t) imm;
 }
 
-void muldiv_delay(uint32_t a, uint32_t b) {
-   if(a == 0 && b == 0)
-      cpu->muldiv_ts_done = gtimestamp + 37;
-   else
+void mul_delay(uint32_t a, uint32_t b, int is_signed) {
+   if(is_signed)
       cpu->muldiv_ts_done = gtimestamp + cpu->MULT_Tab24[MDFN_lzcount32((a ^ ((int32_t) b >> 31)) | 0x400)];
+   else
+      cpu->muldiv_ts_done = gtimestamp + cpu->MULT_Tab24[MDFN_lzcount32(a | 0x400)];
+}
+
+void div_delay() {
+   cpu->muldiv_ts_done = gtimestamp + 37;
 }
 
 void absorb_muldiv_delay() {

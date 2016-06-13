@@ -201,10 +201,10 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 					TGPR(temp_14, rs);
 					TGPR(temp_15, rt);
 					DO_LDS();
-					uint64_t _t = ((int64_t) (temp_14)) * ((int64_t) (temp_15));
+					uint64_t _t = ((int64_t) ((int32_t) (temp_14))) * ((int64_t) ((int32_t) (temp_15)));
 					LO() = (uint32_t) (_t);
 					HI() = (uint32_t) ((_t) >> (0x20));
-					muldiv_delay(temp_14, temp_15);
+					mul_delay(temp_14, temp_15, 0x1);
 					return(true);
 					break;
 				}
@@ -220,7 +220,7 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 					uint64_t _t = ((uint64_t) (temp_16)) * ((uint64_t) (temp_17));
 					LO() = (uint32_t) (_t);
 					HI() = (uint32_t) ((_t) >> (0x20));
-					muldiv_delay(temp_16, temp_17);
+					mul_delay(temp_16, temp_17, 0x0);
 					return(true);
 					break;
 				}
@@ -247,7 +247,7 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 						} else {
 							LO() = ((int32_t) (temp_18)) / ((int32_t) (temp_19));
 							HI() = ((int32_t) (temp_18)) % ((int32_t) (temp_19));
-							muldiv_delay(0x0, 0x0);
+							div_delay();
 						}
 					}
 					return(true);
@@ -268,7 +268,7 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 					} else {
 						LO() = (temp_20) / (temp_21);
 						HI() = (temp_20) % (temp_21);
-						muldiv_delay(0x0, 0x0);
+						div_delay();
 					}
 					return(true);
 					break;

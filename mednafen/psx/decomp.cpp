@@ -144,9 +144,13 @@ void call_timestamp_inc(jit_function_t func, uint32_t amount) {
 	jit_insn_call_native(func, 0, (void *) timestamp_inc, sig_1, args, 1, 0);
 }
 
-void call_muldiv_delay(jit_function_t func, jit_value_t a, jit_value_t b) {
-	jit_value_t args[] = {a, b};
-	jit_insn_call_native(func, 0, (void *) muldiv_delay, sig_2, args, 2, 0);
+void call_mul_delay(jit_function_t func, jit_value_t a, jit_value_t b, int is_signed) {
+	jit_value_t args[] = {a, b, make_uint(is_signed)};
+	jit_insn_call_native(func, 0, (void *) mul_delay, sig_3, args, 3, 0);
+}
+
+void call_div_delay(jit_function_t func) {
+	jit_insn_call_native(func, 0, (void *) div_delay, sig_0, NULL, 0, 0);
 }
 
 void call_absorb_muldiv_delay(jit_function_t func) {
@@ -524,10 +528,10 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					TGPR(temp_127, rs);
 					TGPR(temp_128, rt);
 					DO_LDS();
-					jit_value_t _t = jit_insn_mul(func, jit_insn_convert(func, temp_127, jit_type_long, 0), jit_insn_convert(func, temp_128, jit_type_long, 0));
+					jit_value_t _t = jit_insn_mul(func, jit_insn_convert(func, jit_insn_convert(func, temp_127, jit_type_int, 0), jit_type_long, 0), jit_insn_convert(func, jit_insn_convert(func, temp_128, jit_type_int, 0), jit_type_long, 0));
 					WLO(jit_insn_convert(func, _t, jit_type_uint, 0))
 					WHI(jit_insn_convert(func, jit_insn_ushr(func, _t, make_uint(0x20)), jit_type_uint, 0))
-					call_muldiv_delay(func, temp_127, temp_128);
+					call_mul_delay(func, temp_127, temp_128, 0x1);
 					return(true);
 					break;
 				}
@@ -550,7 +554,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					jit_value_t _t = jit_insn_mul(func, jit_insn_convert(func, temp_129, jit_type_ulong, 0), jit_insn_convert(func, temp_130, jit_type_ulong, 0));
 					WLO(jit_insn_convert(func, _t, jit_type_uint, 0))
 					WHI(jit_insn_convert(func, jit_insn_ushr(func, _t, make_uint(0x20)), jit_type_uint, 0))
-					call_muldiv_delay(func, temp_129, temp_130);
+					call_mul_delay(func, temp_129, temp_130, 0x0);
 					return(true);
 					break;
 				}
@@ -576,7 +580,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					jit_insn_branch_if(func, jit_insn_and(func, jit_insn_eq(func, temp_131, make_uint(0x80000000)), jit_insn_eq(func, temp_132, make_uint(0xffffffff))), &temp_263);
 					WLO(jit_insn_div(func, jit_insn_convert(func, temp_131, jit_type_int, 0), jit_insn_convert(func, temp_132, jit_type_int, 0)))
 					WHI(jit_insn_rem(func, jit_insn_convert(func, temp_131, jit_type_int, 0), jit_insn_convert(func, temp_132, jit_type_int, 0)))
-					call_muldiv_delay(func, make_uint(0x0), make_uint(0x0));
+					call_div_delay(func);
 					jit_insn_branch(func, &temp_264);
 					jit_insn_label(func, &temp_263);
 					WLO(make_uint(0x80000000))
@@ -616,7 +620,7 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					jit_insn_branch_if(func, jit_insn_eq(func, temp_134, make_uint(0x0)), &temp_269);
 					WLO(jit_insn_div(func, temp_133, temp_134))
 					WHI(jit_insn_rem(func, temp_133, temp_134))
-					call_muldiv_delay(func, make_uint(0x0), make_uint(0x0));
+					call_div_delay(func);
 					jit_insn_branch(func, &temp_270);
 					jit_insn_label(func, &temp_269);
 					WLO(make_uint(0xffffffff))

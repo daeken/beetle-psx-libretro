@@ -16,7 +16,7 @@ public:
    void InvalidateBlocks(uint32_t addr);
 
    map<uint32_t, block_t *> BlockCache;
-   list<block_t *> *BlockPages[0x100000]; // A list for every page
+   list<block_t *> *BlockPages[0x400000]; // A list for every page (0x400 bytes)
    block_t *LastBlock;
 };
 
