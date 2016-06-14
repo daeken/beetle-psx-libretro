@@ -1337,7 +1337,7 @@ void PS_CDC::Write(const int32_t timestamp, uint32 A, uint8 V)
                PSX_WARNING("[CDC] Attempting to start command(0x%02x) while command results(count=%d) still in buffer.", V, ResultsIn);
             }
 
-            PendingCommandCounter = 10500 + PSX_GetRandU32(0, 3000) + 1815;
+            PendingCommandCounter = 10500 + 1500 /*PSX_GetRandU32(0, 3000)*/ + 1815;
             PendingCommand = V;
             PendingCommandPhase = -1;
             ArgsReceiveIn = 0;
@@ -1606,7 +1606,7 @@ int32 PS_CDC::CalcSeekTime(int32 initial, int32 target, bool motor_on, bool paus
    //else if(target < initial)
    // ret += 1000000;
 
-   ret += PSX_GetRandU32(0, 25000);
+   ret += 12500; //PSX_GetRandU32(0, 25000);
 
    PSX_DBG(PSX_DBG_SPARSE, "[CDC] CalcSeekTime() %d->%d = %d\n", initial, target, ret);
 
