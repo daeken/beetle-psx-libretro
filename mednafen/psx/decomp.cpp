@@ -876,7 +876,6 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_298);
 					jit_insn_label(func, &temp_297);
-					call_alignment(func, make_uint(target), 32, 0, pc);
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_298);
 					branched = true;
@@ -903,7 +902,6 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_302);
 					jit_insn_label(func, &temp_301);
-					call_alignment(func, make_uint(target), 32, 0, pc);
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_302);
 					branched = true;
@@ -930,7 +928,6 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_306);
 					jit_insn_label(func, &temp_305);
-					call_alignment(func, make_uint(target), 32, 0, pc);
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_306);
 					branched = true;
@@ -957,7 +954,6 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_310);
 					jit_insn_label(func, &temp_309);
-					call_alignment(func, make_uint(target), 32, 0, pc);
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_310);
 					branched = true;
@@ -984,7 +980,6 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_314);
 					jit_insn_label(func, &temp_313);
-					call_alignment(func, make_uint(target), 32, 0, pc);
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_314);
 					branched = true;
@@ -1011,7 +1006,6 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_318);
 					jit_insn_label(func, &temp_317);
-					call_alignment(func, make_uint(target), 32, 0, pc);
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_318);
 					branched = true;
@@ -1038,7 +1032,6 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_322);
 					jit_insn_label(func, &temp_321);
-					call_alignment(func, make_uint(target), 32, 0, pc);
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_322);
 					branched = true;
@@ -1065,7 +1058,6 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_326);
 					jit_insn_label(func, &temp_325);
-					call_alignment(func, make_uint(target), 32, 0, pc);
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_326);
 					branched = true;
@@ -1092,7 +1084,6 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_330);
 					jit_insn_label(func, &temp_329);
-					call_alignment(func, make_uint(target), 32, 0, pc);
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_330);
 					branched = true;
@@ -1119,7 +1110,6 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_334);
 					jit_insn_label(func, &temp_333);
-					call_alignment(func, make_uint(target), 32, 0, pc);
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_334);
 					branched = true;
@@ -1146,7 +1136,6 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_338);
 					jit_insn_label(func, &temp_337);
-					call_alignment(func, make_uint(target), 32, 0, pc);
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_338);
 					branched = true;
@@ -1173,7 +1162,6 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_342);
 					jit_insn_label(func, &temp_341);
-					call_alignment(func, make_uint(target), 32, 0, pc);
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_342);
 					branched = true;
@@ -1200,7 +1188,6 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_346);
 					jit_insn_label(func, &temp_345);
-					call_alignment(func, make_uint(target), 32, 0, pc);
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_346);
 					branched = true;
@@ -1227,7 +1214,6 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_350);
 					jit_insn_label(func, &temp_349);
-					call_alignment(func, make_uint(target), 32, 0, pc);
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_350);
 					branched = true;
@@ -1254,7 +1240,6 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_354);
 					jit_insn_label(func, &temp_353);
-					call_alignment(func, make_uint(target), 32, 0, pc);
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_354);
 					branched = true;
@@ -1281,7 +1266,6 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_358);
 					jit_insn_label(func, &temp_357);
-					call_alignment(func, make_uint(target), 32, 0, pc);
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_358);
 					branched = true;
@@ -1310,7 +1294,6 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_362);
 					jit_insn_label(func, &temp_361);
-					call_alignment(func, make_uint(target), 32, 0, pc);
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_362);
 					branched = true;
@@ -1339,7 +1322,6 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_366);
 					jit_insn_label(func, &temp_365);
-					call_alignment(func, make_uint(target), 32, 0, pc);
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_366);
 					branched = true;
@@ -1368,7 +1350,6 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_370);
 					jit_insn_label(func, &temp_369);
-					call_alignment(func, make_uint(target), 32, 0, pc);
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_370);
 					branched = true;
@@ -1397,7 +1378,6 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_374);
 					jit_insn_label(func, &temp_373);
-					call_alignment(func, make_uint(target), 32, 0, pc);
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_374);
 					branched = true;
@@ -1426,7 +1406,6 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_378);
 					jit_insn_label(func, &temp_377);
-					call_alignment(func, make_uint(target), 32, 0, pc);
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_378);
 					branched = true;
@@ -1455,7 +1434,6 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_382);
 					jit_insn_label(func, &temp_381);
-					call_alignment(func, make_uint(target), 32, 0, pc);
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_382);
 					branched = true;
@@ -1484,7 +1462,6 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_386);
 					jit_insn_label(func, &temp_385);
-					call_alignment(func, make_uint(target), 32, 0, pc);
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_386);
 					branched = true;
@@ -1513,7 +1490,6 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_390);
 					jit_insn_label(func, &temp_389);
-					call_alignment(func, make_uint(target), 32, 0, pc);
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_390);
 					branched = true;
@@ -1542,7 +1518,6 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_394);
 					jit_insn_label(func, &temp_393);
-					call_alignment(func, make_uint(target), 32, 0, pc);
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_394);
 					branched = true;
@@ -1571,7 +1546,6 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_398);
 					jit_insn_label(func, &temp_397);
-					call_alignment(func, make_uint(target), 32, 0, pc);
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_398);
 					branched = true;
@@ -1600,7 +1574,6 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_402);
 					jit_insn_label(func, &temp_401);
-					call_alignment(func, make_uint(target), 32, 0, pc);
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_402);
 					branched = true;
@@ -1629,7 +1602,6 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_406);
 					jit_insn_label(func, &temp_405);
-					call_alignment(func, make_uint(target), 32, 0, pc);
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_406);
 					branched = true;
@@ -1658,7 +1630,6 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_410);
 					jit_insn_label(func, &temp_409);
-					call_alignment(func, make_uint(target), 32, 0, pc);
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_410);
 					branched = true;
@@ -1687,7 +1658,6 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_414);
 					jit_insn_label(func, &temp_413);
-					call_alignment(func, make_uint(target), 32, 0, pc);
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_414);
 					branched = true;
@@ -1716,7 +1686,6 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_418);
 					jit_insn_label(func, &temp_417);
-					call_alignment(func, make_uint(target), 32, 0, pc);
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_418);
 					branched = true;
@@ -1745,7 +1714,6 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_422);
 					jit_insn_label(func, &temp_421);
-					call_alignment(func, make_uint(target), 32, 0, pc);
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_422);
 					branched = true;
@@ -1767,7 +1735,6 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 			uint32_t imm = (inst) & (0x3ffffff);
 			DO_LDS();
 			uint32_t target = (((pc) + (0x4)) & (0xf0000000)) + ((imm) << (0x2));
-			call_alignment(func, make_uint(target), 32, 0, pc);
 			if(!branched) call_branch_block(func, rcpu->GetBlockReference(target));
 			branched = true;
 			return(true);
@@ -1787,7 +1754,6 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 			DO_LDS();
 			WGPR(0x1f, jit_insn_add(func, jit_insn_add(func, make_uint(pc), make_uint(0x4)), make_uint(0x4)));
 			uint32_t target = (((pc) + (0x4)) & (0xf0000000)) + ((imm) << (0x2));
-			call_alignment(func, make_uint(target), 32, 0, pc);
 			if(!branched) call_branch_block(func, rcpu->GetBlockReference(target));
 			branched = true;
 			return(true);
@@ -1816,7 +1782,6 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 			if(!branched) call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 			jit_insn_branch(func, &temp_430);
 			jit_insn_label(func, &temp_429);
-			call_alignment(func, make_uint(target), 32, 0, pc);
 			if(!branched) call_branch_block(func, rcpu->GetBlockReference(target));
 			jit_insn_label(func, &temp_430);
 			branched = true;
@@ -1846,7 +1811,6 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 			if(!branched) call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 			jit_insn_branch(func, &temp_434);
 			jit_insn_label(func, &temp_433);
-			call_alignment(func, make_uint(target), 32, 0, pc);
 			if(!branched) call_branch_block(func, rcpu->GetBlockReference(target));
 			jit_insn_label(func, &temp_434);
 			branched = true;
@@ -1875,7 +1839,6 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_438);
 					jit_insn_label(func, &temp_437);
-					call_alignment(func, make_uint(target), 32, 0, pc);
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_438);
 					branched = true;
@@ -1907,7 +1870,6 @@ bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, 
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(pc + 8));
 					jit_insn_branch(func, &temp_442);
 					jit_insn_label(func, &temp_441);
-					call_alignment(func, make_uint(target), 32, 0, pc);
 					if(!branched) call_branch_block(func, rcpu->GetBlockReference(target));
 					jit_insn_label(func, &temp_442);
 					branched = true;

@@ -447,7 +447,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 					DO_LDS();
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_42)) < (0x0)) {
-						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -464,7 +463,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 					DO_LDS();
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_43)) >= (0x0)) {
-						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -481,7 +479,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 					DO_LDS();
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_44)) < (0x0)) {
-						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -498,7 +495,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 					DO_LDS();
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_45)) >= (0x0)) {
-						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -515,7 +511,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 					DO_LDS();
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_46)) < (0x0)) {
-						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -532,7 +527,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 					DO_LDS();
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_47)) >= (0x0)) {
-						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -549,7 +543,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 					DO_LDS();
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_48)) < (0x0)) {
-						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -566,7 +559,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 					DO_LDS();
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_49)) >= (0x0)) {
-						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -583,7 +575,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 					DO_LDS();
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_50)) < (0x0)) {
-						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -600,7 +591,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 					DO_LDS();
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_51)) >= (0x0)) {
-						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -617,7 +607,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 					DO_LDS();
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_52)) < (0x0)) {
-						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -634,7 +623,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 					DO_LDS();
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_53)) >= (0x0)) {
-						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -651,7 +639,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 					DO_LDS();
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_54)) < (0x0)) {
-						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -668,7 +655,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 					DO_LDS();
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_55)) >= (0x0)) {
-						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -685,7 +671,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 					DO_LDS();
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_56)) < (0x0)) {
-						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -702,7 +687,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 					DO_LDS();
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_57)) >= (0x0)) {
-						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -721,7 +705,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 					if((0x1f) != (0x0)) { REG(0x1f) = ((pc) + (0x4)) + (0x4); }
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_58)) < (0x0)) {
-						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -740,7 +723,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 					if((0x1f) != (0x0)) { REG(0x1f) = ((pc) + (0x4)) + (0x4); }
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_59)) >= (0x0)) {
-						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -759,7 +741,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 					if((0x1f) != (0x0)) { REG(0x1f) = ((pc) + (0x4)) + (0x4); }
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_60)) < (0x0)) {
-						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -778,7 +759,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 					if((0x1f) != (0x0)) { REG(0x1f) = ((pc) + (0x4)) + (0x4); }
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_61)) >= (0x0)) {
-						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -797,7 +777,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 					if((0x1f) != (0x0)) { REG(0x1f) = ((pc) + (0x4)) + (0x4); }
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_62)) < (0x0)) {
-						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -816,7 +795,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 					if((0x1f) != (0x0)) { REG(0x1f) = ((pc) + (0x4)) + (0x4); }
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_63)) >= (0x0)) {
-						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -835,7 +813,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 					if((0x1f) != (0x0)) { REG(0x1f) = ((pc) + (0x4)) + (0x4); }
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_64)) < (0x0)) {
-						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -854,7 +831,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 					if((0x1f) != (0x0)) { REG(0x1f) = ((pc) + (0x4)) + (0x4); }
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_65)) >= (0x0)) {
-						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -873,7 +849,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 					if((0x1f) != (0x0)) { REG(0x1f) = ((pc) + (0x4)) + (0x4); }
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_66)) < (0x0)) {
-						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -892,7 +867,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 					if((0x1f) != (0x0)) { REG(0x1f) = ((pc) + (0x4)) + (0x4); }
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_67)) >= (0x0)) {
-						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -911,7 +885,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 					if((0x1f) != (0x0)) { REG(0x1f) = ((pc) + (0x4)) + (0x4); }
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_68)) < (0x0)) {
-						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -930,7 +903,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 					if((0x1f) != (0x0)) { REG(0x1f) = ((pc) + (0x4)) + (0x4); }
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_69)) >= (0x0)) {
-						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -949,7 +921,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 					if((0x1f) != (0x0)) { REG(0x1f) = ((pc) + (0x4)) + (0x4); }
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_70)) < (0x0)) {
-						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -968,7 +939,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 					if((0x1f) != (0x0)) { REG(0x1f) = ((pc) + (0x4)) + (0x4); }
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_71)) >= (0x0)) {
-						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -987,7 +957,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 					if((0x1f) != (0x0)) { REG(0x1f) = ((pc) + (0x4)) + (0x4); }
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_72)) < (0x0)) {
-						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -1006,7 +975,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 					if((0x1f) != (0x0)) { REG(0x1f) = ((pc) + (0x4)) + (0x4); }
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_73)) >= (0x0)) {
-						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -1022,7 +990,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 			uint32_t imm = (inst) & (0x3ffffff);
 			DO_LDS();
 			uint32_t target = (((pc) + (0x4)) & (0xf0000000)) + ((imm) << (0x2));
-			alignment(target, 0x20, 0x0, pc);
 			branch_to = target;
 			return(true);
 			break;
@@ -1034,7 +1001,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 			DO_LDS();
 			if((0x1f) != (0x0)) { REG(0x1f) = ((pc) + (0x4)) + (0x4); }
 			uint32_t target = (((pc) + (0x4)) & (0xf0000000)) + ((imm) << (0x2));
-			alignment(target, 0x20, 0x0, pc);
 			branch_to = target;
 			return(true);
 			break;
@@ -1051,7 +1017,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 			DO_LDS();
 			uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 			if((temp_74) == (temp_75)) {
-				alignment(target, 0x20, 0x0, pc);
 				branch_to = target;
 			} else {
 				branch_default();
@@ -1071,7 +1036,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 			DO_LDS();
 			uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 			if((temp_76) != (temp_77)) {
-				alignment(target, 0x20, 0x0, pc);
 				branch_to = target;
 			} else {
 				branch_default();
@@ -1090,7 +1054,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 					DO_LDS();
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_78)) <= (0x0)) {
-						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();
@@ -1112,7 +1075,6 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 					DO_LDS();
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					if(((int32_t) (temp_79)) > (0x0)) {
-						alignment(target, 0x20, 0x0, pc);
 						branch_to = target;
 					} else {
 						branch_default();

@@ -162,9 +162,7 @@ def ANDI : IType<0b001100, "andi %$rt, %$rs, $eimm",
 def BEQ : IType<0b000100, "beq %$rs, %$rt, $target", 
 	(let $target, (add (pcd), (shl (signext 16, $imm), 2)), 
 		(if (eq (gpr $rs), (gpr $rt)), 
-			(block
-				(check_load_alignment $target, 32), 
-				(branch $target)), 
+			(branch $target), 
 			(branch_default)))
 >;
 
@@ -184,9 +182,7 @@ multiclass BHack<bits<6> op, bits<5> funct, string disasm, dag eval> {
 defm BGEZ : BHack<0b000001, 0b00001, "bgez %$rs, $target", 
 	(let $target, (add (pcd), (shl (signext 16, $imm), 2)), 
 		(if (ge (signed (gpr $rs)), 0), 
-			(block
-				(check_load_alignment $target, 32), 
-				(branch $target)), 
+			(branch $target), 
 			(branch_default)))
 >;
 
@@ -195,9 +191,7 @@ defm BGEZAL : BHack<0b000001, 0b10001, "bgezal %$rs, $target",
 		(set (gpr 31), (add (pcd), 4)), 
 		(let $target, (add (pcd), (shl (signext 16, $imm), 2)), 
 			(if (ge (signed (gpr $rs)), 0), 
-				(block
-					(check_load_alignment $target, 32), 
-					(branch $target)), 
+				(branch $target), 
 				(branch_default))))
 >;
 
@@ -205,9 +199,7 @@ defm BGEZAL : BHack<0b000001, 0b10001, "bgezal %$rs, $target",
 def BGTZ : RIType<0b000111, 0b00000, "bgtz %$rs, $target", 
 	(let $target, (add (pcd), (shl (signext 16, $imm), 2)), 
 		(if (gt (signed (gpr $rs)), 0), 
-			(block
-				(check_load_alignment $target, 32), 
-				(branch $target)), 
+			(branch $target), 
 			(branch_default)))
 >;
 
@@ -215,18 +207,14 @@ def BGTZ : RIType<0b000111, 0b00000, "bgtz %$rs, $target",
 def BLEZ : RIType<0b000110, 0b00000, "blez %$rs, $target", 
 	(let $target, (add (pcd), (shl (signext 16, $imm), 2)), 
 		(if (le (signed (gpr $rs)), 0), 
-			(block
-				(check_load_alignment $target, 32), 
-				(branch $target)), 
+			(branch $target), 
 			(branch_default)))
 >;
 
 defm BLTZ : BHack<0b000001, 0b00000, "bltz %$rs, $target", 
 	(let $target, (add (pcd), (shl (signext 16, $imm), 2)), 
 		(if (lt (signed (gpr $rs)), 0), 
-			(block
-				(check_load_alignment $target, 32), 
-				(branch $target)), 
+			(branch $target), 
 			(branch_default)))
 >;
 
@@ -235,18 +223,14 @@ defm BLTZAL : BHack<0b000001, 0b10000, "bltzal %$rs, $target",
 		(set (gpr 31), (add (pcd), 4)), 
 		(let $target, (add (pcd), (shl (signext 16, $imm), 2)), 
 			(if (lt (signed (gpr $rs)), 0), 
-				(block
-					(check_load_alignment $target, 32), 
-					(branch $target)), 
+				(branch $target), 
 				(branch_default))))
 >;
 
 def BNE : IType<0b000101, "bne %$rs, %$rt, $target", 
 	(let $target, (add (pcd), (shl (signext 16, $imm), 2)),  
 		(if (neq (gpr $rs), (gpr $rt)), 
-			(block
-				(check_load_alignment $target, 32), 
-				(branch $target)), 
+			(branch $target), 
 			(branch_default)))
 >;
 
@@ -317,7 +301,6 @@ def DIVU : RType<0b011011, "divu %$rs, %$rt",
 
 def J : JType<0b000010, "j $target", 
 	(let $target, (add (and (pcd), 0xF0000000), (zeroext 28, (shl $imm, 2))),  
-		(check_load_alignment $target, 32), 
 		(branch $target))
 >;
 
@@ -325,7 +308,6 @@ def JAL : JType<0b000011, "jal $target",
 	(block
 		(set (gpr 31), (add (pcd), 4)), 
 		(let $target, (add (and (pcd), 0xF0000000), (zeroext 28, (shl $imm, 2))),  
-			(check_load_alignment $target, 32), 
 			(branch $target)))
 >;
 
