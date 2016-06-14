@@ -59,6 +59,11 @@ void do_lds(jit_function_t func) {
 }
 #define DO_LDS() do_lds(func)
 
+void call_zra(jit_function_t func) {
+	WRA(LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_ubyte(0));
+	STORE(_ReadAbsorbWhich, make_ubyte(0));
+}
+
 void defer_set(jit_function_t func, int reg, jit_value_t val) {
     STORE(LDWhich, make_uint(reg));
 	STORE(LDValue, val);

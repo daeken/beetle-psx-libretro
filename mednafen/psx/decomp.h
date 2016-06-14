@@ -37,6 +37,7 @@ void timestamp_inc(int amt);
 void div_delay();
 void mul_delay(uint32_t a, uint32_t b, int signed);
 void absorb_muldiv_delay();
+void call_zra(jit_function_t func);
 
 void check_irq(uint32_t pc);
 
