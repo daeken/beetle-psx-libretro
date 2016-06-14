@@ -382,8 +382,8 @@ def _emitter(sexp, storing=False, locals=None):
 		_else, _end = tempname(), tempname()
 		return [
 			'jit_label_t %s = jit_label_undefined, %s = jit_label_undefined;' % (_else, _end), 
-			'jit_insn_branch_if(func, %s, &%s);' % (emitter(('eq', 'LOAD(_ReadAbsorbWhich, jit_type_ubyte)', 0)), _else), 
-			'STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_uint(1)));', 
+			'jit_insn_branch_if(func, %s, &%s);' % (emitter(('eq', 'LOAD(_ReadAbsorbWhich, jit_type_ubyte)', 'make_ubyte(0)')), _else), 
+			'STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_ubyte(1)));', 
 			'jit_insn_branch(func, &%s);' % _end, 
 			'jit_insn_label(func, &%s);' % _else, 
 			'call_timestamp_inc(func, 1);', 
