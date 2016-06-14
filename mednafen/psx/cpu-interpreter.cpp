@@ -71,7 +71,7 @@ int32_t PS_CPU_Interpreter::RunReal(int32_t timestamp_in)
             continue;
          }
 
-         uint32_t instr;
+         uint32_t instr, before = gtimestamp;
 
          instr = ICache[(PC & 0xFFC) >> 2].Data;
          
@@ -136,6 +136,8 @@ int32_t PS_CPU_Interpreter::RunReal(int32_t timestamp_in)
                instr = ICache[(PC & 0xFFC) >> 2].Data;
             }
          }
+
+         gtimestamp = before;
 
          if(ReadAbsorb[ReadAbsorbWhich])
             ReadAbsorb[ReadAbsorbWhich]--;
