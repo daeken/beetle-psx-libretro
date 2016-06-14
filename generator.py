@@ -380,10 +380,12 @@ def _emitter(sexp, storing=False, locals=None):
 		return 'call_div_delay(func);'
 	elif op == 'read_absorb':
 		_else, _end = tempname(), tempname()
+		raw = tempname()
 		return [
 			'jit_label_t %s = jit_label_undefined, %s = jit_label_undefined;' % (_else, _end), 
-			'jit_insn_branch_if(func, %s, &%s);' % (emitter(('eq', 'LOAD(_ReadAbsorbWhich, jit_type_ubyte)', 'make_ubyte(0)')), _else), 
-			'STORE(_ReadAbsorbWhich, jit_insn_sub(func, LOAD(_ReadAbsorbWhich, jit_type_ubyte), make_ubyte(1)));', 
+			'jit_value_t %s = LOAD(_ReadAbsorbWhich, jit_type_ubyte);' % raw, 
+			'jit_insn_branch_if(func, %s, &%s);' % (emitter(('eq', raw, 'make_ubyte(0)')), _else), 
+			'WRA(%s, jit_insn_sub(func, RRA(%s), make_ubyte(0)));' % (raw, raw), 
 			'jit_insn_branch(func, &%s);' % _end, 
 			'jit_insn_label(func, &%s);' % _else, 
 			'call_timestamp_inc(func, 1);', 

@@ -43,6 +43,7 @@ jit_value_t _make_ubyte(jit_function_t func, uint32_t val) {
 jit_type_t sig_0, sig_1, sig_1_ptr, sig_2, sig_3, sig_4, sig_5;
 jit_value_t state, _ReadAbsorb, _ReadAbsorbWhich, _ReadFudge, LDWhich, LDValue, LDAbsorb;
 
+#define RRA(idx) jit_insn_load_relative(func, jit_insn_add(func, _ReadAbsorb, idx), 0, jit_type_ubyte)
 #define WRA(idx, val) jit_insn_store_relative(func, jit_insn_add(func, _ReadAbsorb, idx), 0, (val))
 
 void do_lds(jit_function_t func) {
