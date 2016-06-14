@@ -66,6 +66,11 @@ int32_t PS_CPU_Interpreter::RunReal(int32_t timestamp_in)
             PC = cpuTest();
 #endif
 
+         if(Halted) {
+            gtimestamp += 6;
+            continue;
+         }
+
          uint32_t instr;
 
          instr = ICache[(PC & 0xFFC) >> 2].Data;
@@ -137,24 +142,6 @@ int32_t PS_CPU_Interpreter::RunReal(int32_t timestamp_in)
          else
             gtimestamp++;
 
-         if(IPCache != 0) {
-            if(!Halted) {
-               if(true || (CP0.SR & 1) != 0) {
-                  // Because DO_LDS() happens for interrupts in the old interp...
-                  GPR[LDWhich] = LDValue;
-                  ReadAbsorb[LDWhich] = LDAbsorb;
-                  ReadFudge = LDWhich;
-                  ReadAbsorbWhich |= (LDWhich != 35) ? (LDWhich & 0x1F) : 0;
-                  LDWhich = 35;
-                  PC = Exception(EXCEPTION_INT, PC, 4, 0xFF, instr);
-                  continue;
-               }
-            } else {
-               gtimestamp = next_event_ts;
-               break;
-            }
-         }
-
          //printf("running %08x\n", PC);
          branch_to = -1;
 
@@ -170,6 +157,10 @@ int32_t PS_CPU_Interpreter::RunReal(int32_t timestamp_in)
          } else if(defer_branch != -1) {
             PC = defer_branch;
             defer_branch = -1;
+            if(IPCache != 0 && (CP0.SR & 1) != 0) {
+               PC = Exception(EXCEPTION_INT, PC, PC, 0xFF, 0);
+               continue;
+            }
          }
       }
    } while(MDFN_LIKELY(PSX_EventHandler(gtimestamp)));

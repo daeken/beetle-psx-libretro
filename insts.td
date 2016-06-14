@@ -55,6 +55,7 @@ def break : DagOp;
 def syscall : DagOp;
 def copfun : DagOp;
 
+def do_load : DagOp;
 def div_delay : DagOp;
 def mul_delay : DagOp;
 def absorb_muldiv_delay : DagOp;
@@ -377,29 +378,33 @@ def LW : IType<0b100011, "lw %$rt, $offset(%$rs)",
 >;
 
 def LWL : IType<0b100010, "lwl %$rt, $offset(%$rs)", 
-	(let $simm, (signext 16, $imm), 
-		(rlet $offset, (add (gpr $rs), $simm), 
-			(rlet $bottom, (and $offset, 0x3), 
-				(rlet $moffset, (and $offset, 0xFFFFFFFC), 
-					(if (eq $bottom, 0), 
-						(defer_set (gpr $rt), (or (and (gpr $rt), 0x00FFFFFF), (shl (load 8, $moffset), 24))), 
-						(if (eq $bottom, 1), 
-							(defer_set (gpr $rt), (or (and (gpr $rt), 0x0000FFFF), (shl (load 16, $moffset), 16))), 
-							(if (eq $bottom, 2), 
-								(defer_set (gpr $rt), (or (and (gpr $rt), 0x000000FF), (shl (load 24, $moffset), 8))), 
-								(defer_set (gpr $rt), (load 32, $moffset)))))))))
+	(block
+		(do_load $rt), 
+		(let $simm, (signext 16, $imm), 
+			(rlet $offset, (add (gpr $rs), $simm), 
+				(rlet $bottom, (and $offset, 0x3), 
+					(rlet $moffset, (and $offset, 0xFFFFFFFC), 
+						(if (eq $bottom, 0), 
+							(defer_set (gpr $rt), (or (and (gpr $rt), 0x00FFFFFF), (shl (load 8, $moffset), 24))), 
+							(if (eq $bottom, 1), 
+								(defer_set (gpr $rt), (or (and (gpr $rt), 0x0000FFFF), (shl (load 16, $moffset), 16))), 
+								(if (eq $bottom, 2), 
+									(defer_set (gpr $rt), (or (and (gpr $rt), 0x000000FF), (shl (load 24, $moffset), 8))), 
+									(defer_set (gpr $rt), (load 32, $moffset))))))))))
 >;
 def LWR : IType<0b100110, "lwr %$rt, $offset(%$rs)", 
-	(let $simm, (signext 16, $imm), 
-		(rlet $offset, (add (gpr $rs), $simm), 
-			(rlet $bottom, (and $offset, 0x3), 
-				(if (eq $bottom, 0), 
-					(defer_set (gpr $rt), (load 32, $offset)), 
-					(if (eq $bottom, 1), 
-						(defer_set (gpr $rt), (or (and (gpr $rt), 0xFF000000), (load 24, $offset))), 
-						(if (eq $bottom, 2), 
-							(defer_set (gpr $rt), (or (and (gpr $rt), 0xFFFF0000), (load 16, $offset))), 
-							(defer_set (gpr $rt), (or (and (gpr $rt), 0xFFFFFF00), (load 8, $offset)))))))))
+	(block
+		(do_load $rt), 
+		(let $simm, (signext 16, $imm), 
+			(rlet $offset, (add (gpr $rs), $simm), 
+				(rlet $bottom, (and $offset, 0x3), 
+					(if (eq $bottom, 0), 
+						(defer_set (gpr $rt), (load 32, $offset)), 
+						(if (eq $bottom, 1), 
+							(defer_set (gpr $rt), (or (and (gpr $rt), 0xFF000000), (load 24, $offset))), 
+							(if (eq $bottom, 2), 
+								(defer_set (gpr $rt), (or (and (gpr $rt), 0xFFFF0000), (load 16, $offset))), 
+								(defer_set (gpr $rt), (or (and (gpr $rt), 0xFFFFFF00), (load 8, $offset))))))))))
 >;
 
 def LWC2: IType<0b110010, "lwc2 %$rt, $offset(%$rs)", 

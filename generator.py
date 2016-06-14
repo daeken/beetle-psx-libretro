@@ -389,6 +389,18 @@ def _emitter(sexp, storing=False, locals=None):
 			'call_timestamp_inc(func, 1);', 
 			'jit_insn_label(func, &%s);' % _end
 		]
+	elif op == 'do_load':
+		reg = to_val(emitter(sexp[1]))
+		return emitter(('if', 
+			('eq', 'LOAD(LDWhich, jit_type_uint)', reg), 
+			[
+				['STORE(_ReadFudge, make_ubyte(0));'], 
+				['jit_insn_store(func, %s, LOAD(LDValue, jit_type_uint));' % sexp[2]]
+			], 
+			[('DO_LDS', )]
+		))
+	elif op == 'DO_LDS':
+		return 'DO_LDS();'
 	elif op == 'check_irq':
 		return 'call_check_irq(func, pc);'
 	elif op in eops:
@@ -398,6 +410,21 @@ def _emitter(sexp, storing=False, locals=None):
 	else:
 		print 'Unknown', sexp
 	return ''
+
+def find(dag, name, cb):
+	if not isinstance(dag, list):
+		return False, dag
+
+	if dag[0] == name:
+		return True, cb(dag)
+	else:
+		any = False
+		out = []
+		for x in dag:
+			f, v = find(x, name, cb)
+			any = f or any
+			out.append(v)
+		return any, out
 
 def findDepres(dag):
 	dep, res = set(), set()
@@ -416,7 +443,6 @@ def findDepres(dag):
 		for sdep, sres in map(findDepres, dag):
 			dep.update(sdep)
 			res.update(sres)
-	dep.difference_update(res)
 	return dep, res
 
 def genCommon(iname, type, dag, decomp):
@@ -430,7 +456,8 @@ def genCommon(iname, type, dag, decomp):
 
 	dep, res = findDepres(dag)
 	if len(dep) != 0 or len(res) != 0:
-		depres = [('DEP', x) for x in dep] + [('RES', x) for x in res]
+		tdep = dep.difference(res)
+		depres = [('DEP', x) for x in tdep] + [('RES', x) for x in res]
 		code += depres
 
 	lregs = {}
@@ -439,13 +466,17 @@ def genCommon(iname, type, dag, decomp):
 		code += [('TGPR', name, reg)]
 		lregs[reg] = name
 
-	code += [('DO_LDS', )]
+	def cb(subdag):
+		return subdag + [lregs[subdag[1]]]
+	found, dag = find(dag, 'do_load', cb)
+	if not found:
+		code += [('DO_LDS', )]
 	#code += [('INSNLOG', iname)]
 
-	return code, vars, lregs
+	return dag, code, vars, lregs
 
 def genInterp((iname, type, dasm, dag)):
-	code, vars, lregs = genCommon(iname, type, dag, decomp=False)
+	dag, code, vars, lregs = genCommon(iname, type, dag, decomp=False)
 
 	def subgen(dag):
 		if isinstance(dag, str) or isinstance(dag, unicode):
@@ -536,6 +567,8 @@ def genInterp((iname, type, dasm, dag)):
 			return [('div_delay', )]
 		elif op == 'absorb_muldiv_delay':
 			return [('absorb_muldiv_delay', )]
+		elif op == 'do_load':
+			return [('do_load', subgen(dag[1]), dag[2])]
 		else:
 			print 'Unknown op:', op
 			return []
@@ -546,12 +579,12 @@ def genInterp((iname, type, dasm, dag)):
 	return code
 
 def genDecomp((iname, type, dasm, dag)):
-	code, vars, lregs = genCommon(iname, type, dag, decomp=True)
+	dag, code, vars, lregs = genCommon(iname, type, dag, decomp=True)
 
 	has_branch = [False]
 	no_delay = [False]
 
-	def subgen(dag):
+	def subgen(dag, in_set=False):
 		if isinstance(dag, str) or isinstance(dag, unicode):
 			return dag
 		elif isinstance(dag, int) or isinstance(dag, long):
@@ -575,7 +608,7 @@ def genDecomp((iname, type, dasm, dag)):
 			return ret
 		elif op == 'defer_set':
 			left = dag[1]
-			leftjs = subgen(left)
+			leftjs = subgen(left, in_set=True)
 			ret = [('emit', ('defer_set', leftjs, subgen(dag[2])))]
 			return ret
 		# XXX: Conditionals should detect if they can happen at decompile-time
@@ -595,7 +628,7 @@ def genDecomp((iname, type, dasm, dag)):
 			return [('add', '$pc', 4)] # Return the delay slot position
 		elif op == 'gpr':
 			name = subgen(dag[1])
-			if name in lregs:
+			if name in lregs and not in_set:
 				return lregs[name]
 			return ('reg', subgen(dag[1]))
 		elif op == 'copreg':
@@ -644,6 +677,8 @@ def genDecomp((iname, type, dasm, dag)):
 			return [('emit', ('div_delay', ))]
 		elif op == 'absorb_muldiv_delay':
 			return [('call_absorb_muldiv_delay', 'func')]
+		elif op == 'do_load':
+			return [('emit', ('do_load', subgen(dag[1]), dag[2]))]
 		else:
 			print 'Unknown op:', op
 			return []

@@ -16,6 +16,14 @@
 	cpu->LDWhich = 35; \
 } while(0)
 
+#define do_load(reg, tvar) do { \
+	if(cpu->LDWhich == (reg)) { \
+		cpu->ReadFudge = 0; \
+		tvar = cpu->LDValue; \
+	} else \
+		DO_LDS(); \
+} while(0)
+
 #define DEFER_SET(gpr, val) do { cpu->LDWhich = gpr; cpu->LDValue = val; } while(0)
 
 #define branch_default() do { } while(0)

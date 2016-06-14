@@ -17,6 +17,14 @@
 	cpu->LDWhich = 35; \
 } while(0)
 
+#define do_load(reg, tvar) do { \
+	if(cpu->LDWhich == (reg)) { \
+		cpu->ReadFudge = 0; \
+		tvar = cpu->LDValue; \
+	} else \
+		DO_LDS(); \
+} while(0)
+
 #define DEFER_SET(gpr, val) do { cpu->LDWhich = gpr; cpu->LDValue = val; } while(0)
 
 #define branch_default() do { } while(0)
@@ -2042,19 +2050,20 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 			DEP(rs);
 			RES(rt);
 			TGPR(temp_97, rs);
-			DO_LDS();
+			TGPR(temp_98, rt);
+			do_load(rt, temp_98);
 			uint32_t simm = signext(0x10, imm);
 			uint32_t offset = (temp_97) + (simm);
 			uint32_t bottom = (offset) & (0x3);
 			uint32_t moffset = (offset) & (0xfffffffc);
 			if((bottom) == (0x0)) {
-				if((rt) != (0x0)) { DEFER_SET(rt, ((REG(rt)) & (0xffffff)) | ((load_memory(0x8, moffset, pc)) << (0x18))); }
+				if((rt) != (0x0)) { DEFER_SET(rt, ((temp_98) & (0xffffff)) | ((load_memory(0x8, moffset, pc)) << (0x18))); }
 			} else {
 				if((bottom) == (0x1)) {
-					if((rt) != (0x0)) { DEFER_SET(rt, ((REG(rt)) & (0xffff)) | ((load_memory(0x10, moffset, pc)) << (0x10))); }
+					if((rt) != (0x0)) { DEFER_SET(rt, ((temp_98) & (0xffff)) | ((load_memory(0x10, moffset, pc)) << (0x10))); }
 				} else {
 					if((bottom) == (0x2)) {
-						if((rt) != (0x0)) { DEFER_SET(rt, ((REG(rt)) & (0xff)) | ((load_memory(0x18, moffset, pc)) << (0x8))); }
+						if((rt) != (0x0)) { DEFER_SET(rt, ((temp_98) & (0xff)) | ((load_memory(0x18, moffset, pc)) << (0x8))); }
 					} else {
 						if((rt) != (0x0)) { DEFER_SET(rt, load_memory(0x20, moffset, pc)); }
 					}
@@ -2070,10 +2079,10 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 			uint32_t imm = (inst) & (0xffff);
 			DEP(rs);
 			RES(rt);
-			TGPR(temp_98, rs);
+			TGPR(temp_99, rs);
 			DO_LDS();
 			uint32_t offset = signext(0x10, imm);
-			uint32_t addr = (temp_98) + (offset);
+			uint32_t addr = (temp_99) + (offset);
 			alignment(addr, 0x20, 0x0, pc);
 			if((rt) != (0x0)) { DEFER_SET(rt, load_memory(0x20, addr, pc)); }
 			return(true);
@@ -2086,10 +2095,10 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 			uint32_t imm = (inst) & (0xffff);
 			DEP(rs);
 			RES(rt);
-			TGPR(temp_99, rs);
+			TGPR(temp_100, rs);
 			DO_LDS();
 			uint32_t offset = signext(0x10, imm);
-			if((rt) != (0x0)) { DEFER_SET(rt, load_memory(0x8, (temp_99) + (offset), pc)); }
+			if((rt) != (0x0)) { DEFER_SET(rt, load_memory(0x8, (temp_100) + (offset), pc)); }
 			return(true);
 			break;
 		}
@@ -2100,10 +2109,10 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 			uint32_t imm = (inst) & (0xffff);
 			DEP(rs);
 			RES(rt);
-			TGPR(temp_100, rs);
+			TGPR(temp_101, rs);
 			DO_LDS();
 			uint32_t offset = signext(0x10, imm);
-			uint32_t addr = (temp_100) + (offset);
+			uint32_t addr = (temp_101) + (offset);
 			alignment(addr, 0x10, 0x0, pc);
 			if((rt) != (0x0)) { DEFER_SET(rt, load_memory(0x10, addr, pc)); }
 			return(true);
@@ -2116,21 +2125,22 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 			uint32_t imm = (inst) & (0xffff);
 			DEP(rs);
 			RES(rt);
-			TGPR(temp_101, rs);
-			DO_LDS();
+			TGPR(temp_102, rs);
+			TGPR(temp_103, rt);
+			do_load(rt, temp_103);
 			uint32_t simm = signext(0x10, imm);
-			uint32_t offset = (temp_101) + (simm);
+			uint32_t offset = (temp_102) + (simm);
 			uint32_t bottom = (offset) & (0x3);
 			if((bottom) == (0x0)) {
 				if((rt) != (0x0)) { DEFER_SET(rt, load_memory(0x20, offset, pc)); }
 			} else {
 				if((bottom) == (0x1)) {
-					if((rt) != (0x0)) { DEFER_SET(rt, ((REG(rt)) & (0xff000000)) | (load_memory(0x18, offset, pc))); }
+					if((rt) != (0x0)) { DEFER_SET(rt, ((temp_103) & (0xff000000)) | (load_memory(0x18, offset, pc))); }
 				} else {
 					if((bottom) == (0x2)) {
-						if((rt) != (0x0)) { DEFER_SET(rt, ((REG(rt)) & (0xffff0000)) | (load_memory(0x10, offset, pc))); }
+						if((rt) != (0x0)) { DEFER_SET(rt, ((temp_103) & (0xffff0000)) | (load_memory(0x10, offset, pc))); }
 					} else {
-						if((rt) != (0x0)) { DEFER_SET(rt, ((REG(rt)) & (0xffffff00)) | (load_memory(0x8, offset, pc))); }
+						if((rt) != (0x0)) { DEFER_SET(rt, ((temp_103) & (0xffffff00)) | (load_memory(0x8, offset, pc))); }
 					}
 				}
 			}
@@ -2144,11 +2154,11 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 			uint32_t imm = (inst) & (0xffff);
 			DEP(rs);
 			DEP(rt);
-			TGPR(temp_102, rs);
-			TGPR(temp_103, rt);
+			TGPR(temp_104, rs);
+			TGPR(temp_105, rt);
 			DO_LDS();
 			uint32_t offset = signext(0x10, imm);
-			store_memory(0x8, (temp_102) + (offset), temp_103, pc);
+			store_memory(0x8, (temp_104) + (offset), temp_105, pc);
 			return(true);
 			break;
 		}
@@ -2159,13 +2169,13 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 			uint32_t imm = (inst) & (0xffff);
 			DEP(rs);
 			DEP(rt);
-			TGPR(temp_104, rs);
-			TGPR(temp_105, rt);
+			TGPR(temp_106, rs);
+			TGPR(temp_107, rt);
 			DO_LDS();
 			uint32_t offset = signext(0x10, imm);
-			uint32_t addr = (temp_104) + (offset);
+			uint32_t addr = (temp_106) + (offset);
 			alignment(addr, 0x10, 0x1, pc);
-			store_memory(0x10, addr, temp_105, pc);
+			store_memory(0x10, addr, temp_107, pc);
 			return(true);
 			break;
 		}
@@ -2176,23 +2186,23 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 			uint32_t imm = (inst) & (0xffff);
 			DEP(rs);
 			DEP(rt);
-			TGPR(temp_106, rs);
-			TGPR(temp_107, rt);
+			TGPR(temp_108, rs);
+			TGPR(temp_109, rt);
 			DO_LDS();
 			uint32_t simm = signext(0x10, imm);
-			uint32_t offset = (temp_106) + (simm);
+			uint32_t offset = (temp_108) + (simm);
 			uint32_t bottom = (offset) & (0x3);
 			uint32_t moffset = (offset) & (0xfffffffc);
 			if((bottom) == (0x0)) {
-				store_memory(0x8, moffset, (temp_107) >> (0x18), pc);
+				store_memory(0x8, moffset, (temp_109) >> (0x18), pc);
 			} else {
 				if((bottom) == (0x1)) {
-					store_memory(0x10, moffset, (temp_107) >> (0x10), pc);
+					store_memory(0x10, moffset, (temp_109) >> (0x10), pc);
 				} else {
 					if((bottom) == (0x2)) {
-						store_memory(0x18, moffset, (temp_107) >> (0x8), pc);
+						store_memory(0x18, moffset, (temp_109) >> (0x8), pc);
 					} else {
-						store_memory(0x20, moffset, temp_107, pc);
+						store_memory(0x20, moffset, temp_109, pc);
 					}
 				}
 			}
@@ -2206,13 +2216,13 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 			uint32_t imm = (inst) & (0xffff);
 			DEP(rs);
 			DEP(rt);
-			TGPR(temp_108, rs);
-			TGPR(temp_109, rt);
+			TGPR(temp_110, rs);
+			TGPR(temp_111, rt);
 			DO_LDS();
 			uint32_t offset = signext(0x10, imm);
-			uint32_t addr = (temp_108) + (offset);
+			uint32_t addr = (temp_110) + (offset);
 			alignment(addr, 0x20, 0x1, pc);
-			store_memory(0x20, addr, temp_109, pc);
+			store_memory(0x20, addr, temp_111, pc);
 			return(true);
 			break;
 		}
@@ -2223,22 +2233,22 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 			uint32_t imm = (inst) & (0xffff);
 			DEP(rs);
 			DEP(rt);
-			TGPR(temp_110, rs);
-			TGPR(temp_111, rt);
+			TGPR(temp_112, rs);
+			TGPR(temp_113, rt);
 			DO_LDS();
 			uint32_t simm = signext(0x10, imm);
-			uint32_t offset = (temp_110) + (simm);
+			uint32_t offset = (temp_112) + (simm);
 			uint32_t bottom = (offset) & (0x3);
 			if((bottom) == (0x0)) {
-				store_memory(0x20, offset, temp_111, pc);
+				store_memory(0x20, offset, temp_113, pc);
 			} else {
 				if((bottom) == (0x1)) {
-					store_memory(0x18, offset, temp_111, pc);
+					store_memory(0x18, offset, temp_113, pc);
 				} else {
 					if((bottom) == (0x2)) {
-						store_memory(0x10, offset, temp_111, pc);
+						store_memory(0x10, offset, temp_113, pc);
 					} else {
-						store_memory(0x8, offset, temp_111, pc);
+						store_memory(0x8, offset, temp_113, pc);
 					}
 				}
 			}
@@ -2251,12 +2261,12 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
 			DEP(rs);
-			TGPR(temp_112, rs);
+			TGPR(temp_114, rs);
 			DO_LDS();
 			uint32_t offset = signext(0x10, imm);
-			uint32_t addr = (temp_112) + (offset);
+			uint32_t addr = (temp_114) + (offset);
 			alignment(addr, 0x20, 0x0, pc);
-			write_copreg(0x2, rt, load_memory(0x20, (temp_112) + (offset), pc));
+			write_copreg(0x2, rt, load_memory(0x20, (temp_114) + (offset), pc));
 			return(true);
 			break;
 		}
@@ -2266,10 +2276,10 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
 			DEP(rs);
-			TGPR(temp_113, rs);
+			TGPR(temp_115, rs);
 			DO_LDS();
 			uint32_t offset = signext(0x10, imm);
-			uint32_t addr = (temp_113) + (offset);
+			uint32_t addr = (temp_115) + (offset);
 			alignment(addr, 0x20, 0x1, pc);
 			store_memory(0x20, addr, read_copreg(0x2, rt), pc);
 			return(true);
