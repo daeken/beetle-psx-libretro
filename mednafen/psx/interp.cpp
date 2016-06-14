@@ -27,7 +27,7 @@
 
 #define DEFER_SET(gpr, val) do { cpu->LDWhich = gpr; cpu->LDValue = val; } while(0)
 
-#define branch_default() do { } while(0)
+#define branch_default() do { branch_to = pc + 8; } while(0)
 
 #define INSNLOG(mnem) printf(#mnem " [%08x]\n", pc);
 
