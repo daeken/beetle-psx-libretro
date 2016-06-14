@@ -157,7 +157,7 @@ class PS_CPU
          };
       } CP0;
 
-      uint8_t ReadAbsorb[0x20 + 1];
+      uint8_t ReadAbsorb[36];
       uint8_t ReadAbsorbWhich;
       uint8_t ReadFudge;
 
