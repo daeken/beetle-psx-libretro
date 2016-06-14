@@ -159,7 +159,6 @@ int32_t PS_CPU_Interpreter::RunReal(int32_t timestamp_in)
             defer_branch = -1;
             if(IPCache != 0 && (CP0.SR & 1) != 0) {
                PC = Exception(EXCEPTION_INT, PC, PC, 0xFF, 0);
-               continue;
             }
          }
       }

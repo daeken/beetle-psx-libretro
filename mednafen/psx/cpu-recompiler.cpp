@@ -361,8 +361,6 @@ int32_t PS_CPU_Recompiler::RunReal(int32_t timestamp_in)
             &LDWhich, &LDValue, &LDAbsorb
          );
 
-         PC = GPR[32] + 4; // We don't set PC after instructions
-
          if(branch_to != -1) {
             assert(branch_to_block == NULL);
             PC = branch_to;
@@ -371,7 +369,7 @@ int32_t PS_CPU_Recompiler::RunReal(int32_t timestamp_in)
             LastBlock = (block_t *) branch_to_block;
          }
 
-         if(PC == 0x80016124) {
+         /*if(PC == 0x80016124) {
             char fmt[4096];
             char *at = fmt;
             uint32_t addr = GPR[4];
@@ -381,7 +379,7 @@ int32_t PS_CPU_Recompiler::RunReal(int32_t timestamp_in)
                printf("Game log [at %08x]: ", initPC);
                game_printf(fmt, GPR);
             }
-         }
+         }*/
          
          if(gdebug)
             fflush(stdout);
