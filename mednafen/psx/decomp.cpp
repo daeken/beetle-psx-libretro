@@ -53,7 +53,7 @@ void do_lds(jit_function_t func) {
 	WRA(ldw, jit_insn_load(func, LDAbsorb));
 	STORE(_ReadFudge, CAST(ldw, jit_type_ubyte));
 	jit_label_t label = jit_label_undefined;
-	jit_insn_branch_if(func, jit_insn_eq(func, raw, make_uint(35)), &label);
+	jit_insn_branch_if(func, jit_insn_eq(func, raw, make_ubyte(35)), &label);
 	STORE(_ReadAbsorbWhich, CAST(jit_insn_or(func, raw, jit_insn_and(func, ldw, make_uint(0x1F))), jit_type_ubyte));
 	jit_insn_label(func, &label);
 	STORE(LDWhich, make_uint(35));
