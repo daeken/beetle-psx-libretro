@@ -214,8 +214,8 @@ int32_t PS_CPU_Recompiler::RunReal(int32_t timestamp_in)
 #endif
 
          if(Halted) {
-            gtimestamp += 6;
-            continue;
+            gtimestamp = next_event_ts;
+            break;
          }
 
          if(IPCache != 0 && (CP0.SR & 1) != 0) {

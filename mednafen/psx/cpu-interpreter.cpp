@@ -67,8 +67,8 @@ int32_t PS_CPU_Interpreter::RunReal(int32_t timestamp_in)
 #endif
 
          if(Halted) {
-            gtimestamp += 6;
-            continue;
+            gtimestamp = next_event_ts;
+            break;
          }
 
          uint32_t instr, before = gtimestamp;
