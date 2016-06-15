@@ -129,7 +129,7 @@ inline uint32_t PS_CPU_Recompiler::RunBlock(uint32_t PC) {
    //   printf("block %08x\n", initPC);
    map<uint32_t, block_t *>::iterator iter;
    if((LastBlock == NULL || PC != LastBlock->pc || LastBlock->block == NULL) && ((iter = BlockCache.find(PC)) == BlockCache.end() || *iter->second->block == NULL)) {
-      bool branched = false, no_delay = false, uncond = false, did_delay = false;
+      bool branched = false, no_delay = false, did_delay = false;
       jit_function_t func = create_function();
       while(!did_delay) {
             uint32_t instr;
@@ -220,8 +220,6 @@ inline uint32_t PS_CPU_Recompiler::RunBlock(uint32_t PC) {
             need_load = has_load;
 
             //call_step(func, PC);
-
-            //assert(!branched || (!did_delay && branched)); // No branch in branch delay slot...
 
             if(branched && no_delay)
                did_delay = true;
