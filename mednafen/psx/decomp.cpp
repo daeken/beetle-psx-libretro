@@ -245,7 +245,7 @@ block_func_t compile_function(jit_function_t func) {
 
 #define INSNLOG(name) printf(#name "\n")
 
-inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, bool &no_delay) {
+inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, bool &no_delay, bool &has_load, bool need_load) {
 	switch((inst) >> (0x1a)) {
 		case 0x0: {
 			switch((inst) & (0x3f)) {
@@ -265,7 +265,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					DEP(rt);
 					RES(rd);
 					TGPR(temp_116, rt);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					WGPR(rd, jit_insn_shl(func, temp_116, make_uint(shamt)));
 					return(true);
 					break;
@@ -286,7 +286,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					DEP(rt);
 					RES(rd);
 					TGPR(temp_117, rt);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					WGPR(rd, jit_insn_ushr(func, temp_117, make_uint(shamt)));
 					return(true);
 					break;
@@ -307,7 +307,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					DEP(rt);
 					RES(rd);
 					TGPR(temp_118, rt);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					WGPR(rd, jit_insn_sshr(func, temp_118, make_uint(shamt)));
 					return(true);
 					break;
@@ -330,7 +330,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					RES(rd);
 					TGPR(temp_119, rs);
 					TGPR(temp_120, rt);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					WGPR(rd, jit_insn_shl(func, temp_120, temp_119));
 					return(true);
 					break;
@@ -353,7 +353,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					RES(rd);
 					TGPR(temp_121, rs);
 					TGPR(temp_122, rt);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					WGPR(rd, jit_insn_ushr(func, temp_122, temp_121));
 					return(true);
 					break;
@@ -376,7 +376,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					RES(rd);
 					TGPR(temp_123, rs);
 					TGPR(temp_124, rt);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					WGPR(rd, jit_insn_sshr(func, temp_124, temp_123));
 					return(true);
 					break;
@@ -394,7 +394,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					uint32_t rs = ((inst) >> (0x15)) & (0x1f);
 					DEP(rs);
 					TGPR(temp_125, rs);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_alignment(func, temp_125, 32, 0, pc);
 					if(!branched) call_branch(func, temp_125);
 					branched = true;
@@ -416,7 +416,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					DEP(rs);
 					RES(rd);
 					TGPR(temp_126, rs);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					WGPR(rd, jit_insn_add(func, jit_insn_add(func, make_uint(pc), make_uint(0x4)), make_uint(0x4)));
 					call_alignment(func, temp_126, 32, 0, pc);
 					if(!branched) call_branch(func, temp_126);
@@ -435,7 +435,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					call_timestamp_inc(func, 1);
 					jit_insn_label(func, &temp_264);
 					uint32_t code = ((inst) >> (0x6)) & (0xfffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_syscall(func, code, pc, inst);
 					branched = true;
 					no_delay = true;
@@ -453,7 +453,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					call_timestamp_inc(func, 1);
 					jit_insn_label(func, &temp_268);
 					uint32_t code = ((inst) >> (0x6)) & (0xfffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_break(func, code, pc, inst);
 					branched = true;
 					no_delay = true;
@@ -472,7 +472,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_272);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					RES(rd);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					WGPR(rd, RHI());
 					call_absorb_muldiv_delay(func);
 					return(true);
@@ -491,7 +491,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					DEP(rd);
 					TGPR(temp_127, rd);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					WHI(temp_127)
 					return(true);
 					break;
@@ -508,7 +508,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_280);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					RES(rd);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					WGPR(rd, RLO());
 					call_absorb_muldiv_delay(func);
 					return(true);
@@ -527,7 +527,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					DEP(rd);
 					TGPR(temp_128, rd);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					WLO(temp_128)
 					return(true);
 					break;
@@ -548,7 +548,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					DEP(rt);
 					TGPR(temp_129, rs);
 					TGPR(temp_130, rt);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					jit_value_t _t = jit_insn_mul(func, jit_insn_convert(func, jit_insn_convert(func, temp_129, jit_type_int, 0), jit_type_long, 0), jit_insn_convert(func, jit_insn_convert(func, temp_130, jit_type_int, 0), jit_type_long, 0));
 					WLO(jit_insn_convert(func, _t, jit_type_uint, 0))
 					WHI(jit_insn_convert(func, jit_insn_ushr(func, _t, make_uint(0x20)), jit_type_uint, 0))
@@ -572,7 +572,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					DEP(rt);
 					TGPR(temp_131, rs);
 					TGPR(temp_132, rt);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					jit_value_t _t = jit_insn_mul(func, jit_insn_convert(func, temp_131, jit_type_ulong, 0), jit_insn_convert(func, temp_132, jit_type_ulong, 0));
 					WLO(jit_insn_convert(func, _t, jit_type_uint, 0))
 					WHI(jit_insn_convert(func, jit_insn_ushr(func, _t, make_uint(0x20)), jit_type_uint, 0))
@@ -596,7 +596,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					DEP(rt);
 					TGPR(temp_133, rs);
 					TGPR(temp_134, rt);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					jit_label_t temp_299 = jit_label_undefined, temp_300 = jit_label_undefined;
 					jit_insn_branch_if(func, jit_insn_eq(func, temp_134, make_uint(0x0)), &temp_299);
 					jit_label_t temp_301 = jit_label_undefined, temp_302 = jit_label_undefined;
@@ -639,7 +639,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					DEP(rt);
 					TGPR(temp_135, rs);
 					TGPR(temp_136, rt);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					jit_label_t temp_309 = jit_label_undefined, temp_310 = jit_label_undefined;
 					jit_insn_branch_if(func, jit_insn_eq(func, temp_136, make_uint(0x0)), &temp_309);
 					WLO(jit_insn_div(func, temp_135, temp_136))
@@ -671,7 +671,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					RES(rd);
 					TGPR(temp_137, rs);
 					TGPR(temp_138, rt);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_overflow(func, temp_137, temp_138, 1, pc, inst);
 					WGPR(rd, jit_insn_add(func, temp_137, temp_138));
 					return(true);
@@ -695,7 +695,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					RES(rd);
 					TGPR(temp_139, rs);
 					TGPR(temp_140, rt);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					WGPR(rd, jit_insn_add(func, temp_139, temp_140));
 					return(true);
 					break;
@@ -718,7 +718,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					RES(rd);
 					TGPR(temp_141, rs);
 					TGPR(temp_142, rt);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_overflow(func, temp_141, temp_142, -1, pc, inst);
 					WGPR(rd, jit_insn_sub(func, temp_141, temp_142));
 					return(true);
@@ -742,7 +742,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					RES(rd);
 					TGPR(temp_143, rs);
 					TGPR(temp_144, rt);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					WGPR(rd, jit_insn_sub(func, temp_143, temp_144));
 					return(true);
 					break;
@@ -765,7 +765,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					RES(rd);
 					TGPR(temp_145, rs);
 					TGPR(temp_146, rt);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					WGPR(rd, jit_insn_and(func, temp_145, temp_146));
 					return(true);
 					break;
@@ -788,7 +788,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					RES(rd);
 					TGPR(temp_147, rs);
 					TGPR(temp_148, rt);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					WGPR(rd, jit_insn_or(func, temp_147, temp_148));
 					return(true);
 					break;
@@ -811,7 +811,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					RES(rd);
 					TGPR(temp_149, rs);
 					TGPR(temp_150, rt);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					WGPR(rd, jit_insn_xor(func, temp_149, temp_150));
 					return(true);
 					break;
@@ -834,7 +834,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					RES(rd);
 					TGPR(temp_151, rs);
 					TGPR(temp_152, rt);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					WGPR(rd, jit_insn_not(func, jit_insn_or(func, temp_151, temp_152)));
 					return(true);
 					break;
@@ -857,7 +857,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					RES(rd);
 					TGPR(temp_153, rs);
 					TGPR(temp_154, rt);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					WGPR(rd, jit_insn_lt(func, jit_insn_convert(func, temp_153, jit_type_int, 0), jit_insn_convert(func, temp_154, jit_type_int, 0)));
 					return(true);
 					break;
@@ -880,7 +880,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					RES(rd);
 					TGPR(temp_155, rs);
 					TGPR(temp_156, rt);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					WGPR(rd, jit_insn_lt(func, temp_155, temp_156));
 					return(true);
 					break;
@@ -904,7 +904,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
 					TGPR(temp_157, rs);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					jit_label_t temp_355 = jit_label_undefined, temp_356 = jit_label_undefined;
 					jit_insn_branch_if(func, jit_insn_lt(func, jit_insn_convert(func, temp_157, jit_type_int, 0), make_uint(0x0)), &temp_355);
@@ -931,7 +931,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
 					TGPR(temp_158, rs);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					jit_label_t temp_361 = jit_label_undefined, temp_362 = jit_label_undefined;
 					jit_insn_branch_if(func, jit_insn_ge(func, jit_insn_convert(func, temp_158, jit_type_int, 0), make_uint(0x0)), &temp_361);
@@ -958,7 +958,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
 					TGPR(temp_159, rs);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					jit_label_t temp_367 = jit_label_undefined, temp_368 = jit_label_undefined;
 					jit_insn_branch_if(func, jit_insn_lt(func, jit_insn_convert(func, temp_159, jit_type_int, 0), make_uint(0x0)), &temp_367);
@@ -985,7 +985,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
 					TGPR(temp_160, rs);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					jit_label_t temp_373 = jit_label_undefined, temp_374 = jit_label_undefined;
 					jit_insn_branch_if(func, jit_insn_ge(func, jit_insn_convert(func, temp_160, jit_type_int, 0), make_uint(0x0)), &temp_373);
@@ -1012,7 +1012,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
 					TGPR(temp_161, rs);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					jit_label_t temp_379 = jit_label_undefined, temp_380 = jit_label_undefined;
 					jit_insn_branch_if(func, jit_insn_lt(func, jit_insn_convert(func, temp_161, jit_type_int, 0), make_uint(0x0)), &temp_379);
@@ -1039,7 +1039,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
 					TGPR(temp_162, rs);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					jit_label_t temp_385 = jit_label_undefined, temp_386 = jit_label_undefined;
 					jit_insn_branch_if(func, jit_insn_ge(func, jit_insn_convert(func, temp_162, jit_type_int, 0), make_uint(0x0)), &temp_385);
@@ -1066,7 +1066,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
 					TGPR(temp_163, rs);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					jit_label_t temp_391 = jit_label_undefined, temp_392 = jit_label_undefined;
 					jit_insn_branch_if(func, jit_insn_lt(func, jit_insn_convert(func, temp_163, jit_type_int, 0), make_uint(0x0)), &temp_391);
@@ -1093,7 +1093,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
 					TGPR(temp_164, rs);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					jit_label_t temp_397 = jit_label_undefined, temp_398 = jit_label_undefined;
 					jit_insn_branch_if(func, jit_insn_ge(func, jit_insn_convert(func, temp_164, jit_type_int, 0), make_uint(0x0)), &temp_397);
@@ -1120,7 +1120,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
 					TGPR(temp_165, rs);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					jit_label_t temp_403 = jit_label_undefined, temp_404 = jit_label_undefined;
 					jit_insn_branch_if(func, jit_insn_lt(func, jit_insn_convert(func, temp_165, jit_type_int, 0), make_uint(0x0)), &temp_403);
@@ -1147,7 +1147,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
 					TGPR(temp_166, rs);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					jit_label_t temp_409 = jit_label_undefined, temp_410 = jit_label_undefined;
 					jit_insn_branch_if(func, jit_insn_ge(func, jit_insn_convert(func, temp_166, jit_type_int, 0), make_uint(0x0)), &temp_409);
@@ -1174,7 +1174,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
 					TGPR(temp_167, rs);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					jit_label_t temp_415 = jit_label_undefined, temp_416 = jit_label_undefined;
 					jit_insn_branch_if(func, jit_insn_lt(func, jit_insn_convert(func, temp_167, jit_type_int, 0), make_uint(0x0)), &temp_415);
@@ -1201,7 +1201,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
 					TGPR(temp_168, rs);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					jit_label_t temp_421 = jit_label_undefined, temp_422 = jit_label_undefined;
 					jit_insn_branch_if(func, jit_insn_ge(func, jit_insn_convert(func, temp_168, jit_type_int, 0), make_uint(0x0)), &temp_421);
@@ -1228,7 +1228,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
 					TGPR(temp_169, rs);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					jit_label_t temp_427 = jit_label_undefined, temp_428 = jit_label_undefined;
 					jit_insn_branch_if(func, jit_insn_lt(func, jit_insn_convert(func, temp_169, jit_type_int, 0), make_uint(0x0)), &temp_427);
@@ -1255,7 +1255,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
 					TGPR(temp_170, rs);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					jit_label_t temp_433 = jit_label_undefined, temp_434 = jit_label_undefined;
 					jit_insn_branch_if(func, jit_insn_ge(func, jit_insn_convert(func, temp_170, jit_type_int, 0), make_uint(0x0)), &temp_433);
@@ -1282,7 +1282,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
 					TGPR(temp_171, rs);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					jit_label_t temp_439 = jit_label_undefined, temp_440 = jit_label_undefined;
 					jit_insn_branch_if(func, jit_insn_lt(func, jit_insn_convert(func, temp_171, jit_type_int, 0), make_uint(0x0)), &temp_439);
@@ -1309,7 +1309,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
 					TGPR(temp_172, rs);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					jit_label_t temp_445 = jit_label_undefined, temp_446 = jit_label_undefined;
 					jit_insn_branch_if(func, jit_insn_ge(func, jit_insn_convert(func, temp_172, jit_type_int, 0), make_uint(0x0)), &temp_445);
@@ -1337,7 +1337,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					DEP(rs);
 					RES(0x1f);
 					TGPR(temp_173, rs);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					WGPR(0x1f, jit_insn_add(func, jit_insn_add(func, make_uint(pc), make_uint(0x4)), make_uint(0x4)));
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					jit_label_t temp_451 = jit_label_undefined, temp_452 = jit_label_undefined;
@@ -1366,7 +1366,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					DEP(rs);
 					RES(0x1f);
 					TGPR(temp_174, rs);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					WGPR(0x1f, jit_insn_add(func, jit_insn_add(func, make_uint(pc), make_uint(0x4)), make_uint(0x4)));
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					jit_label_t temp_457 = jit_label_undefined, temp_458 = jit_label_undefined;
@@ -1395,7 +1395,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					DEP(rs);
 					RES(0x1f);
 					TGPR(temp_175, rs);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					WGPR(0x1f, jit_insn_add(func, jit_insn_add(func, make_uint(pc), make_uint(0x4)), make_uint(0x4)));
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					jit_label_t temp_463 = jit_label_undefined, temp_464 = jit_label_undefined;
@@ -1424,7 +1424,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					DEP(rs);
 					RES(0x1f);
 					TGPR(temp_176, rs);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					WGPR(0x1f, jit_insn_add(func, jit_insn_add(func, make_uint(pc), make_uint(0x4)), make_uint(0x4)));
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					jit_label_t temp_469 = jit_label_undefined, temp_470 = jit_label_undefined;
@@ -1453,7 +1453,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					DEP(rs);
 					RES(0x1f);
 					TGPR(temp_177, rs);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					WGPR(0x1f, jit_insn_add(func, jit_insn_add(func, make_uint(pc), make_uint(0x4)), make_uint(0x4)));
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					jit_label_t temp_475 = jit_label_undefined, temp_476 = jit_label_undefined;
@@ -1482,7 +1482,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					DEP(rs);
 					RES(0x1f);
 					TGPR(temp_178, rs);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					WGPR(0x1f, jit_insn_add(func, jit_insn_add(func, make_uint(pc), make_uint(0x4)), make_uint(0x4)));
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					jit_label_t temp_481 = jit_label_undefined, temp_482 = jit_label_undefined;
@@ -1511,7 +1511,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					DEP(rs);
 					RES(0x1f);
 					TGPR(temp_179, rs);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					WGPR(0x1f, jit_insn_add(func, jit_insn_add(func, make_uint(pc), make_uint(0x4)), make_uint(0x4)));
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					jit_label_t temp_487 = jit_label_undefined, temp_488 = jit_label_undefined;
@@ -1540,7 +1540,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					DEP(rs);
 					RES(0x1f);
 					TGPR(temp_180, rs);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					WGPR(0x1f, jit_insn_add(func, jit_insn_add(func, make_uint(pc), make_uint(0x4)), make_uint(0x4)));
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					jit_label_t temp_493 = jit_label_undefined, temp_494 = jit_label_undefined;
@@ -1569,7 +1569,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					DEP(rs);
 					RES(0x1f);
 					TGPR(temp_181, rs);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					WGPR(0x1f, jit_insn_add(func, jit_insn_add(func, make_uint(pc), make_uint(0x4)), make_uint(0x4)));
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					jit_label_t temp_499 = jit_label_undefined, temp_500 = jit_label_undefined;
@@ -1598,7 +1598,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					DEP(rs);
 					RES(0x1f);
 					TGPR(temp_182, rs);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					WGPR(0x1f, jit_insn_add(func, jit_insn_add(func, make_uint(pc), make_uint(0x4)), make_uint(0x4)));
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					jit_label_t temp_505 = jit_label_undefined, temp_506 = jit_label_undefined;
@@ -1627,7 +1627,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					DEP(rs);
 					RES(0x1f);
 					TGPR(temp_183, rs);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					WGPR(0x1f, jit_insn_add(func, jit_insn_add(func, make_uint(pc), make_uint(0x4)), make_uint(0x4)));
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					jit_label_t temp_511 = jit_label_undefined, temp_512 = jit_label_undefined;
@@ -1656,7 +1656,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					DEP(rs);
 					RES(0x1f);
 					TGPR(temp_184, rs);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					WGPR(0x1f, jit_insn_add(func, jit_insn_add(func, make_uint(pc), make_uint(0x4)), make_uint(0x4)));
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					jit_label_t temp_517 = jit_label_undefined, temp_518 = jit_label_undefined;
@@ -1685,7 +1685,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					DEP(rs);
 					RES(0x1f);
 					TGPR(temp_185, rs);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					WGPR(0x1f, jit_insn_add(func, jit_insn_add(func, make_uint(pc), make_uint(0x4)), make_uint(0x4)));
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					jit_label_t temp_523 = jit_label_undefined, temp_524 = jit_label_undefined;
@@ -1714,7 +1714,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					DEP(rs);
 					RES(0x1f);
 					TGPR(temp_186, rs);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					WGPR(0x1f, jit_insn_add(func, jit_insn_add(func, make_uint(pc), make_uint(0x4)), make_uint(0x4)));
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					jit_label_t temp_529 = jit_label_undefined, temp_530 = jit_label_undefined;
@@ -1743,7 +1743,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					DEP(rs);
 					RES(0x1f);
 					TGPR(temp_187, rs);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					WGPR(0x1f, jit_insn_add(func, jit_insn_add(func, make_uint(pc), make_uint(0x4)), make_uint(0x4)));
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					jit_label_t temp_535 = jit_label_undefined, temp_536 = jit_label_undefined;
@@ -1772,7 +1772,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					DEP(rs);
 					RES(0x1f);
 					TGPR(temp_188, rs);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					WGPR(0x1f, jit_insn_add(func, jit_insn_add(func, make_uint(pc), make_uint(0x4)), make_uint(0x4)));
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					jit_label_t temp_541 = jit_label_undefined, temp_542 = jit_label_undefined;
@@ -1800,7 +1800,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 			call_timestamp_inc(func, 1);
 			jit_insn_label(func, &temp_544);
 			uint32_t imm = (inst) & (0x3ffffff);
-			DO_LDS();
+			if(need_load) { DO_LDS(); }
 			uint32_t target = (((pc) + (0x4)) & (0xf0000000)) + ((imm) << (0x2));
 			if(!branched) call_branch_block(func, rcpu->GetBlockReference(target));
 			branched = true;
@@ -1819,7 +1819,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 			jit_insn_label(func, &temp_548);
 			uint32_t imm = (inst) & (0x3ffffff);
 			RES(0x1f);
-			DO_LDS();
+			if(need_load) { DO_LDS(); }
 			WGPR(0x1f, jit_insn_add(func, jit_insn_add(func, make_uint(pc), make_uint(0x4)), make_uint(0x4)));
 			uint32_t target = (((pc) + (0x4)) & (0xf0000000)) + ((imm) << (0x2));
 			if(!branched) call_branch_block(func, rcpu->GetBlockReference(target));
@@ -1844,7 +1844,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 			DEP(rt);
 			TGPR(temp_189, rs);
 			TGPR(temp_190, rt);
-			DO_LDS();
+			if(need_load) { DO_LDS(); }
 			uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 			jit_label_t temp_555 = jit_label_undefined, temp_556 = jit_label_undefined;
 			jit_insn_branch_if(func, jit_insn_eq(func, temp_189, temp_190), &temp_555);
@@ -1874,7 +1874,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 			DEP(rt);
 			TGPR(temp_191, rs);
 			TGPR(temp_192, rt);
-			DO_LDS();
+			if(need_load) { DO_LDS(); }
 			uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 			jit_label_t temp_561 = jit_label_undefined, temp_562 = jit_label_undefined;
 			jit_insn_branch_if(func, jit_insn_ne(func, temp_191, temp_192), &temp_561);
@@ -1903,7 +1903,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
 					TGPR(temp_193, rs);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					jit_label_t temp_567 = jit_label_undefined, temp_568 = jit_label_undefined;
 					jit_insn_branch_if(func, jit_insn_le(func, jit_insn_convert(func, temp_193, jit_type_int, 0), make_uint(0x0)), &temp_567);
@@ -1935,7 +1935,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					uint32_t imm = (inst) & (0xffff);
 					DEP(rs);
 					TGPR(temp_194, rs);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					uint32_t target = ((pc) + (0x4)) + ((signext(0x10, imm)) << (0x2));
 					jit_label_t temp_573 = jit_label_undefined, temp_574 = jit_label_undefined;
 					jit_insn_branch_if(func, jit_insn_gt(func, jit_insn_convert(func, temp_194, jit_type_int, 0), make_uint(0x0)), &temp_573);
@@ -1967,7 +1967,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 			DEP(rs);
 			RES(rt);
 			TGPR(temp_195, rs);
-			DO_LDS();
+			if(need_load) { DO_LDS(); }
 			uint32_t eimm = signext(0x10, imm);
 			call_overflow(func, temp_195, make_uint(eimm), 1, pc, inst);
 			WGPR(rt, jit_insn_add(func, temp_195, make_uint(eimm)));
@@ -1990,7 +1990,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 			DEP(rs);
 			RES(rt);
 			TGPR(temp_196, rs);
-			DO_LDS();
+			if(need_load) { DO_LDS(); }
 			uint32_t eimm = signext(0x10, imm);
 			WGPR(rt, jit_insn_add(func, temp_196, make_uint(eimm)));
 			return(true);
@@ -2012,7 +2012,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 			DEP(rs);
 			RES(rt);
 			TGPR(temp_197, rs);
-			DO_LDS();
+			if(need_load) { DO_LDS(); }
 			uint32_t eimm = signext(0x10, imm);
 			WGPR(rt, jit_insn_lt(func, jit_insn_convert(func, temp_197, jit_type_int, 0), jit_insn_convert(func, make_uint(eimm), jit_type_int, 0)));
 			return(true);
@@ -2034,7 +2034,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 			DEP(rs);
 			RES(rt);
 			TGPR(temp_198, rs);
-			DO_LDS();
+			if(need_load) { DO_LDS(); }
 			uint32_t eimm = signext(0x10, imm);
 			WGPR(rt, jit_insn_lt(func, temp_198, make_uint(eimm)));
 			return(true);
@@ -2056,7 +2056,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 			DEP(rs);
 			RES(rt);
 			TGPR(temp_199, rs);
-			DO_LDS();
+			if(need_load) { DO_LDS(); }
 			uint32_t eimm = imm;
 			WGPR(rt, jit_insn_and(func, temp_199, make_uint(eimm)));
 			return(true);
@@ -2078,7 +2078,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 			DEP(rs);
 			RES(rt);
 			TGPR(temp_200, rs);
-			DO_LDS();
+			if(need_load) { DO_LDS(); }
 			uint32_t eimm = imm;
 			WGPR(rt, jit_insn_or(func, temp_200, make_uint(eimm)));
 			return(true);
@@ -2100,7 +2100,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 			DEP(rs);
 			RES(rt);
 			TGPR(temp_201, rs);
-			DO_LDS();
+			if(need_load) { DO_LDS(); }
 			uint32_t eimm = imm;
 			WGPR(rt, jit_insn_xor(func, temp_201, make_uint(eimm)));
 			return(true);
@@ -2119,7 +2119,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 			uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 			uint32_t imm = (inst) & (0xffff);
 			RES(rt);
-			DO_LDS();
+			if(need_load) { DO_LDS(); }
 			WGPR(rt, jit_insn_shl(func, make_uint(imm), make_uint(0x10)));
 			return(true);
 			break;
@@ -2140,8 +2140,9 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					RES(rt);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					defer_set(func, rt, call_read_copreg(func, cop, rd));
+					has_load = true;
 					return(true);
 					break;
 				}
@@ -2159,7 +2160,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					RES(rt);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					WGPR(rt, call_read_copcreg(func, cop, rd));
 					return(true);
 					break;
@@ -2179,7 +2180,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					DEP(rt);
 					TGPR(temp_202, rt);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_write_copreg(func, cop, rd, temp_202);
 					return(true);
 					break;
@@ -2199,7 +2200,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					DEP(rt);
 					TGPR(temp_203, rt);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_write_copcreg(func, cop, rd, temp_203);
 					return(true);
 					break;
@@ -2216,7 +2217,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_624);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -2233,7 +2234,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_628);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -2250,7 +2251,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_632);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -2267,7 +2268,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_636);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -2284,7 +2285,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_640);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -2301,7 +2302,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_644);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -2318,7 +2319,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_648);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -2335,7 +2336,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_652);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -2352,7 +2353,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_656);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -2369,7 +2370,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_660);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -2386,7 +2387,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_664);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -2403,7 +2404,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_668);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -2420,7 +2421,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_672);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -2437,7 +2438,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_676);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -2454,7 +2455,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_680);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -2471,7 +2472,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_684);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -2495,8 +2496,9 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					RES(rt);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					defer_set(func, rt, call_read_copreg(func, cop, rd));
+					has_load = true;
 					return(true);
 					break;
 				}
@@ -2514,7 +2516,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					RES(rt);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					WGPR(rt, call_read_copcreg(func, cop, rd));
 					return(true);
 					break;
@@ -2534,7 +2536,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					DEP(rt);
 					TGPR(temp_204, rt);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_write_copreg(func, cop, rd, temp_204);
 					return(true);
 					break;
@@ -2554,7 +2556,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					DEP(rt);
 					TGPR(temp_205, rt);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_write_copcreg(func, cop, rd, temp_205);
 					return(true);
 					break;
@@ -2571,7 +2573,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_704);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -2588,7 +2590,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_708);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -2605,7 +2607,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_712);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -2622,7 +2624,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_716);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -2639,7 +2641,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_720);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -2656,7 +2658,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_724);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -2673,7 +2675,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_728);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -2690,7 +2692,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_732);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -2707,7 +2709,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_736);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -2724,7 +2726,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_740);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -2741,7 +2743,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_744);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -2758,7 +2760,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_748);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -2775,7 +2777,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_752);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -2792,7 +2794,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_756);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -2809,7 +2811,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_760);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -2826,7 +2828,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_764);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -2850,8 +2852,9 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					RES(rt);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					defer_set(func, rt, call_read_copreg(func, cop, rd));
+					has_load = true;
 					return(true);
 					break;
 				}
@@ -2869,7 +2872,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					RES(rt);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					WGPR(rt, call_read_copcreg(func, cop, rd));
 					return(true);
 					break;
@@ -2889,7 +2892,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					DEP(rt);
 					TGPR(temp_206, rt);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_write_copreg(func, cop, rd, temp_206);
 					return(true);
 					break;
@@ -2909,7 +2912,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					DEP(rt);
 					TGPR(temp_207, rt);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_write_copcreg(func, cop, rd, temp_207);
 					return(true);
 					break;
@@ -2926,7 +2929,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_784);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -2943,7 +2946,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_788);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -2960,7 +2963,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_792);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -2977,7 +2980,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_796);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -2994,7 +2997,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_800);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -3011,7 +3014,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_804);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -3028,7 +3031,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_808);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -3045,7 +3048,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_812);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -3062,7 +3065,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_816);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -3079,7 +3082,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_820);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -3096,7 +3099,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_824);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -3113,7 +3116,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_828);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -3130,7 +3133,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_832);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -3147,7 +3150,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_836);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -3164,7 +3167,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_840);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -3181,7 +3184,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_844);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -3205,8 +3208,9 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					RES(rt);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					defer_set(func, rt, call_read_copreg(func, cop, rd));
+					has_load = true;
 					return(true);
 					break;
 				}
@@ -3224,7 +3228,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					uint32_t rt = ((inst) >> (0x10)) & (0x1f);
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					RES(rt);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					WGPR(rt, call_read_copcreg(func, cop, rd));
 					return(true);
 					break;
@@ -3244,7 +3248,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					DEP(rt);
 					TGPR(temp_208, rt);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_write_copreg(func, cop, rd, temp_208);
 					return(true);
 					break;
@@ -3264,7 +3268,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					DEP(rt);
 					TGPR(temp_209, rt);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_write_copcreg(func, cop, rd, temp_209);
 					return(true);
 					break;
@@ -3281,7 +3285,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_864);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -3298,7 +3302,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_868);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -3315,7 +3319,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_872);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -3332,7 +3336,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_876);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -3349,7 +3353,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_880);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -3366,7 +3370,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_884);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -3383,7 +3387,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_888);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -3400,7 +3404,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_892);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -3417,7 +3421,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_896);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -3434,7 +3438,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_900);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -3451,7 +3455,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_904);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -3468,7 +3472,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_908);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -3485,7 +3489,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_912);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -3502,7 +3506,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_916);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -3519,7 +3523,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_920);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -3536,7 +3540,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 					jit_insn_label(func, &temp_924);
 					uint32_t cop = ((inst) >> (0x1a)) & (0x3);
 					uint32_t cofun = (inst) & (0x1ffffff);
-					DO_LDS();
+					if(need_load) { DO_LDS(); }
 					call_copfun(func, cop, cofun, inst);
 					return(true);
 					break;
@@ -3560,9 +3564,10 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 			DEP(rs);
 			RES(rt);
 			TGPR(temp_210, rs);
-			DO_LDS();
+			if(need_load) { DO_LDS(); }
 			uint32_t offset = signext(0x10, imm);
 			defer_set(func, rt, call_signext(func, 8, call_load_memory(func, 8, jit_insn_add(func, temp_210, make_uint(offset)), pc)));
+			has_load = true;
 			return(true);
 			break;
 		}
@@ -3582,11 +3587,12 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 			DEP(rs);
 			RES(rt);
 			TGPR(temp_211, rs);
-			DO_LDS();
+			if(need_load) { DO_LDS(); }
 			uint32_t offset = signext(0x10, imm);
 			jit_value_t addr = jit_insn_add(func, temp_211, make_uint(offset));
 			call_alignment(func, addr, 16, 0, pc);
 			defer_set(func, rt, call_signext(func, 16, call_load_memory(func, 16, addr, pc)));
+			has_load = true;
 			return(true);
 			break;
 		}
@@ -3638,6 +3644,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 			jit_insn_label(func, &temp_941);
 			defer_set(func, rt, jit_insn_or(func, jit_insn_and(func, temp_213, make_uint(0xffffff)), jit_insn_shl(func, call_load_memory(func, 8, moffset, pc), make_uint(0x18))));
 			jit_insn_label(func, &temp_942);
+			has_load = true;
 			return(true);
 			break;
 		}
@@ -3657,11 +3664,12 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 			DEP(rs);
 			RES(rt);
 			TGPR(temp_214, rs);
-			DO_LDS();
+			if(need_load) { DO_LDS(); }
 			uint32_t offset = signext(0x10, imm);
 			jit_value_t addr = jit_insn_add(func, temp_214, make_uint(offset));
 			call_alignment(func, addr, 32, 0, pc);
 			defer_set(func, rt, call_load_memory(func, 32, addr, pc));
+			has_load = true;
 			return(true);
 			break;
 		}
@@ -3681,9 +3689,10 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 			DEP(rs);
 			RES(rt);
 			TGPR(temp_215, rs);
-			DO_LDS();
+			if(need_load) { DO_LDS(); }
 			uint32_t offset = signext(0x10, imm);
 			defer_set(func, rt, call_load_memory(func, 8, jit_insn_add(func, temp_215, make_uint(offset)), pc));
+			has_load = true;
 			return(true);
 			break;
 		}
@@ -3703,11 +3712,12 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 			DEP(rs);
 			RES(rt);
 			TGPR(temp_216, rs);
-			DO_LDS();
+			if(need_load) { DO_LDS(); }
 			uint32_t offset = signext(0x10, imm);
 			jit_value_t addr = jit_insn_add(func, temp_216, make_uint(offset));
 			call_alignment(func, addr, 16, 0, pc);
 			defer_set(func, rt, call_load_memory(func, 16, addr, pc));
+			has_load = true;
 			return(true);
 			break;
 		}
@@ -3758,6 +3768,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 			jit_insn_label(func, &temp_965);
 			defer_set(func, rt, call_load_memory(func, 32, offset, pc));
 			jit_insn_label(func, &temp_966);
+			has_load = true;
 			return(true);
 			break;
 		}
@@ -3778,7 +3789,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 			DEP(rt);
 			TGPR(temp_219, rs);
 			TGPR(temp_220, rt);
-			DO_LDS();
+			if(need_load) { DO_LDS(); }
 			uint32_t offset = signext(0x10, imm);
 			call_store_memory(func, 8, jit_insn_add(func, temp_219, make_uint(offset)), temp_220, pc);
 			return(true);
@@ -3801,7 +3812,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 			DEP(rt);
 			TGPR(temp_221, rs);
 			TGPR(temp_222, rt);
-			DO_LDS();
+			if(need_load) { DO_LDS(); }
 			uint32_t offset = signext(0x10, imm);
 			jit_value_t addr = jit_insn_add(func, temp_221, make_uint(offset));
 			call_alignment(func, addr, 16, 1, pc);
@@ -3826,7 +3837,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 			DEP(rt);
 			TGPR(temp_223, rs);
 			TGPR(temp_224, rt);
-			DO_LDS();
+			if(need_load) { DO_LDS(); }
 			uint32_t simm = signext(0x10, imm);
 			jit_value_t offset = jit_insn_add(func, temp_223, make_uint(simm));
 			jit_value_t bottom = jit_insn_and(func, offset, make_uint(0x3));
@@ -3870,7 +3881,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 			DEP(rt);
 			TGPR(temp_225, rs);
 			TGPR(temp_226, rt);
-			DO_LDS();
+			if(need_load) { DO_LDS(); }
 			uint32_t offset = signext(0x10, imm);
 			jit_value_t addr = jit_insn_add(func, temp_225, make_uint(offset));
 			call_alignment(func, addr, 32, 1, pc);
@@ -3895,7 +3906,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 			DEP(rt);
 			TGPR(temp_227, rs);
 			TGPR(temp_228, rt);
-			DO_LDS();
+			if(need_load) { DO_LDS(); }
 			uint32_t simm = signext(0x10, imm);
 			jit_value_t offset = jit_insn_add(func, temp_227, make_uint(simm));
 			jit_value_t bottom = jit_insn_and(func, offset, make_uint(0x3));
@@ -3936,7 +3947,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 			uint32_t imm = (inst) & (0xffff);
 			DEP(rs);
 			TGPR(temp_229, rs);
-			DO_LDS();
+			if(need_load) { DO_LDS(); }
 			uint32_t offset = signext(0x10, imm);
 			jit_value_t addr = jit_insn_add(func, temp_229, make_uint(offset));
 			call_alignment(func, addr, 32, 0, pc);
@@ -3959,7 +3970,7 @@ inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &bra
 			uint32_t imm = (inst) & (0xffff);
 			DEP(rs);
 			TGPR(temp_230, rs);
-			DO_LDS();
+			if(need_load) { DO_LDS(); }
 			uint32_t offset = signext(0x10, imm);
 			jit_value_t addr = jit_insn_add(func, temp_230, make_uint(offset));
 			call_alignment(func, addr, 32, 1, pc);

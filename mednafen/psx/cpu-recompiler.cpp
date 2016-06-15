@@ -122,6 +122,7 @@ PS_CPU_Recompiler::PS_CPU_Recompiler() {
 }
 
 inline uint32_t PS_CPU_Recompiler::RunBlock(uint32_t PC) {
+   bool need_load = true;
    uint32_t initPC = PC;
    block_t *block;
    //if(LastBlock == NULL || initPC != LastBlock->pc)
@@ -209,10 +210,14 @@ inline uint32_t PS_CPU_Recompiler::RunBlock(uint32_t PC) {
                did_delay = true;
             }
 
-            if(!decompile(func, PC, instr, branched, no_delay)) {
+            bool has_load = false;
+
+            if(!decompile(func, PC, instr, branched, no_delay, has_load, need_load)) {
                printf("[CPU] Unknown instruction @%08x = %08x, op=%02x, funct=%02x\n", PC, instr, instr >> 26, (instr & 0x3F));
                exit(0); // XXX: Handle this properly...
             }
+
+            need_load = has_load;
 
             //call_step(func, PC);
 
