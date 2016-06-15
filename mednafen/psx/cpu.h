@@ -171,8 +171,10 @@ class PS_CPU
 
       uint32_t Exception(uint32_t code, uint32_t PC, const uint32_t NP, const uint32_t NPM, const uint32_t instr) MDFN_WARN_UNUSED_RESULT;
 
-      virtual int32_t RunReal(int32_t timestamp_in) = 0;
-      virtual void Interrupt(uint32_t addr) = 0;
+      int32_t RunReal(int32_t timestamp_in);
+      bool HandleHalt();
+      virtual uint32_t RunBlock(uint32_t PC) = 0;
+      void Interrupt(uint32_t addr);
 
       template<typename T> T PeekMemory(uint32_t address) MDFN_COLD;
       template<typename T> void PokeMemory(uint32 address, T value) MDFN_COLD;

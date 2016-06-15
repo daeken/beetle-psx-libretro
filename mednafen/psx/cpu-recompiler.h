@@ -7,8 +7,7 @@ class PS_CPU_Recompiler : public PS_CPU {
 public:
    PS_CPU_Recompiler();
 
-   int32_t RunReal(int32_t timestamp_in);
-   void Interrupt(uint32_t addr);
+   uint32_t RunBlock(uint32_t PC);
    void CheckBreakpoints(void (*callback)(bool write, uint32_t address, unsigned int len), uint32_t instr);
 
    block_t *GetBlockReference(uint32_t pc);

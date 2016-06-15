@@ -20,25 +20,10 @@
 
 extern bool psx_cpu_overclock;
 
-jmp_buf iexcjmpenv;
 PS_CPU_Interpreter *icpu = NULL;
 
 PS_CPU_Interpreter::PS_CPU_Interpreter() {
    icpu = this;
-}
-
-void PS_CPU_Interpreter::Interrupt(uint32_t addr) {
-   longjmp(iexcjmpenv, addr);
-}
-
-bool HandleHalt() {
-   while(cpu->Halted) {
-      gtimestamp = cpu->next_event_ts;
-      if(!PSX_EventHandler(gtimestamp)) {
-         return false;
-      }
-   }
-   return true;
 }
 
 uint32_t defer_branch = -1;
@@ -136,61 +121,6 @@ inline uint32_t PS_CPU_Interpreter::RunBlock(uint32_t PC) {
          return PC;
       }
    }
-}
-
-int32_t PS_CPU_Interpreter::RunReal(int32_t timestamp_in)
-{
-   uint32_t PC;
-   uint32_t new_PC;
-   uint32_t new_PC_mask;
-
-#ifdef RUN_TESTS
-   static bool startedTest = false;
-   if(!startedTest) {
-      startedTest = true;
-      BACKED_PC = 0xDEADBEE0;
-   }
-#endif
-
-   gte_ts_done += timestamp_in;
-   muldiv_ts_done += timestamp_in;
-
-   BACKING_TO_ACTIVE;
-
-   gtimestamp = timestamp_in;
-
-   // Used for interrupts/exceptions
-   uint32_t temp = setjmp(iexcjmpenv);
-   if(temp != 0) {
-      PC = temp;
-   }
-
-   while(gtimestamp < next_event_ts || PSX_EventHandler(gtimestamp)) {
-#ifdef RUN_TESTS
-      if((PC & 0x0FFFFFFF) == 0x0EADBEE0)
-         PC = cpuTest();
-#endif
-      if(IPCache != 0) {
-         if(Halted) {
-            if(!HandleHalt())
-               break;
-         } else if((CP0.SR & 1) != 0) {
-            PC = Exception(EXCEPTION_INT, PC, PC, 0xFF, 0);
-         }
-      }
-
-      PC = RunBlock(PC);
-   }
-
-   if(gte_ts_done > 0)
-      gte_ts_done -= gtimestamp;
-
-   if(muldiv_ts_done > 0)
-      muldiv_ts_done -= gtimestamp;
-
-   ACTIVE_TO_BACKING;
-
-   return(gtimestamp);
 }
 
 void PS_CPU_Interpreter::CheckBreakpoints(void (*callback)(bool write, uint32_t address, unsigned int len), uint32_t instr)

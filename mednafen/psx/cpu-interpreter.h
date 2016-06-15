@@ -8,10 +8,8 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst);
 class PS_CPU_Interpreter : public PS_CPU {
 public:
    PS_CPU_Interpreter();
-
-   int32_t RunReal(int32_t timestamp_in);
+   
    uint32_t RunBlock(uint32_t PC);
-   void Interrupt(uint32_t addr);
    void CheckBreakpoints(void (*callback)(bool write, uint32_t address, unsigned int len), uint32_t instr);
 
    block_t *GetBlockReference(uint32_t pc);
