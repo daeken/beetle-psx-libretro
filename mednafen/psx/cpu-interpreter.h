@@ -10,6 +10,7 @@ public:
    PS_CPU_Interpreter();
 
    int32_t RunReal(int32_t timestamp_in);
+   uint32_t RunBlock(uint32_t PC);
    void Interrupt(uint32_t addr);
    void CheckBreakpoints(void (*callback)(bool write, uint32_t address, unsigned int len), uint32_t instr);
 
