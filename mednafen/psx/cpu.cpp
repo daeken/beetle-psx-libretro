@@ -89,7 +89,7 @@ void PS_CPU::SetFastMap(void *region_mem, uint32_t region_address, uint32_t regi
       FastMap[A >> FAST_MAP_SHIFT] = ((uint8_t *)region_mem - region_address);
 }
 
-INLINE void PS_CPU::RecalcIPCache(void)
+void PS_CPU::RecalcIPCache(void)
 {
    IPCache = 0;
 

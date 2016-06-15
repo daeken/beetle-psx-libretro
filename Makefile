@@ -1,4 +1,4 @@
-DEBUG = 1
+DEBUG = 0
 FRONTEND_SUPPORTS_RGB565 = 1
 HAVE_RUST=0
 HAVE_OPENGL=0
@@ -293,7 +293,7 @@ mednafen/psx/decomp.cpp: generator.py insts.td decompstub.cpp interpstub.cpp
 	touch mednafen/psx/cpu-recompiler.cpp
 
 ifeq ($(DEBUG),0)
-   FLAGS += -O2 $(EXTRA_GCC_FLAGS)
+   FLAGS += -O3 $(EXTRA_GCC_FLAGS) -g
 else
    FLAGS += -O0 -g
 endif
