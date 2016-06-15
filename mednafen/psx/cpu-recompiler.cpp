@@ -246,7 +246,7 @@ int32_t PS_CPU_Recompiler::RunReal(int32_t timestamp_in)
 
                   if(ICache[(PC & 0xFFC) >> 2].TV != PC)
                   {
-                     call_zra(func);
+                     //call_zra(func);
 
                      // FIXME: Handle executing out of scratchpad.
                      if(PC >= 0xA0000000 || !(BIU & 0x800))

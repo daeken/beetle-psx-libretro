@@ -77,8 +77,8 @@ int32_t PS_CPU_Interpreter::RunReal(int32_t timestamp_in)
          
          if(ICache[(PC & 0xFFC) >> 2].TV != PC)
          {
-            ReadAbsorb[ReadAbsorbWhich] = 0;
-            ReadAbsorbWhich = 0;
+            //ReadAbsorb[ReadAbsorbWhich] = 0;
+            //ReadAbsorbWhich = 0;
 
             // FIXME: Handle executing out of scratchpad.
             if(PC >= 0xA0000000 || !(BIU & 0x800))
