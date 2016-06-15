@@ -506,8 +506,6 @@ def genInterp((iname, type, dasm, dag)):
 			left = dag[1]
 			assert left[0] == 'gpr'
 			ret = [('DEFER_SET', left[1], subgen(dag[2]))]
-			if left[0] == 'gpr':
-				ret = [('when', ('neq', left[1], 0), ret)]
 			return ret
 		elif op == 'if':
 			return [('if', subgen(dag[1]), subgen(dag[2]), subgen(dag[3]))]

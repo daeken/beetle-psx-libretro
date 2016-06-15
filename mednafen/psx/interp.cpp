@@ -1203,7 +1203,7 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					RES(rt);
 					DO_LDS();
-					if((rt) != (0x0)) { DEFER_SET(rt, read_copreg(cop, rd)); }
+					DEFER_SET(rt, read_copreg(cop, rd));
 					return(true);
 					break;
 				}
@@ -1398,7 +1398,7 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					RES(rt);
 					DO_LDS();
-					if((rt) != (0x0)) { DEFER_SET(rt, read_copreg(cop, rd)); }
+					DEFER_SET(rt, read_copreg(cop, rd));
 					return(true);
 					break;
 				}
@@ -1593,7 +1593,7 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					RES(rt);
 					DO_LDS();
-					if((rt) != (0x0)) { DEFER_SET(rt, read_copreg(cop, rd)); }
+					DEFER_SET(rt, read_copreg(cop, rd));
 					return(true);
 					break;
 				}
@@ -1788,7 +1788,7 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 					uint32_t rd = ((inst) >> (0xb)) & (0x1f);
 					RES(rt);
 					DO_LDS();
-					if((rt) != (0x0)) { DEFER_SET(rt, read_copreg(cop, rd)); }
+					DEFER_SET(rt, read_copreg(cop, rd));
 					return(true);
 					break;
 				}
@@ -1984,7 +1984,7 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 			TGPR(temp_95, rs);
 			DO_LDS();
 			uint32_t offset = signext(0x10, imm);
-			if((rt) != (0x0)) { DEFER_SET(rt, signext(0x8, load_memory(0x8, (temp_95) + (offset), pc))); }
+			DEFER_SET(rt, signext(0x8, load_memory(0x8, (temp_95) + (offset), pc)));
 			return(true);
 			break;
 		}
@@ -2000,7 +2000,7 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 			uint32_t offset = signext(0x10, imm);
 			uint32_t addr = (temp_96) + (offset);
 			alignment(addr, 0x10, 0x0, pc);
-			if((rt) != (0x0)) { DEFER_SET(rt, signext(0x10, load_memory(0x10, addr, pc))); }
+			DEFER_SET(rt, signext(0x10, load_memory(0x10, addr, pc)));
 			return(true);
 			break;
 		}
@@ -2019,15 +2019,15 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 			uint32_t bottom = (offset) & (0x3);
 			uint32_t moffset = (offset) & (0xfffffffc);
 			if((bottom) == (0x0)) {
-				if((rt) != (0x0)) { DEFER_SET(rt, ((temp_98) & (0xffffff)) | ((load_memory(0x8, moffset, pc)) << (0x18))); }
+				DEFER_SET(rt, ((temp_98) & (0xffffff)) | ((load_memory(0x8, moffset, pc)) << (0x18)));
 			} else {
 				if((bottom) == (0x1)) {
-					if((rt) != (0x0)) { DEFER_SET(rt, ((temp_98) & (0xffff)) | ((load_memory(0x10, moffset, pc)) << (0x10))); }
+					DEFER_SET(rt, ((temp_98) & (0xffff)) | ((load_memory(0x10, moffset, pc)) << (0x10)));
 				} else {
 					if((bottom) == (0x2)) {
-						if((rt) != (0x0)) { DEFER_SET(rt, ((temp_98) & (0xff)) | ((load_memory(0x18, moffset, pc)) << (0x8))); }
+						DEFER_SET(rt, ((temp_98) & (0xff)) | ((load_memory(0x18, moffset, pc)) << (0x8)));
 					} else {
-						if((rt) != (0x0)) { DEFER_SET(rt, load_memory(0x20, moffset, pc)); }
+						DEFER_SET(rt, load_memory(0x20, moffset, pc));
 					}
 				}
 			}
@@ -2046,7 +2046,7 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 			uint32_t offset = signext(0x10, imm);
 			uint32_t addr = (temp_99) + (offset);
 			alignment(addr, 0x20, 0x0, pc);
-			if((rt) != (0x0)) { DEFER_SET(rt, load_memory(0x20, addr, pc)); }
+			DEFER_SET(rt, load_memory(0x20, addr, pc));
 			return(true);
 			break;
 		}
@@ -2060,7 +2060,7 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 			TGPR(temp_100, rs);
 			DO_LDS();
 			uint32_t offset = signext(0x10, imm);
-			if((rt) != (0x0)) { DEFER_SET(rt, load_memory(0x8, (temp_100) + (offset), pc)); }
+			DEFER_SET(rt, load_memory(0x8, (temp_100) + (offset), pc));
 			return(true);
 			break;
 		}
@@ -2076,7 +2076,7 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 			uint32_t offset = signext(0x10, imm);
 			uint32_t addr = (temp_101) + (offset);
 			alignment(addr, 0x10, 0x0, pc);
-			if((rt) != (0x0)) { DEFER_SET(rt, load_memory(0x10, addr, pc)); }
+			DEFER_SET(rt, load_memory(0x10, addr, pc));
 			return(true);
 			break;
 		}
@@ -2094,15 +2094,15 @@ bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 			uint32_t offset = (temp_102) + (simm);
 			uint32_t bottom = (offset) & (0x3);
 			if((bottom) == (0x0)) {
-				if((rt) != (0x0)) { DEFER_SET(rt, load_memory(0x20, offset, pc)); }
+				DEFER_SET(rt, load_memory(0x20, offset, pc));
 			} else {
 				if((bottom) == (0x1)) {
-					if((rt) != (0x0)) { DEFER_SET(rt, ((temp_103) & (0xff000000)) | (load_memory(0x18, offset, pc))); }
+					DEFER_SET(rt, ((temp_103) & (0xff000000)) | (load_memory(0x18, offset, pc)));
 				} else {
 					if((bottom) == (0x2)) {
-						if((rt) != (0x0)) { DEFER_SET(rt, ((temp_103) & (0xffff0000)) | (load_memory(0x10, offset, pc))); }
+						DEFER_SET(rt, ((temp_103) & (0xffff0000)) | (load_memory(0x10, offset, pc)));
 					} else {
-						if((rt) != (0x0)) { DEFER_SET(rt, ((temp_103) & (0xffffff00)) | (load_memory(0x8, offset, pc))); }
+						DEFER_SET(rt, ((temp_103) & (0xffffff00)) | (load_memory(0x8, offset, pc)));
 					}
 				}
 			}

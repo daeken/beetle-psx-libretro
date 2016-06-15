@@ -146,6 +146,7 @@ int32_t PS_CPU_Interpreter::RunReal(int32_t timestamp_in)
       //printf("running %08x\n", PC);
       branch_to = -1;
 
+      GPR[0] = 0;
       if(!interpret(GPR, PC, instr)) {
          printf("[CPU] Unknown instruction @%08x = %08x, op=%02x, funct=%02x\n", PC, instr, instr >> 26, (instr & 0x3F));
          exit(0); // XXX: Handle this properly...
