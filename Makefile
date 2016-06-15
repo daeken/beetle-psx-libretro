@@ -289,6 +289,8 @@ all: mednafen/psx/decomp.cpp $(TARGET)
 
 mednafen/psx/decomp.cpp: generator.py insts.td decompstub.cpp interpstub.cpp
 	python generator.py
+	touch mednafen/psx/cpu-interpreter.cpp
+	touch mednafen/psx/cpu-recompiler.cpp
 
 ifeq ($(DEBUG),0)
    FLAGS += -O2 $(EXTRA_GCC_FLAGS)

@@ -17,6 +17,8 @@
 
 #include "psx.h"
 
+#include "decomp.cpp"
+
 extern bool psx_cpu_overclock;
 
 PS_CPU_Recompiler *rcpu = NULL;

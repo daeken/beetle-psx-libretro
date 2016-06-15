@@ -245,7 +245,7 @@ block_func_t compile_function(jit_function_t func) {
 
 #define INSNLOG(name) printf(#name "\n")
 
-bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, bool &no_delay) {
+inline bool decompile(jit_function_t func, uint32_t pc, uint32_t inst, bool &branched, bool &no_delay) {
 	switch((inst) >> (0x1a)) {
 		case 0x0: {
 			switch((inst) & (0x3f)) {

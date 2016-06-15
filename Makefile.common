@@ -138,8 +138,6 @@ ifneq ($(HAVE_GRIFFIN), 1)
 	$(CORE_EMU_DIR)/cpu-common.cpp \
 	$(CORE_EMU_DIR)/cpu-recompiler.cpp \
 	$(CORE_EMU_DIR)/cpu-interpreter.cpp \
-	$(CORE_EMU_DIR)/decomp.cpp \
-	$(CORE_EMU_DIR)/interp.cpp \
 	$(CORE_EMU_DIR)/gte.cpp \
 	$(CORE_EMU_DIR)/cdc.cpp \
 	$(CORE_EMU_DIR)/spu.cpp \

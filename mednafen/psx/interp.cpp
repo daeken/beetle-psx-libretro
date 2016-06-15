@@ -31,7 +31,7 @@
 
 #define INSNLOG(mnem) printf(#mnem " [%08x]\n", pc);
 
-bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
+inline bool interpret(uint32_t *state, uint32_t pc, uint32_t inst) {
 	switch((inst) >> (0x1a)) {
 		case 0x0: {
 			switch((inst) & (0x3f)) {

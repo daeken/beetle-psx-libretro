@@ -18,6 +18,8 @@
 #include "psx.h"
 #include <setjmp.h>
 
+#include "interp.cpp"
+
 extern bool psx_cpu_overclock;
 
 PS_CPU_Interpreter *icpu = NULL;
