@@ -19,7 +19,6 @@
 
 extern bool psx_cpu_overclock;
 
-bool gdebug = false;
 PS_CPU_Recompiler *rcpu = NULL;
 
 void timestamp_inc(int amt) {
@@ -109,68 +108,7 @@ void PS_CPU_Recompiler::InvalidateBlocks(uint32_t addr) {
    //BlockPages[page]->clear();
 }
 
-void game_printf(char *fmt, uint32_t *GPR) {
-   int reg = 5;
-   while(*fmt != 0) {
-      if(*fmt == '%') {
-         fmt++;
-         int padding = 0;
-         if(*fmt == '0') {
-            fmt++;
-            while(*fmt >= '0' && *fmt <= '9')
-               padding = padding * 10 + (*(fmt++) - '0');
-         }
-         switch(*fmt) {
-            case 's': {
-               uint32_t addr = GPR[reg];
-               int len = 0;
-               while(rcpu->PeekMem8(addr + len++) != 0)
-                  ;
-               char *buf = new char[len+1];
-               for(int i = 0; i < len; ++i)
-                  buf[i] = rcpu->PeekMem8(addr + i);
-               buf[len] = 0;
-               printf("%s", buf);
-               ++reg;
-               break;
-            }
-            case 'c':
-               putc(GPR[reg++], stdout);
-               break;
-            case 'x': {
-               uint32_t val = GPR[reg++];
-               if(padding == 0)
-                  printf("%x", val);
-               else
-                  while(--padding >= 0)
-                     putc("0123456789abcdef"[(val >> (4 * padding)) & 0xF], stdout);
-               break;
-            }
-            case 'd': case 'i':
-               printf("%i", GPR[reg++]);
-               break;
-            default:
-               putc(*(fmt++), stdout);
-         }
-         fmt++;
-      } else
-         putc(*(fmt++), stdout);
-   }
-   fflush(stdout);
-}
-
 void step(uint32_t arg) {
-   if(arg == 0xf00) {
-      printf("zra\n");
-      return;
-   }
-   // Called for every instruction
-   printf("step... %08x\n", arg);
-   printf("%i\n", gtimestamp);
-   printf("ReadAbsorbWhich %i\n", rcpu->ReadAbsorbWhich);
-   printf("ReadAbsorb[RAW] %i\n", rcpu->ReadAbsorb[rcpu->ReadAbsorbWhich]);
-   if(gtimestamp == 120840)
-      exit(0);
 }
 
 PS_CPU_Recompiler::PS_CPU_Recompiler() {
