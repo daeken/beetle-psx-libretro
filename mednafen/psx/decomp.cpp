@@ -49,11 +49,11 @@ jit_value_t state, _ReadAbsorb, _ReadAbsorbWhich, _ReadFudge, LDWhich, LDValue, 
 
 void do_lds(jit_function_t func) {
 	jit_value_t ldw = LOAD(LDWhich, jit_type_uint), raw = LOAD(_ReadAbsorbWhich, jit_type_ubyte);
+	jit_label_t label = jit_label_undefined;
+	jit_insn_branch_if(func, jit_insn_eq(func, ldw, make_ubyte(35)), &label);
 	WGPR_VAL(ldw, LOAD(LDValue, jit_type_uint));
 	WRA(ldw, CAST(LOAD(LDAbsorb, jit_type_uint), jit_type_ubyte));
 	STORE(_ReadFudge, CAST(ldw, jit_type_ubyte));
-	jit_label_t label = jit_label_undefined;
-	jit_insn_branch_if(func, jit_insn_eq(func, ldw, make_ubyte(35)), &label);
 	STORE(_ReadAbsorbWhich, CAST(jit_insn_or(func, raw, jit_insn_and(func, ldw, make_uint(0x1F))), jit_type_ubyte));
 	jit_insn_label(func, &label);
 	STORE(LDWhich, make_uint(35));
