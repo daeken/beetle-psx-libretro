@@ -31,6 +31,16 @@ void PS_CPU_Interpreter::Interrupt(uint32_t addr) {
    longjmp(iexcjmpenv, addr);
 }
 
+bool HandleHalt() {
+   while(cpu->Halted) {
+      gtimestamp = cpu->next_event_ts;
+      if(!PSX_EventHandler(gtimestamp)) {
+         return false;
+      }
+   }
+   return true;
+}
+
 uint32_t defer_branch = -1;
 int32_t PS_CPU_Interpreter::RunReal(int32_t timestamp_in)
 {
@@ -59,16 +69,16 @@ int32_t PS_CPU_Interpreter::RunReal(int32_t timestamp_in)
       PC = temp;
    }
 
+   if(Halted) {
+      if(!HandleHalt())
+         goto SkipBody;
+   }
+
    do {
 #ifdef RUN_TESTS
       if((PC & 0x0FFFFFFF) == 0x0EADBEE0)
          PC = cpuTest();
 #endif
-      if(Halted) {
-         gtimestamp = next_event_ts;
-         if(!PSX_EventHandler(gtimestamp))
-            break;
-      }
 
       uint32_t instr, before = gtimestamp;
 
@@ -159,14 +169,22 @@ int32_t PS_CPU_Interpreter::RunReal(int32_t timestamp_in)
       } else if(defer_branch != -1) {
          PC = defer_branch;
          defer_branch = -1;
-         if(IPCache != 0 && (CP0.SR & 1) != 0) {
-            PC = Exception(EXCEPTION_INT, PC, PC, 0xFF, 0);
+         if(IPCache != 0) {
+            bool done = false;
+            if(Halted) {
+               if(!HandleHalt())
+                  break;
+            } else if((CP0.SR & 1) != 0) {
+               PC = Exception(EXCEPTION_INT, PC, PC, 0xFF, 0);
+            }
          }
 
          if(gtimestamp >= next_event_ts && !PSX_EventHandler(gtimestamp))
             break;
       }
    } while(true);
+
+SkipBody:
 
    if(gte_ts_done > 0)
       gte_ts_done -= gtimestamp;
