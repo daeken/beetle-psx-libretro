@@ -25,7 +25,7 @@ jit_value_t _make_ubyte(jit_function_t func, uint32_t val) {
 #define STORE(ptr, value) jit_insn_store_relative(func, (ptr), 0, (value))
 #define CAST(value, type) jit_insn_convert(func, (value), (type), 0)
 
-#define WGPR(gpr, val) do { if(gpr != 0) jit_insn_store_elem(func, state, make_uint(gpr), (val)); } while(0)
+#define WGPR(gpr, val) do { if(gpr != 0) { jit_insn_store_elem(func, state, make_uint(gpr), (val)); } else { (val); } } while(0)
 #define WGPR_VAL(gpr, val) jit_insn_store_elem(func, state, gpr, (val))
 #define RGPR(gpr) ((gpr == 0) ? make_uint(0) : jit_insn_load_elem(func, state, make_uint(gpr), jit_type_uint))
 #define TGPR(name, gpr) jit_value_t name = RGPR(gpr)
@@ -47,9 +47,10 @@ jit_value_t state, _ReadAbsorb, _ReadAbsorbWhich, _ReadFudge, LDWhich, LDValue, 
 #define WRA(idx, val) jit_insn_store_relative(func, jit_insn_add(func, _ReadAbsorb, idx), 0, (val))
 
 void do_lds(jit_function_t func) {
-	jit_value_t ldw = LOAD(LDWhich, jit_type_uint), raw = LOAD(_ReadAbsorbWhich, jit_type_ubyte);
+	jit_value_t ldw = LOAD(LDWhich, jit_type_uint);
 	jit_label_t label = jit_label_undefined;
 	jit_insn_branch_if(func, jit_insn_eq(func, ldw, make_ubyte(35)), &label);
+	jit_value_t raw = LOAD(_ReadAbsorbWhich, jit_type_ubyte);
 	WGPR_VAL(ldw, LOAD(LDValue, jit_type_uint));
 	WRA(ldw, CAST(LOAD(LDAbsorb, jit_type_uint), jit_type_ubyte));
 	STORE(_ReadFudge, CAST(ldw, jit_type_ubyte));
